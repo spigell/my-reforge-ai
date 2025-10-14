@@ -1,0 +1,60 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: codex-gh-runner
+  namespace: my-reforge-ai
+  labels:
+    app: codex-gh-runner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: codex-gh-runner
+  template:
+    metadata:
+      labels:
+        app: codex-gh-runner
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 1001
+      containers:
+      - name: runner
+        image: ghcr.io/spigell/codex-gh-runner:manual
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: GITHUB_URL
+          valueFrom:
+            secretKeyRef:
+              name: github-runner-config
+              key: github-url
+        - name: RUNNER_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: github-runner-config
+              key: runner-token
+        - name: RUNNER_LABELS
+          value: codex
+        - name: RUNNER_GROUP
+          value: Default
+        - name: RUNNER_WORKDIR
+          value: _work
+        volumeMounts:
+        - name: codex-home
+          mountPath: /home/runner/.codex
+        - name: work
+          mountPath: /actions-runner/_work
+        resources:
+          requests:
+            cpu: "0.5"
+            memory: 1Gi
+          limits:
+            cpu: "2"
+            memory: 4Gi
+      volumes:
+      - name: codex-home
+        persistentVolumeClaim:
+          claimName: codex-home
+      - name: work
+        emptyDir: {}
