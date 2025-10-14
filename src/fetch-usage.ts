@@ -24,6 +24,7 @@ interface RateLimitWindow {
     used_percent: number;
     limit_window_seconds: number;
     reset_after_seconds: number;
+    limit_reached: boolean;
 }
 
 interface UsageData {
@@ -121,10 +122,57 @@ You have ${remainingForToday.toFixed(2)}% of your token budget left for today.`)
     } else {
         console.log(`
 You have exceeded today's token budget by ${Math.abs(remainingForToday).toFixed(2)}%.`);
+
+        // Provide more specific reasons for exceeding the budget
+        if (usageData.rate_limit.primary_window.limit_reached) {
+            console.log("Reason: You have hit your short-term (e.g., daily) rate limit.");
+            console.log(`This limit resets in ${formatSeconds(usageData.rate_limit.primary_window.reset_after_seconds)} on ${getResetDateTime(usageData.rate_limit.primary_window.reset_after_seconds)}.`);
+        } else if (usageData.rate_limit.limit_reached) {
+            // If overall limit_reached is true but primary is not, it's likely the weekly limit.
+            console.log("Reason: You have hit your overall weekly rate limit.");
+            console.log(`This limit resets in ${formatSeconds(usageData.rate_limit.secondary_window.reset_after_seconds)} on ${getResetDateTime(usageData.rate_limit.secondary_window.reset_after_seconds)}.`);
+        } else {
+            console.log("Reason: You are currently using tokens faster than your average weekly budget.");
+            console.log(`To stay within budget, try to reduce usage for the next ${formatSeconds(usageData.rate_limit.secondary_window.reset_after_seconds)}.`);
+        }
     }
     
     const dailyBudget = totalWeeklyAllowance / totalDaysInWindow;
     console.log(`(Your average daily budget is ~${dailyBudget.toFixed(2)}% of the weekly total)`);
+}
+
+/**
+ * Formats a given number of seconds into a human-readable string (e.g., "1 day, 2 hours, 30 minutes").
+ * @param seconds The number of seconds to format.
+ * @returns A formatted string.
+ */
+function formatSeconds(seconds: number): string {
+    const days = Math.floor(seconds / (24 * 3600));
+    seconds %= (24 * 3600);
+    const hours = Math.floor(seconds / 3600);
+    seconds %= 3600;
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+
+    let parts: string[] = [];
+    if (days > 0) parts.push(`${days} day${days > 1 ? 's' : ''}`);
+    if (hours > 0) parts.push(`${hours} hour${hours > 1 ? 's' : ''}`);
+    if (minutes > 0) parts.push(`${minutes} minute${minutes > 1 ? 's' : ''}`);
+    // Only add seconds if there are no other larger units, or if it's the only unit.
+    if (remainingSeconds > 0 || parts.length === 0) parts.push(`${remainingSeconds} second${remainingSeconds !== 1 ? 's' : ''}`);
+
+    return parts.join(', ');
+}
+
+/**
+ * Calculates the exact date and time when a limit will reset.
+ * @param secondsUntilReset The number of seconds until the limit resets.
+ * @returns A formatted string representing the reset date and time.
+ */
+function getResetDateTime(secondsUntilReset: number): string {
+    const now = new Date();
+    const resetDate = new Date(now.getTime() + secondsUntilReset * 1000);
+    return resetDate.toLocaleString();
 }
 
 // Run the script and handle any top-level errors.
