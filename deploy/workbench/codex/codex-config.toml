@@ -10,3 +10,5 @@ name = "Ollama"
 base_url = "http://192.168.1.10:30297/v1"
 query_params = { num_thread = "4" }
 
+[mcp_servers.mcp-github]
+url = "http://mcp-github.my-reforge-ai.svc.cluster.local:8080/mcp/"
