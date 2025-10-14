@@ -15,3 +15,14 @@ npm install
 ## Contributing
 
 This project is tailored to personal workflows, but feel free to open an issue or pull request if you spot something that could be improved.
+
+## Project Structure
+
+The repository is organized as follows:
+
+-   `src/`: Contains the source code for the AI tools and services.
+-   `deploy/`: Contains the deployment configurations for Kubernetes.
+    -   `mcp/`: MCP server deployment.
+    -   `gh-runner/`: GitHub Actions runner deployment.
+    -   `workbench/`: Workbench environment for development.
+-   `.github/`: Contains GitHub Actions workflows.
