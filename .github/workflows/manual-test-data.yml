@@ -18,7 +18,7 @@ jobs:
       - name: Select eligible task
         id: select_task
         run: |
-          TASK_OUTPUT=$(yarn ts-node my-reforge-ai/src/task-picker/cli.ts my-reforge-ai/tasks/example-task.yaml)
+          TASK_OUTPUT=$(yarn ts-node src/task-picker/cli.ts my-reforge-ai/tasks/example-task.yaml)
           TASK_REPO=$(echo "$TASK_OUTPUT" | awk -F',' '{print $1}')
           TASK_BRANCH=$(echo "$TASK_OUTPUT" | awk -F',' '{print $2}')
           echo "repo=$TASK_REPO" >> $GITHUB_OUTPUT
