@@ -1,6 +1,6 @@
 # My Reforge AI
 
-My Reforge AI is a personal platform for experimenting with AI-driven self-improvement tools. This repository collects the infrastructure, services, and automations used to explore new workflows and ideas.
+My Reforge AI is a personal platform for experimenting with AI-driven self-improvement tooling. The repository brings together the infrastructure, services, and automations used to iterate on workflows and new ideas.
 
 ## Getting Started
 
@@ -14,7 +14,7 @@ npm install
 
 ## Contributing
 
-This project is tailored to personal workflows, but feel free to open an issue or pull request if you spot something that could be improved.
+The project reflects personal workflows, but feel free to open an issue or pull request if you notice something that can be improved.
 
 ## Project Structure
 
