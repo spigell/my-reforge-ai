@@ -35,7 +35,7 @@ spec:
       containers:
         - name: runner
           image: ghcr.io/spigell/codex-gh-runner:manual
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           env:
             - name: GITHUB_URL
               valueFrom:

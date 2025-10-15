@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-Source code lives in `src/` as TypeScript modules; keep each service in its own folder following the existing flat layout used by `src/fetch-usage.ts`. Compiled artifacts belong in `dist/` after running the build. Deployment assets sit in `deploy/`, with `deploy/gh-runner` and `deploy/workbench` providing Kubernetes manifests and bootstrap scripts; update them when your change requires infrastructure adjustments. Shared automation files (GitHub workflows, Husky hooks) reside under `.github/` and `.husky/`.
+Source code lives in `src/` as TypeScript modules; keep each service in its own folder following the existing flat layout used by `src/fetch-usage.ts`. This now includes `src/task-picker` for task selection logic and `src/task-executor` for executing tasks with the Codex CLI. Compiled artifacts belong in `dist/` after running the build. Deployment assets sit in `deploy/`, with `deploy/gh-runner` and `deploy/workbench` providing Kubernetes manifests and bootstrap scripts; update them when your change requires infrastructure adjustments. Shared automation files (GitHub workflows, Husky hooks) reside under `.github/` and `.husky/`.
 
 ## Build, Test, and Development Commands
 
@@ -37,6 +37,7 @@ A minimal system where a **worker** reads tasks from a dedicated repo, executes 
 ```yaml
 tasks:
   - repo: owner/target-repo
+    branch: 'branch-name' # New: The branch to work on in the target repository
     kind: feature
     idea: 'Make an archtecture for the project'
     # description is a full description for the task, e.g. prompts. It should be created in planning stage.
@@ -89,8 +90,7 @@ chore(my-reforge-ai): run task
 
 ### 3) AI Agent Worker
 
-* Executes tasks:
-
+* Executes tasks using the `src/task-executor` component, which runs the `codex` binary with a templated prompt.
   * **Git**: pull target repo, modify `file` as needed, commit & push branches.
   * **PR**: open/update PR when `review_required: true`.
   * **MCP**: converse in PR like a human for reviews (post, read replies, iterate, fix commits).

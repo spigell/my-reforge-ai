@@ -7,20 +7,19 @@ jobs:
     runs-on: codex
     outputs:
       target_repo: ${{ steps.select_task.outputs.repo }}
+      target_branch: ${{ steps.select_task.outputs.branch }} # New output for branch
     steps:
-      - name: Checkout tasks repository
-        uses: actions/checkout@v3
-
       - name: Checkout my-reforge-ai repository
         uses: actions/checkout@v3
-        with:
-          path: my-reforge-ai
 
       - name: Select eligible task
         id: select_task
         run: |
-          TASK_REPO=$(npx ts-node my-reforge-ai/src/task-picker/cli.ts tasks-repo/tasks/example-task.yaml)
+          TASK_OUTPUT=$(yarn ts-node my-reforge-ai/src/task-picker/cli.ts my-reforge-ai/tasks/example-task.yaml)
+          TASK_REPO=$(echo "$TASK_OUTPUT" | awk -F',' '{print $1}')
+          TASK_BRANCH=$(echo "$TASK_OUTPUT" | awk -F',' '{print $2}')
           echo "repo=$TASK_REPO" >> $GITHUB_OUTPUT
+          echo "branch=$TASK_BRANCH" >> $GITHUB_OUTPUT
 
   push-test-data:
     needs: task-picker
@@ -30,12 +29,24 @@ jobs:
         run: |
           GH_TOKEN=$(cat /etc/github/github-pat)
           TARGET_REPO="${{ needs.task-picker.outputs.target_repo }}"
+          TARGET_BRANCH="${{ needs.task-picker.outputs.target_branch }}" # Get the branch
           REPO_URL="https://x-access-token:${GH_TOKEN}@github.com/${TARGET_REPO}.git"
           
           git clone "$REPO_URL" other-repo
           cd other-repo
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
+
+          # Check if the branch exists remotely
+          if ! git ls-remote --heads "$REPO_URL" "$TARGET_BRANCH" | grep -q "$TARGET_BRANCH"; then
+            echo "Branch '$TARGET_BRANCH' does not exist remotely. Creating it."
+            git checkout -b "$TARGET_BRANCH"
+            git push -u origin "$TARGET_BRANCH"
+          fi
+          
+          echo "Branch '$TARGET_BRANCH' exists remotely. Switching to it."
+          git switch "$TARGET_BRANCH"
+
           echo "test data from workflow run ${{ github.run_id }}" > test-data.txt
           git add test-data.txt
           git commit -m "Add test data from workflow"

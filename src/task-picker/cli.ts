@@ -15,7 +15,8 @@ async function main() {
 
     if (data && data.tasks && data.tasks.length > 0) {
       const repo = data.tasks[0].repo;
-      console.log(repo);
+      const branch = data.tasks[0].branch || 'main'; // Default to 'main' if branch is not specified
+      console.log(`${repo},${branch}`);
     } else {
       console.error('No tasks found in the YAML file or invalid format.');
       process.exit(1);

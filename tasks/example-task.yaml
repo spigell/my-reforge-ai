@@ -1,5 +1,6 @@
 tasks:
   - repo: spigell/my-reforge-ai
+    branch: 'ai/arch-1'
     kind: feature
     idea: 'Make an archtecture for the project'
     # description is a full description for the task, e.g. prompts. It should be created in planning stage.
