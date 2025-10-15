@@ -1,3 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: codex-config-gh-runner
+  namespace: my-reforge-ai
+data:
+  config.toml: |
+    model_provider = "openai"
+    model = "gpt-5-codex"
+    sandbox_mode = "danger-full-access"
+    network_access = true
+    model_verbosity = "low"
+    approval_policy = "never"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -29,11 +42,11 @@ spec:
                 secretKeyRef:
                   name: github-runner-config
                   key: github-url
-            - name: RUNNER_TOKEN
+            - name: GITHUB_PAT
               valueFrom:
                 secretKeyRef:
                   name: github-runner-config
-                  key: runner-token
+                  key: github-pat
             - name: RUNNER_LABELS
               value: codex
             - name: RUNNER_GROUP
@@ -45,6 +58,12 @@ spec:
               mountPath: /home/runner/.codex
             - name: work
               mountPath: /actions-runner/_work
+            - name: github-pat
+              mountPath: /etc/github
+              readOnly: true
+            - name: codex-config-volume
+              mountPath: /home/runner/.codex/config.toml
+              subPath: config.toml
           resources:
             requests:
               cpu: '0.5'
@@ -58,3 +77,9 @@ spec:
             claimName: codex-home
         - name: work
           emptyDir: {}
+        - name: github-pat
+          secret:
+            secretName: github-mcp-credentials
+        - name: codex-config-volume
+          configMap:
+            name: codex-config-gh-runner

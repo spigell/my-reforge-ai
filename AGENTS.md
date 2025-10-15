@@ -35,10 +35,17 @@ A minimal system where a **worker** reads tasks from a dedicated repo, executes 
 **File:** `path/to/task.yaml` inside the **tasks repo**.
 
 ```yaml
-# task.yaml
-repo: owner/target-repo
-file: path/to/file.ext                 # target file in the repo
-review_required: true                  # if true, no other review tasks run for this repo
+tasks:
+  - repo: owner/target-repo
+    kind: feature
+    idea: 'Make an archtecture for the project'
+    # description is a full description for the task, e.g. prompts. It should be created in planning stage.
+    description-file: ''
+    # stage can be 'planning' or 'implementing'
+    stage: planning
+    # if PR is already created then link should be here
+    pr_link: ''
+    review_required: true
 ```
 
 **Worker output (commit message convention):**

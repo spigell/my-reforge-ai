@@ -1,0 +1,19 @@
+name: Manual Test Data Push
+on:
+  workflow_dispatch:
+
+jobs:
+  push-test-data:
+    runs-on: codex
+    steps:
+      - name: Clone, commit and push to another repo
+        run: |
+          GH_TOKEN=$(cat /etc/github/github-pat)
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/YOUR_ORG/YOUR_REPO.git" other-repo
+          cd other-repo
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          echo "test data" > test-data.txt
+          git add test-data.txt
+          git commit -m "Add test data"
+          git push

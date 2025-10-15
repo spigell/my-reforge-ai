@@ -28,6 +28,9 @@ EOF
 
 EOF
   chown "${USER_UID}:${USER_UID}" "${USER_HOME}/.bashrc"
+  # /usr/local/bin/setup-git-workbench --name "workbench bot" --email spigelly+gh-bot@gmail.com
+
+  run_as_user 'setup-git-workbench --name "workbench bot" --email spigelly+gh-bot@gmail.com --editor vim'
 }
 
 run_as_user() { # $@ = command

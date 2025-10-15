@@ -15,7 +15,7 @@
   "scripts": {
     "build": "tsc --build",
     "prepare": "husky",
-    "fetch-usage": "ts-node src/fetch-usage.ts"
+    "fetch-usage": "node --loader ts-node/esm src/fetch-usage/cli.ts"
   },
   "dependencies": {
     "@types/dotenv-safe": "^8.1.6",

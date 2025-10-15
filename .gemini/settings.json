@@ -1,23 +1,4 @@
 {
-  "general": {
-    "vimMode": true,
-    "preferredEditor": "code",
-    "checkpointing": {
-      "enabled": true
-    }
-  },
-  "ui": {
-    "theme": "Dracula",
-    "hideBanner": true,
-    "hideTips": false
-  },
-  "tools": {
-    "sandbox": "false",
-    "autoAccept": "true"
-  },
-  "privacy": {
-    "usageStatisticsEnabled": false
-  },
   "model": {
     "name": "gemini-2.5-pro",
     "maxSessionTurns": 100
@@ -35,5 +16,24 @@
     "mcp-github": {
       "httpUrl": "http://mcp-github.my-reforge-ai.svc.cluster.local:8080/mcp/"
     }
+  },
+  "tools": {
+    "core": [
+      "read_many_files",
+      "edit",
+      "run_shell_command(yarn)",
+      "run_shell_command(git status)",
+      "run_shell_command(curl)",
+      "run_shell_command(cat)",
+      "run_shell_command(git diff)",
+      "ls",
+      "read_file",
+      "write_file",
+      "grep",
+      "glob",
+      "web_fetch",
+      "web_search",
+      "memory"
+    ]
   }
 }
