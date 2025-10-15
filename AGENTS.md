@@ -75,6 +75,10 @@ chore(my-reforge-ai): run task
 
   * If a review is in progress for `repo`, skip other `review_required: true` tasks for that `repo`.
 * Yields tasks in FIFO (or filename) order.
+* **GitHub Workflow Integration**: When used in a GitHub workflow, the Task Picker job will:
+    *   Checkout the repository containing the task definitions.
+    *   Execute logic to select an eligible task based on the defined rules.
+    *   Output the `repo` field of the selected task, making it available for subsequent jobs in the workflow (e.g., for cloning the target repository).
 
 ### 2) Usage Manager
 

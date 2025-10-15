@@ -3,17 +3,40 @@ on:
   workflow_dispatch:
 
 jobs:
+  task-picker:
+    runs-on: codex
+    outputs:
+      target_repo: ${{ steps.select_task.outputs.repo }}
+    steps:
+      - name: Checkout tasks repository
+        uses: actions/checkout@v3
+
+      - name: Checkout my-reforge-ai repository
+        uses: actions/checkout@v3
+        with:
+          path: my-reforge-ai
+
+      - name: Select eligible task
+        id: select_task
+        run: |
+          TASK_REPO=$(npx ts-node my-reforge-ai/src/task-picker/cli.ts tasks-repo/tasks/example-task.yaml)
+          echo "repo=$TASK_REPO" >> $GITHUB_OUTPUT
+
   push-test-data:
+    needs: task-picker
     runs-on: codex
     steps:
       - name: Clone, commit and push to another repo
         run: |
           GH_TOKEN=$(cat /etc/github/github-pat)
-          git clone "https://x-access-token:${GH_TOKEN}@github.com/YOUR_ORG/YOUR_REPO.git" other-repo
+          TARGET_REPO="${{ needs.task-picker.outputs.target_repo }}"
+          REPO_URL="https://x-access-token:${GH_TOKEN}@github.com/${TARGET_REPO}.git"
+          
+          git clone "$REPO_URL" other-repo
           cd other-repo
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
-          echo "test data" > test-data.txt
+          echo "test data from workflow run ${{ github.run_id }}" > test-data.txt
           git add test-data.txt
-          git commit -m "Add test data"
+          git commit -m "Add test data from workflow"
           git push
