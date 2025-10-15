@@ -12,6 +12,9 @@ jobs:
       - name: Checkout my-reforge-ai repository
         uses: actions/checkout@v3
 
+      - name: Install deps
+        run: yarn install
+
       - name: Select eligible task
         id: select_task
         run: |
@@ -43,7 +46,7 @@ jobs:
             git checkout -b "$TARGET_BRANCH"
             git push -u origin "$TARGET_BRANCH"
           fi
-          
+
           echo "Branch '$TARGET_BRANCH' exists remotely. Switching to it."
           git switch "$TARGET_BRANCH"
 
