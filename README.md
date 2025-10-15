@@ -26,3 +26,4 @@ The repository is organized as follows:
     -   `gh-runner/`: GitHub Actions runner deployment.
     -   `workbench/`: Workbench environment for development.
 -   `.github/`: Contains GitHub Actions workflows.
+-   `AGENTS.md`: Contains detailed architecture and guidelines for AI agents.
