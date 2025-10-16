@@ -2,16 +2,11 @@
   "type": "module",
   "license": "UNLICENSED",
   "devDependencies": {
-    "@types/handlebars": "^4.1.0",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.0.0",
-    "@types/ws": "^8.5.14",
-    "concurrently": "^8.2.2",
     "handlebars": "^4.7.8",
     "husky": "^9.1.5",
     "js-yaml": "^4.1.0",
-    "lint-staged": "^15.2.9",
-    "nodemon": "^3.1.4",
     "prettier": "^3.3.3",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.2"
@@ -19,13 +14,14 @@
   "scripts": {
     "build": "tsc --build",
     "prepare": "husky",
-    "fetch-usage": "node --loader ts-node/esm src/fetch-usage/cli.ts"
+    "fetch-usage": "node src/fetch-usage/cli.ts",
+    "task-picker": "node src/task-picker/cli.ts",
+    "task-executor": "node src/task-executor/cli.ts",
+    "test": "yarn build && node --test dist/**/*.test.js"
   },
   "dependencies": {
     "@types/dotenv-safe": "^8.1.6",
-    "axios": "^1.7.8",
     "dotenv": "^16.4.5",
-    "dotenv-safe": "^9.1.0",
-    "extensionless": "^1.9.9"
+    "dotenv-safe": "^9.1.0"
   }
 }

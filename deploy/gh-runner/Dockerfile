@@ -46,6 +46,6 @@ RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/fetch-runner-token.sh \
     && chown "${RUNNER_USER}:${RUNNER_USER}" /usr/local/bin/entrypoint.sh /usr/local/bin/fetch-runner-token.sh
 
 USER ${RUNNER_USER}
-ENV HOME=/home/runner
+ENV HOME=${RUNNER_HOME}
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

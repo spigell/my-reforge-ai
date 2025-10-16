@@ -14,9 +14,13 @@ async function main() {
     const data: any = yaml.load(fileContents);
 
     if (data && data.tasks && data.tasks.length > 0) {
-      const repo = data.tasks[0].repo;
-      const branch = data.tasks[0].branch || 'main'; // Default to 'main' if branch is not specified
-      console.log(`${repo},${branch}`);
+      const task = data.tasks[0];
+      const repo = task.repo;
+      const branch = task.branch || 'main'; // Default to 'main' if branch is not specified
+      const agent = task.agents && task.agents.length > 0 ? task.agents[0] : 'codex'; // Default to 'codex'
+
+      // Output JSON object
+      console.log(JSON.stringify({ repo, branch, agent }));
     } else {
       console.error('No tasks found in the YAML file or invalid format.');
       process.exit(1);

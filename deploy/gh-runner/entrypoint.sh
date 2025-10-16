@@ -25,6 +25,7 @@ RUNNER_LABELS="${RUNNER_LABELS:-}"
 RUNNER_GROUP="${RUNNER_GROUP:-Default}"
 RUNNER_EPHEMERAL="${RUNNER_EPHEMERAL:-1}"
 RUNNER_REPLACE="${RUNNER_REPLACE:-1}"
+RUNNER_DISABLE_UPDATES=${RUNNER_DISABLE_UPDATES:-1}
 
 ACTIVE_TOKEN=""
 
@@ -77,6 +78,8 @@ cleanup() {
 
 trap cleanup EXIT INT TERM
 
+mkdir -p "${RUNNER_WORKDIR}"
+
 token="$(fetch_token)"
 ACTIVE_TOKEN="${token}"
 
@@ -104,10 +107,10 @@ if [[ -n "${RUNNER_LABELS}" ]]; then
   config_args+=(--labels "${RUNNER_LABELS}")
 fi
 
+if [[ "${RUNNER_DISABLE_UPDATES}" == "1" ]]; then
+  config_args+=(--disableupdate)
+fi
+
 ./config.sh "${config_args[@]}"
 
-mkdir -p "${RUNNER_WORKDIR}"
-
-export RUNNER_FEATURE_FLAG_EPHEMERAL="${RUNNER_FEATURE_FLAG_EPHEMERAL:-1}"
-
-exec ./run.sh --once
+exec ./run.sh

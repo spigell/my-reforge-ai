@@ -20,7 +20,7 @@ metadata:
   labels:
     app: codex-gh-runner
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: codex-gh-runner
@@ -49,8 +49,12 @@ spec:
                   key: github-pat
             - name: RUNNER_LABELS
               value: codex
-            - name: RUNNER_GROUP
-              value: Default
+            - name: RUNNER_EPHEMERAL
+              value: '1'
+            - name: RUNNER_REPLACE
+              value: '1'
+            - name: RUNNER_DISABLE_UPDATES
+              value: '1'
             - name: RUNNER_WORKDIR
               value: _work
           volumeMounts:

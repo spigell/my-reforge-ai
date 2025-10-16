@@ -38,6 +38,8 @@ A minimal system where a **worker** reads tasks from a dedicated repo, executes 
 tasks:
   - repo: owner/target-repo
     branch: 'branch-name' # New: The branch to work on in the target repository
+    # Availabe agents list. can be codex, gemini-2.5-flash. The task-picker chooses executor.
+    agents: ['codex', 'gemini-2.5-flash']
     kind: feature
     idea: 'Make an archtecture for the project'
     # description is a full description for the task, e.g. prompts. It should be created in planning stage.
@@ -72,6 +74,7 @@ chore(my-reforge-ai): run task
 ### 1) Task Picker
 
 * Scans the **tasks repo** for `task.yaml` files.
+* Selects an executor based on the `agents` field in the task.
 * Applies **review lock** per repo:
 
   * If a review is in progress for `repo`, skip other `review_required: true` tasks for that `repo`.

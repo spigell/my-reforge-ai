@@ -4,42 +4,53 @@ on:
 
 jobs:
   task-picker:
-    runs-on: codex
+    runs-on: ubuntu-24.04
     outputs:
-      target_repo: ${{ steps.select_task.outputs.repo }}
-      target_branch: ${{ steps.select_task.outputs.branch }} # New output for branch
+      task_json: "${{ steps.select_task.outputs.task_json }}"
     steps:
       - name: Checkout my-reforge-ai repository
         uses: actions/checkout@v3
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22'
+
+      - name: install yarn
+        run: npm install -g yarn
+
       - name: Install deps
-        run: yarn install
+        run: yarn install --frozen-lockfile
 
       - name: Select eligible task
         id: select_task
         run: |
-          TASK_OUTPUT=$(yarn -s ts-node src/task-picker/cli.ts tasks/example-task.yaml)
-          echo TASK_OUTPUT=${TASK_OUTPUT}
-          TASK_REPO=$(echo "$TASK_OUTPUT" | awk -F',' '{print $1}')
-          TASK_BRANCH=$(echo "$TASK_OUTPUT" | awk -F',' '{print $2}')
-          echo "repo=$TASK_REPO" >> $GITHUB_OUTPUT
-          echo "branch=$TASK_BRANCH" >> $GITHUB_OUTPUT
+          TASK_JSON=$(yarn -s ts-node src/task-picker/cli.ts tasks/example-task.yaml)
+          echo "task_json=$TASK_JSON" >> $GITHUB_OUTPUT
 
   push-test-data:
     needs: task-picker
-    runs-on: codex
+    runs-on: ${{ fromJson(needs.task-picker.outputs.task_json).agent }}
     steps:
+      - name: Parse task details
+        id: parse_task
+        run: |
+          TASK_JSON='${{ needs.task-picker.outputs.task_json }}'
+          echo "TASK_JSON: $TASK_JSON"
+          echo "repo=$(echo "$TASK_JSON" | jq -r '.repo')" >> $GITHUB_OUTPUT
+          echo "branch=$(echo "$TASK_JSON" | jq -r '.branch')" >> $GITHUB_OUTPUT
+          echo "agent=$(echo "$TASK_JSON" | jq -r '.agent')" >> $GITHUB_OUTPUT
+
       - name: Clone, commit and push to another repo
         run: |
           GH_TOKEN=$(cat /etc/github/github-pat)
-          TARGET_REPO="${{ needs.task-picker.outputs.target_repo }}"
-          TARGET_BRANCH="${{ needs.task-picker.outputs.target_branch }}" # Get the branch
+          TARGET_REPO="${{ steps.parse_task.outputs.repo }}"
+          TARGET_BRANCH="${{ steps.parse_task.outputs.branch }}"
           REPO_URL="https://x-access-token:${GH_TOKEN}@github.com/${TARGET_REPO}.git"
           
           git clone "$REPO_URL" other-repo
           cd other-repo
-          git config user.name 'github-actions[bot]'
-          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          setup-git-workbench --name "github-runner bot" --email spigelly+gh-bot@gmail.com --editor vim
 
           # Check if the branch exists remotely
           if ! git ls-remote --heads "$REPO_URL" "$TARGET_BRANCH" | grep -q "$TARGET_BRANCH"; then
