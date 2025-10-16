@@ -1,3 +1,4 @@
+
 # Repository Guidelines
 
 ## Project Structure & Module Organization
@@ -94,6 +95,7 @@ chore(my-reforge-ai): run task
 ### 3) AI Agent Worker
 
 * Executes tasks using the `src/task-executor` component, which runs the `codex` binary with a templated prompt.
+  * **Workspace**: Prepares the workspace by cloning the target repository and checking out the correct branch using a TypeScript git library.
   * **Git**: pull target repo, modify `file` as needed, commit & push branches.
   * **PR**: open/update PR when `review_required: true`.
   * **MCP**: converse in PR like a human for reviews (post, read replies, iterate, fix commits).
@@ -110,7 +112,7 @@ chore(my-reforge-ai): run task
 3. **Usage Manager** computes today’s/hour’s token budget.
 4. **AI Agent Worker**:
 
-   * Clones target `repo` (git binary), checks out a task branch.
+   * Prepares workspace (clones repo, checks out branch).
    * Applies changes to `file`.
    * Commits and pushes.
    * If `review_required: true`:

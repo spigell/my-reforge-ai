@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as handlebars from 'handlebars';
 import { spawn } from 'child_process';
+import { prepareWorkspace } from './workspace-manager.js';
 
 async function main() {
   const promptTemplatePath = process.argv[2];
@@ -12,9 +13,14 @@ async function main() {
   }
 
   try {
+    const taskData = JSON.parse(taskDataJson);
+    const workspacePath = `./workspace/${taskData.repo}`;
+    const repoUrl = `https://github.com/${taskData.repo}.git`;
+
+    await prepareWorkspace(repoUrl, taskData.branch, workspacePath);
+
     const templateContent = fs.readFileSync(promptTemplatePath, 'utf8');
     const template = handlebars.compile(templateContent);
-    const taskData = JSON.parse(taskDataJson);
 
     // Placeholder for additional context data that might be needed by the template
     const context = {
@@ -27,6 +33,7 @@ async function main() {
 
     // Execute codex cli
     const codexProcess = spawn('codex', ['cli', '--non-interactive'], { // Assuming '--non-interactive' is the flag
+      cwd: workspacePath, // Run codex in the prepared workspace
       stdio: ['pipe', process.stdout, process.stderr],
     });
 

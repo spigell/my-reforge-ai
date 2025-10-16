@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.4
 
-FROM ghcr.io/spigell/codex-workbench:v0.46.0-27acc7
+FROM ghcr.io/spigell/codex-workbench:v0.46.0-5fc8ea
 
 ENV DEBIAN_FRONTEND=noninteractive \
     RUNNER_VERSION=2.328.0 \
