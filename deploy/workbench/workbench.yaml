@@ -48,7 +48,7 @@ spec:
         - /bin/bash
         - -c
         - /project/deploy/workbench/user-bootstrap.sh gemini
-      image: ghcr.io/spigell/google-gemini-workbench:0.9.0-5d94ed
+      image: ghcr.io/spigell/google-gemini-workbench:0.9.0-d854d3
       name: gemini-workbench
       resources:
         limits:
