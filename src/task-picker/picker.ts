@@ -40,7 +40,9 @@ async function main() {
       const value = arg.slice('--output-file='.length);
 
       if (!value) {
-        logger.error('Error: --output-file flag requires a non-empty file path.');
+        logger.error(
+          'Error: --output-file flag requires a non-empty file path.',
+        );
         process.exit(1);
       }
 
@@ -54,7 +56,9 @@ async function main() {
   const taskFilePath = positionalArgs[0];
 
   if (!taskFilePath) {
-    logger.error('Usage: ts-node src/task-picker/picker.ts [--output-file <path>] <path/to/task.yaml>');
+    logger.error(
+      'Usage: ts-node src/task-picker/picker.ts [--output-file <path>] <path/to/task.yaml>',
+    );
     process.exit(1);
   }
 
@@ -69,7 +73,9 @@ async function main() {
 
       const rawAgents = Array.isArray(task.agents) ? task.agents : [];
       const normalizedAgents = rawAgents
-        .map((agent: unknown) => (typeof agent === 'string' ? agent.trim() : ''))
+        .map((agent: unknown) =>
+          typeof agent === 'string' ? agent.trim() : '',
+        )
         .filter((agent: string) => agent.length > 0);
 
       if (normalizedAgents.length === 0) {

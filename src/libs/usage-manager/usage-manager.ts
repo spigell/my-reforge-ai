@@ -1,4 +1,3 @@
-
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
@@ -70,14 +69,20 @@ export class UsageManager {
     }
   }
 
-  private async fetchUsageData(token: string, accountId: string): Promise<UsageData> {
+  private async fetchUsageData(
+    token: string,
+    accountId: string,
+  ): Promise<UsageData> {
     try {
-      const response = await fetch('https://chatgpt.com/backend-api/wham/usage', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'chatgpt-account-id': accountId,
+      const response = await fetch(
+        'https://chatgpt.com/backend-api/wham/usage',
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'chatgpt-account-id': accountId,
+          },
         },
-      });
+      );
 
       if (!response.ok) {
         throw new Error(
@@ -138,21 +143,33 @@ export class UsageManager {
 
   private logUsage(usageDetails: UsageDetails): void {
     this.logger.info(`Plan: ${usageDetails.plan_type}`);
-    this.logger.info(`Total weekly usage so far: ${usageDetails.consumedAllowance.toFixed(2)}%`);
-    this.logger.info(`Primary limit resets in ${this.formatSeconds(usageDetails.primaryWindow.reset_after_seconds)} on ${this.getResetDateTime(usageDetails.primaryWindow.reset_after_seconds)}.`);
-    this.logger.info(`Weekly limit resets in ${this.formatSeconds(usageDetails.secondaryWindow.reset_after_seconds)} on ${this.getResetDateTime(usageDetails.secondaryWindow.reset_after_seconds)}.`);
+    this.logger.info(
+      `Total weekly usage so far: ${usageDetails.consumedAllowance.toFixed(2)}%`,
+    );
+    this.logger.info(
+      `Primary limit resets in ${this.formatSeconds(usageDetails.primaryWindow.reset_after_seconds)} on ${this.getResetDateTime(usageDetails.primaryWindow.reset_after_seconds)}.`,
+    );
+    this.logger.info(
+      `Weekly limit resets in ${this.formatSeconds(usageDetails.secondaryWindow.reset_after_seconds)} on ${this.getResetDateTime(usageDetails.secondaryWindow.reset_after_seconds)}.`,
+    );
 
     if (usageDetails.remainingForToday >= 0) {
-      this.logger.info(`You have ${usageDetails.remainingForToday.toFixed(2)}% of your token budget left for today.`);
+      this.logger.info(
+        `You have ${usageDetails.remainingForToday.toFixed(2)}% of your token budget left for today.`,
+      );
     } else {
-      this.logger.warn(`You have exceeded today's token budget by ${Math.abs(usageDetails.remainingForToday).toFixed(2)}%.`);
+      this.logger.warn(
+        `You have exceeded today's token budget by ${Math.abs(usageDetails.remainingForToday).toFixed(2)}%.`,
+      );
 
       if (usageDetails.primaryWindow.limit_reached) {
         this.logger.warn(
           'Reason: You have hit your short-term (5-hour window) rate limit.',
         );
       } else if (usageDetails.limitReached) {
-        this.logger.warn('Reason: You have hit your overall weekly rate limit.');
+        this.logger.warn(
+          'Reason: You have hit your overall weekly rate limit.',
+        );
       } else {
         this.logger.warn(
           'Reason: You are currently using tokens faster than your average weekly budget. To stay within budget, try to reduce usage.',

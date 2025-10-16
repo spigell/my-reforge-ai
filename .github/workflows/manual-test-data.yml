@@ -6,8 +6,8 @@ jobs:
   pick-task:
     runs-on: ubuntu-24.04
     outputs:
-      task_json: "${{ steps.select_task.outputs.task_json }}"
-      agent: "${{ steps.select_task.outputs.agent }}"
+      task_json: '${{ steps.select_task.outputs.task_json }}'
+      agent: '${{ steps.select_task.outputs.agent }}'
     steps:
       - name: Checkout my-reforge-ai repository
         uses: actions/checkout@v3

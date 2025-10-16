@@ -1,4 +1,3 @@
-
 import simpleGit, { SimpleGit } from 'simple-git';
 import fs from 'fs';
 

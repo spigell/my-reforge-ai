@@ -3,10 +3,11 @@
 ## Project Structure & Module Organization
 
 Source code lives in `src/` as TypeScript modules. Services are organized into logical folders within `src/`.
+
 - `src/libs/usage-manager`: Contains the logic for fetching and calculating token usage.
 - `src/task-picker`: Contains task selection logic.
 - `src/task-executor`: Contains logic for executing tasks with the Codex CLI, including workspace management and prompt rendering.
-Compiled artifacts belong in `dist/` after running the build. Deployment assets sit in `deploy/`, with `deploy/gh-runner` and `deploy/workbench` providing Kubernetes manifests and bootstrap scripts; update them when your change requires infrastructure adjustments. Shared automation files (GitHub workflows, Husky hooks) reside under `.github/` and `.husky/`.
+  Compiled artifacts belong in `dist/` after running the build. Deployment assets sit in `deploy/`, with `deploy/gh-runner` and `deploy/workbench` providing Kubernetes manifests and bootstrap scripts; update them when your change requires infrastructure adjustments. Shared automation files (GitHub workflows, Husky hooks) reside under `.github/` and `.husky/`.
 
 ## Build, Test, and Development Commands
 
@@ -14,7 +15,7 @@ Install dependencies with `yarn install`. Run `yarn build` to transpile TypeScri
 
 ## Coding Style & Naming Conventions
 
-Write modern TypeScript, targeting ES modules (`"type": "module"`). Use Prettier with the repository settings (`.prettierrc` enforces single quotes); format before committing. Keep indentation at two spaces, favor named exports, and suffix service entrypoints with the feature (e.g., `task-picker/cli.ts`). Configuration files should remain JSON with a trailing newline.
+Write modern TypeScript, targeting ES modules (`"type": "module"`). Use Prettier with the repository settings (`.prettierrc` enforces single quotes); format before committing. To ensure consistent code style, run `yarn format` before committing your changes. Keep indentation at two spaces, favor named exports, and suffix service entrypoints with the feature (e.g., `task-picker/cli.ts`). Configuration files should remain JSON with a trailing newline.
 
 ## Testing Guidelines
 
@@ -68,8 +69,8 @@ chore(my-reforge-ai): run task
 
 ## Review Blocking Rule
 
-* If `review_required: true` is active for `owner/target-repo`, **all other tasks with `review_required: true` for that repo are blocked** until the review is completed.
-* Review completion = PR merged or PR closed with outcome noted in the PR thread.
+- If `review_required: true` is active for `owner/target-repo`, **all other tasks with `review_required: true` for that repo are blocked** until the review is completed.
+- Review completion = PR merged or PR closed with outcome noted in the PR thread.
 
 ---
 
@@ -77,38 +78,38 @@ chore(my-reforge-ai): run task
 
 ### 1) Task Picker
 
-*   **Token Availability**: Before selecting any task, it checks with the `UsageManager` to ensure there are sufficient tokens available for the day. If not, it exits, preventing tasks from being picked when the budget is exhausted.
-* Scans the **tasks repo** for `task.yaml` files.
-* Selects an executor based on the `agents` field in the task.
-* Applies **review lock** per repo:
+-   **Token Availability**: Before selecting any task, it checks with the `UsageManager` to ensure there are sufficient tokens available for the day. If not, it exits, preventing tasks from being picked when the budget is exhausted.
+- Scans the **tasks repo** for `task.yaml` files.
+- Selects an executor based on the `agents` field in the task.
+- Applies **review lock** per repo:
+  - If a review is in progress for `repo`, skip other `review_required: true` tasks for that `repo`.
 
-  * If a review is in progress for `repo`, skip other `review_required: true` tasks for that `repo`.
-* Yields tasks in FIFO (or filename) order.
-* **GitHub Workflow Integration**: When used in a GitHub workflow, the Task Picker job will:
-    *   Checkout the repository containing the task definitions.
-    *   Execute logic to select an eligible task based on the defined rules.
-    *   Output the `repo` field of the selected task, making it available for subsequent jobs in the workflow (e.g., for cloning the target repository).
+- Yields tasks in FIFO (or filename) order.
+- **GitHub Workflow Integration**: When used in a GitHub workflow, the Task Picker job will:
+  - Checkout the repository containing the task definitions.
+  - Execute logic to select an eligible task based on the defined rules.
+  - Output the `repo` field of the selected task, making it available for subsequent jobs in the workflow (e.g., for cloning the target repository).
 
 ### 2) Usage Manager
 
-*   Fetches **current usage** and **weekly limit** via `src/libs/usage-manager/usage-manager.ts`.
-    *   Reads authentication tokens from `~/.codex/auth.json`.
-    *   Fetches usage data from the ChatGPT API.
-    *   Calculates the daily token budget based on a weekly allowance (100% split over 7 days) and consumed tokens.
-    *   Implements an "aggressive catch-up" mechanism to allow higher spending if the weekly budget is largely unused.
-*   Splits weekly limit into 7 daily budgets.
-*   **Aggressive catch-up**: If on Day 5 you still have ~90% of the weekly budget, spend more than the equal share (e.g., 40% extra).
-*   Exposes **per-run token target** (hourly) to the worker.
-*   The `hasTokens()` method is used by the `Task Picker` to determine if there are enough tokens remaining for the day to proceed with task selection.
+-   Fetches **current usage** and **weekly limit** via `src/libs/usage-manager/usage-manager.ts`.
+    -   Reads authentication tokens from `~/.codex/auth.json`.
+    -   Fetches usage data from the ChatGPT API.
+    -   Calculates the daily token budget based on a weekly allowance (100% split over 7 days) and consumed tokens.
+    -   Implements an "aggressive catch-up" mechanism to allow higher spending if the weekly budget is largely unused.
+-   Splits weekly limit into 7 daily budgets.
+-   **Aggressive catch-up**: If on Day 5 you still have ~90% of the weekly budget, spend more than the equal share (e.g., 40% extra).
+-   Exposes **per-run token target** (hourly) to the worker.
+-   The `hasTokens()` method is used by the `Task Picker` to determine if there are enough tokens remaining for the day to proceed with task selection.
 
 ### 3) AI Agent Worker
 
-* Executes tasks using the `src/task-executor` component, which runs the `codex` binary with a templated prompt.
-  * **Workspace**: Prepares the workspace by cloning the target repository and checking out the correct branch using a TypeScript git library (`src/task-executor/workspace-manager.ts`).
-  * **Git**: pull target repo, modify `file` as needed, commit & push branches.
-  * **PR**: open/update PR when `review_required: true`.
-  * **MCP**: converse in PR like a human for reviews (post, read replies, iterate, fix commits).
-* Respects per-run token budget from the Usage Manager.
+- Executes tasks using the `src/task-executor` component, which runs the `codex` binary with a templated prompt.
+  - **Workspace**: Prepares the workspace by cloning the target repository and checking out the correct branch using a TypeScript git library (`src/task-executor/workspace-manager.ts`).
+  - **Git**: pull target repo, modify `file` as needed, commit & push branches.
+  - **PR**: open/update PR when `review_required: true`.
+  - **MCP**: converse in PR like a human for reviews (post, read replies, iterate, fix commits).
+- Respects per-run token budget from the Usage Manager.
 
 ---
 
@@ -116,66 +117,63 @@ chore(my-reforge-ai): run task
 
 1. **Cron/Runner triggers** the worker on schedule.
 2. **Task Picker** selects the next eligible task:
+   - Skips any repo currently under a **review lock** if the picked task requires review.
 
-   * Skips any repo currently under a **review lock** if the picked task requires review.
 3. **Usage Manager** computes today’s/hour’s token budget.
 4. **AI Agent Worker**:
+   - Prepares workspace (clones repo, checks out branch).
+   - Applies changes to `file`.
+   - Commits and pushes.
+   - If `review_required: true`:
+     - Opens/updates a PR.
+     - Communicates via **MCP** in the PR thread.
+     - Iterates on requested changes; amends/commits as needed.
+     - On approval/merge: release lock for that `repo`.
 
-   * Prepares workspace (clones repo, checks out branch).
-   * Applies changes to `file`.
-   * Commits and pushes.
-   * If `review_required: true`:
-
-     * Opens/updates a PR.
-     * Communicates via **MCP** in the PR thread.
-     * Iterates on requested changes; amends/commits as needed.
-     * On approval/merge: release lock for that `repo`.
 5. **Completion**: logs execution summary and tokens used.
 
 ---
 
 ## Communication via MCP (PR)
 
-* **Inbound**: read PR comments addressed to the agent (e.g., `@my-reforge-ai`).
-* **Outbound**: post replies, status updates, and “done” notes in PR thread.
-* **Loop**: iterate until approved or closed.
+- **Inbound**: read PR comments addressed to the agent (e.g., `@my-reforge-ai`).
+- **Outbound**: post replies, status updates, and “done” notes in PR thread.
+- **Loop**: iterate until approved or closed.
 
 ---
 
 ## Repositories
 
-* **Tasks repo**: contains only task definitions and their YAML files.
-* **Target repos**: the worker reads/modifies files directly using **git**.
+- **Tasks repo**: contains only task definitions and their YAML files.
+- **Target repos**: the worker reads/modifies files directly using **git**.
 
 ---
 
 ## K8s Namespace & Pods
 
-* Namespace: `my-reforge-ai`
-
-  * **gh-runner-codex**: GitHub Actions runner pod with Codex CLI and auth.
-  * **gh-mcp**: MCP service for GitHub PR communication (creates tasks, handles human interaction).
-  * **other-mcps**: any additional MCP servers required by tasks.
+- Namespace: `my-reforge-ai`
+  - **gh-runner-codex**: GitHub Actions runner pod with Codex CLI and auth.
+  - **gh-mcp**: MCP service for GitHub PR communication (creates tasks, handles human interaction).
+  - **other-mcps**: any additional MCP servers required by tasks.
 
 ---
 
 ## Runner Requirements
 
-* GitHub self-hosted runner **with Codex CLI installed**.
-* Authentication configured for:
-
-  * Target repos (push/PR).
-  * Codex/LLM provider (env/secret).
-  * MCP server access.
-  * Codex CLI auth material at `~/.codex/auth.json` (present on the shared runners).
+- GitHub self-hosted runner **with Codex CLI installed**.
+- Authentication configured for:
+  - Target repos (push/PR).
+  - Codex/LLM provider (env/secret).
+  - MCP server access.
+  - Codex CLI auth material at `~/.codex/auth.json` (present on the shared runners).
 
 ---
 
 ## Budgeting Policy (Weekly → Daily → Hourly)
 
-* **Weekly limit** split evenly across **7 days**.
-* **Aggressive mode** kicks in when behind (e.g., Day 5 you still have ~90% of the weekly budget, spend more than the equal share (e.g., 40% extra)).
-* Worker receives **hourly token target** and must not exceed it.
+- **Weekly limit** split evenly across **7 days**.
+- **Aggressive mode** kicks in when behind (e.g., Day 5 you still have ~90% of the weekly budget, spend more than the equal share (e.g., 40% extra)).
+- Worker receives **hourly token target** and must not exceed it.
 
 ---
 
@@ -202,21 +200,20 @@ cron/runner
 
 ## Commit/PR Conventions
 
-* **Branch name**: `my-reforge-ai/<task-file-stem>`
-* **Commit message**: `chore(my-reforge-ai): apply task <path/to/task.yaml>`
-* **PR title**: `my-reforge-ai: <task-file-stem>`
-* **PR body**: includes task YAML and run summary (tokens used, files touched).
+- **Branch name**: `my-reforge-ai/<task-file-stem>`
+- **Commit message**: `chore(my-reforge-ai): apply task <path/to/task.yaml>`
+- **PR title**: `my-reforge-ai: <task-file-stem>`
+- **PR body**: includes task YAML and run summary (tokens used, files touched).
 
 ---
 
 ## Logging
 
-* Record for each run:
-
-  * `repo`, `task file`, `review_required`
-  * `tokens_in`, `tokens_out`, `total_tokens`
-  * PR URL (if any)
-  * Result: `completed`, `awaiting-review`, or `skipped (lock)`
+- Record for each run:
+  - `repo`, `task file`, `review_required`
+  - `tokens_in`, `tokens_out`, `total_tokens`
+  - PR URL (if any)
+  - Result: `completed`, `awaiting-review`, or `skipped (lock)`
 
 ---
 

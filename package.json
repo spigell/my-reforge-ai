@@ -18,7 +18,8 @@
     "prepare": "husky",
     "build": "tsc --build",
     "test": "yarn build && node --test dist/**/*.test.js",
-    "postbuild": "node ./scripts/prepare-bins.mjs"
+    "postbuild": "node ./scripts/prepare-bins.mjs",
+    "format": "prettier --write ."
   },
   "bin": {
     "my-reforge-ai-picker": "./dist/task-picker/picker.js",

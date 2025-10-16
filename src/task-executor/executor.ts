@@ -1,4 +1,3 @@
-
 import * as fs from 'fs';
 import * as handlebars from 'handlebars';
 import { spawn } from 'child_process';
@@ -9,7 +8,9 @@ async function main() {
   const taskDataJson = process.argv[3]; // Expecting task data as JSON string
 
   if (!promptTemplatePath || !taskDataJson) {
-    console.error('Usage: ts-node src/task-executor/executor.ts <path/to/prompt-template.md> <task-data-json>');
+    console.error(
+      'Usage: ts-node src/task-executor/executor.ts <path/to/prompt-template.md> <task-data-json>',
+    );
     process.exit(1);
   }
 
@@ -33,7 +34,8 @@ async function main() {
     const renderedPrompt = template(context);
 
     // Execute codex cli
-    const codexProcess = spawn('codex', ['cli', '--non-interactive'], { // Assuming '--non-interactive' is the flag
+    const codexProcess = spawn('codex', ['cli', '--non-interactive'], {
+      // Assuming '--non-interactive' is the flag
       cwd: workspacePath, // Run codex in the prepared workspace
       stdio: ['pipe', process.stdout, process.stderr],
     });
@@ -47,7 +49,6 @@ async function main() {
         process.exit(code || 1);
       }
     });
-
   } catch (error: any) {
     console.error(`Error: ${error.message}`);
     process.exit(1);
