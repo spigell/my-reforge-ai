@@ -1,9 +1,12 @@
-
 # Repository Guidelines
 
 ## Project Structure & Module Organization
 
-Source code lives in `src/` as TypeScript modules; keep each service in its own folder following the existing flat layout used by `src/fetch-usage.ts`. This now includes `src/task-picker` for task selection logic and `src/task-executor` for executing tasks with the Codex CLI. Compiled artifacts belong in `dist/` after running the build. Deployment assets sit in `deploy/`, with `deploy/gh-runner` and `deploy/workbench` providing Kubernetes manifests and bootstrap scripts; update them when your change requires infrastructure adjustments. Shared automation files (GitHub workflows, Husky hooks) reside under `.github/` and `.husky/`.
+Source code lives in `src/` as TypeScript modules. Services are organized into logical folders within `src/`.
+- `src/libs/usage-manager`: Contains the logic for fetching and calculating token usage.
+- `src/task-picker`: Contains task selection logic.
+- `src/task-executor`: Contains logic for executing tasks with the Codex CLI, including workspace management and prompt rendering.
+Compiled artifacts belong in `dist/` after running the build. Deployment assets sit in `deploy/`, with `deploy/gh-runner` and `deploy/workbench` providing Kubernetes manifests and bootstrap scripts; update them when your change requires infrastructure adjustments. Shared automation files (GitHub workflows, Husky hooks) reside under `.github/` and `.husky/`.
 
 ## Build, Test, and Development Commands
 
@@ -11,7 +14,7 @@ Install dependencies with `yarn install`. Run `yarn build` to transpile TypeScri
 
 ## Coding Style & Naming Conventions
 
-Write modern TypeScript, targeting ES modules (`"type": "module"`). Use Prettier with the repository settings (`.prettierrc` enforces single quotes); format before committing. Keep indentation at two spaces, favor named exports, and suffix service entrypoints with the feature (e.g., `fetch-usage.ts`). Configuration files should remain JSON with a trailing newline.
+Write modern TypeScript, targeting ES modules (`"type": "module"`). Use Prettier with the repository settings (`.prettierrc` enforces single quotes); format before committing. Keep indentation at two spaces, favor named exports, and suffix service entrypoints with the feature (e.g., `task-picker/cli.ts`). Configuration files should remain JSON with a trailing newline.
 
 ## Testing Guidelines
 
@@ -74,6 +77,7 @@ chore(my-reforge-ai): run task
 
 ### 1) Task Picker
 
+*   **Token Availability**: Before selecting any task, it checks with the `UsageManager` to ensure there are sufficient tokens available for the day. If not, it exits, preventing tasks from being picked when the budget is exhausted.
 * Scans the **tasks repo** for `task.yaml` files.
 * Selects an executor based on the `agents` field in the task.
 * Applies **review lock** per repo:
@@ -87,15 +91,20 @@ chore(my-reforge-ai): run task
 
 ### 2) Usage Manager
 
-* Fetches **current usage** and **weekly limit** via TS script.
-* Splits weekly limit into 7 daily budgets.
-* **Aggressive catch-up**: If on Day 5 you still have ~90% of the weekly budget, spend more than the equal share (e.g., 40% extra).
-* Exposes **per-run token target** (hourly) to the worker.
+*   Fetches **current usage** and **weekly limit** via `src/libs/usage-manager/usage-manager.ts`.
+    *   Reads authentication tokens from `~/.codex/auth.json`.
+    *   Fetches usage data from the ChatGPT API.
+    *   Calculates the daily token budget based on a weekly allowance (100% split over 7 days) and consumed tokens.
+    *   Implements an "aggressive catch-up" mechanism to allow higher spending if the weekly budget is largely unused.
+*   Splits weekly limit into 7 daily budgets.
+*   **Aggressive catch-up**: If on Day 5 you still have ~90% of the weekly budget, spend more than the equal share (e.g., 40% extra).
+*   Exposes **per-run token target** (hourly) to the worker.
+*   The `hasTokens()` method is used by the `Task Picker` to determine if there are enough tokens remaining for the day to proceed with task selection.
 
 ### 3) AI Agent Worker
 
 * Executes tasks using the `src/task-executor` component, which runs the `codex` binary with a templated prompt.
-  * **Workspace**: Prepares the workspace by cloning the target repository and checking out the correct branch using a TypeScript git library.
+  * **Workspace**: Prepares the workspace by cloning the target repository and checking out the correct branch using a TypeScript git library (`src/task-executor/workspace-manager.ts`).
   * **Git**: pull target repo, modify `file` as needed, commit & push branches.
   * **PR**: open/update PR when `review_required: true`.
   * **MCP**: converse in PR like a human for reviews (post, read replies, iterate, fix commits).
@@ -158,13 +167,14 @@ chore(my-reforge-ai): run task
   * Target repos (push/PR).
   * Codex/LLM provider (env/secret).
   * MCP server access.
+  * Codex CLI auth material at `~/.codex/auth.json` (present on the shared runners).
 
 ---
 
 ## Budgeting Policy (Weekly → Daily → Hourly)
 
 * **Weekly limit** split evenly across **7 days**.
-* **Aggressive mode** kicks in when behind (e.g., Day 5 still has ~90% remaining → increase daily/hourly spend).
+* **Aggressive mode** kicks in when behind (e.g., Day 5 you still have ~90% of the weekly budget, spend more than the equal share (e.g., 40% extra)).
 * Worker receives **hourly token target** and must not exceed it.
 
 ---
@@ -219,6 +229,7 @@ This document provides instructions for AI agents interacting with this reposito
 - Adhere to the project's coding style and conventions.
 - Ensure that all code changes are accompanied by corresponding tests.
 - Keep pull requests focused on a single issue or feature.
+- **Documentation**: Any changes to TypeScript scripts in the `src/` directory should be reflected and documented in this `AGENTS.md` file.
 
 ## Specific Instructions
 

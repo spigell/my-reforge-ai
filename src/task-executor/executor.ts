@@ -1,3 +1,4 @@
+
 import * as fs from 'fs';
 import * as handlebars from 'handlebars';
 import { spawn } from 'child_process';
@@ -8,7 +9,7 @@ async function main() {
   const taskDataJson = process.argv[3]; // Expecting task data as JSON string
 
   if (!promptTemplatePath || !taskDataJson) {
-    console.error('Usage: ts-node src/task-executor/cli.ts <path/to/prompt-template.md> <task-data-json>');
+    console.error('Usage: ts-node src/task-executor/executor.ts <path/to/prompt-template.md> <task-data-json>');
     process.exit(1);
   }
 

@@ -20,10 +20,11 @@
     "core": [
       "read_many_files",
       "edit",
-      "run_shell_command(yarn)",
+      "run_shell_command(yarn add)",
       "run_shell_command(curl)",
       "run_shell_command(cat)",
       "run_shell_command(mkdir)",
+      "run_shell_command(chmod)",
       "run_shell_command(git status)",
       "run_shell_command(git diff)",
       "run_shell_command(git restore)",

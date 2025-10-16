@@ -1,9 +1,12 @@
 {
+  "name": "my-reforge-ai",
+  "version": "0.0.0",
   "type": "module",
   "license": "UNLICENSED",
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.0.0",
+    "@types/winston": "^2.4.4",
     "handlebars": "^4.7.8",
     "husky": "^9.1.5",
     "js-yaml": "^4.1.0",
@@ -12,17 +15,20 @@
     "typescript": "^5.7.2"
   },
   "scripts": {
-    "build": "tsc --build",
     "prepare": "husky",
-    "fetch-usage": "node src/fetch-usage/cli.ts",
-    "task-picker": "node src/task-picker/cli.ts",
-    "task-executor": "node src/task-executor/cli.ts",
-    "test": "yarn build && node --test dist/**/*.test.js"
+    "build": "tsc --build",
+    "test": "yarn build && node --test dist/**/*.test.js",
+    "postbuild": "node ./scripts/prepare-bins.mjs"
+  },
+  "bin": {
+    "my-reforge-ai-picker": "./dist/task-picker/picker.js",
+    "my-reforge-ai-executor": "./dist/task-executor/executor.js"
   },
   "dependencies": {
     "@types/dotenv-safe": "^8.1.6",
     "dotenv": "^16.4.5",
     "dotenv-safe": "^9.1.0",
-    "simple-git": "^3.28.0"
+    "simple-git": "^3.28.0",
+    "winston": "^3.18.3"
   }
 }

@@ -3,10 +3,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  task-picker:
+  pick-task:
     runs-on: ubuntu-24.04
     outputs:
       task_json: "${{ steps.select_task.outputs.task_json }}"
+      agent: "${{ steps.select_task.outputs.agent }}"
     steps:
       - name: Checkout my-reforge-ai repository
         uses: actions/checkout@v3
@@ -22,23 +23,39 @@ jobs:
       - name: Install deps
         run: yarn install --frozen-lockfile
 
+      - name: Build
+        run: yarn build
+
       - name: Select eligible task
         id: select_task
         run: |
-          TASK_JSON=$(yarn -s ts-node src/task-picker/cli.ts tasks/example-task.yaml)
+          yarn -s my-reforge-ai-picker --output-file task.json tasks/example-task.yaml
+          TASK_JSON=$(cat task.json | jq -c '.task')
+          AGENT=$(cat task.json | jq -r '.agent')
           echo "task_json=$TASK_JSON" >> $GITHUB_OUTPUT
+          echo "agent=$AGENT" >> $GITHUB_OUTPUT
 
-  push-test-data:
-    needs: task-picker
-    runs-on: ${{ fromJson(needs.task-picker.outputs.task_json).agent }}
+  execute-task:
+    needs: pick-task
+    runs-on: ${{ needs.pick-task.outputs.agent }}
     steps:
       - name: Checkout my-reforge-ai repository
         uses: actions/checkout@v3
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22'
+
+      - name: install yarn
+        run: npm install -g yarn
+
       - name: Install deps
         run: yarn install --frozen-lockfile
 
+      - name: Build
+        run: yarn build
+
       - name: Execute task
         run: |
-          yarn ts-node src/task-executor/cli.ts src/task-executor/planning-promt-tmpl.md '${{ needs.task-picker.outputs.task_json }}'
-          
+          yarn -s my-reforge-ai-executor src/task-executor/planning-promt-tmpl.md '${{ needs.pick-task.outputs.task_json }}'

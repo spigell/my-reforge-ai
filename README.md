@@ -21,6 +21,9 @@ The project reflects personal workflows, but feel free to open an issue or pull 
 The repository is organized as follows:
 
 -   `src/`: Contains the source code for the AI tools and services.
+    *   `src/libs/usage-manager`: Contains the logic for fetching and calculating token usage.
+    *   `src/task-picker`: Contains task selection logic.
+    *   `src/task-executor`: Contains logic for executing tasks with the Codex CLI, including workspace management and prompt rendering.
 -   `deploy/`: Contains the deployment configurations for Kubernetes.
     -   `mcp/`: MCP server deployment.
     -   `gh-runner/`: GitHub Actions runner deployment.
