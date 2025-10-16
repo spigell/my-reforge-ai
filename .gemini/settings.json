@@ -21,6 +21,8 @@
       "read_many_files",
       "edit",
       "run_shell_command(yarn add)",
+      "run_shell_command(yarn test)",
+      "run_shell_command(yarn build)",
       "run_shell_command(curl)",
       "run_shell_command(cat)",
       "run_shell_command(mkdir)",
