@@ -1,9 +1,11 @@
 import * as fs from 'fs';
 import * as yaml from 'js-yaml';
+import { parseArgs } from 'node:util';
+import { fileURLToPath } from 'node:url';
 import { UsageManager } from '../libs/usage-manager/usage-manager.js';
 import { Logger } from '../libs/logger/logger.js';
 
-async function main() {
+export async function main(argv: string[]) {
   const logger = Logger.getLogger();
   const usageManager = new UsageManager(logger);
 
@@ -16,49 +18,39 @@ async function main() {
   }
   logger.info('Tokens are available.');
 
-  const rawArgs = process.argv.slice(2);
-  let outputFilePath: string | undefined;
-  const positionalArgs: string[] = [];
-
-  for (let index = 0; index < rawArgs.length; index += 1) {
-    const arg = rawArgs[index];
-
-    if (arg === '--output-file') {
-      const nextValue = rawArgs[index + 1];
-
-      if (!nextValue) {
-        logger.error('Error: --output-file flag requires a file path.');
-        process.exit(1);
-      }
-
-      outputFilePath = nextValue;
-      index += 1;
-      continue;
-    }
-
-    if (arg.startsWith('--output-file=')) {
-      const value = arg.slice('--output-file='.length);
-
-      if (!value) {
-        logger.error(
-          'Error: --output-file flag requires a non-empty file path.',
-        );
-        process.exit(1);
-      }
-
-      outputFilePath = value;
-      continue;
-    }
-
-    positionalArgs.push(arg);
+  let parsedArgs;
+  try {
+    parsedArgs = parseArgs({
+      args: argv,
+      options: {
+        'output-file': {
+          type: 'string',
+        },
+      },
+      allowPositionals: true,
+    });
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : 'Unknown argument parsing error';
+    logger.error(`Error parsing arguments: ${message}`);
+    process.exit(1);
+    return;
   }
 
-  const taskFilePath = positionalArgs[0];
+  const { values, positionals } = parsedArgs;
+
+  const outputFilePath = values['output-file'];
+  const taskFilePath = positionals[0];
 
   if (!taskFilePath) {
     logger.error(
       'Usage: ts-node src/task-picker/picker.ts [--output-file <path>] <path/to/task.yaml>',
     );
+    process.exit(1);
+  }
+
+  if (outputFilePath === '') {
+    logger.error('Error: --output-file flag requires a non-empty file path.');
     process.exit(1);
   }
 
@@ -112,4 +104,6 @@ async function main() {
   }
 }
 
-main();
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main(process.argv.slice(2));
+}

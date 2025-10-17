@@ -11,7 +11,7 @@ Source code lives in `src/` as TypeScript modules. Services are organized into l
 
 ## Build, Test, and Development Commands
 
-Install dependencies with `yarn install`. Run `yarn build` to transpile TypeScript using the root `tsconfig.json`, which outputs to `dist/`. Use `yarn run fetch-usage` during development to exercise the current service logic against live APIs (requires environment variables defined via `dotenv-safe`). For ad-hoc scripts, prefer `npx ts-node path/to/script.ts` so TypeScript stays the source of truth.
+Install dependencies with `yarn install`. To transpile TypeScript, run `./node_modules/.bin/tsc --build`, which outputs to `dist/`. For ad-hoc scripts, prefer `npx ts-node path/to/script.ts` so TypeScript stays the source of truth.
 
 ## Coding Style & Naming Conventions
 
@@ -19,7 +19,14 @@ Write modern TypeScript, targeting ES modules (`"type": "module"`). Use Prettier
 
 ## Testing Guidelines
 
-Every functional change should introduce or update tests. Compile first, then run Node’s test runner against the emitted code, e.g., `yarn build && node --test dist/**/*.test.js`. Place test sources in `src/__tests__/` using `*.test.ts` naming so they mirror production modules. When behavior depends on external services, stub HTTP calls with lightweight fixtures and document them in the test file.
+Every functional change should introduce or update tests. Compile first, then run Node’s test runner against the emitted code, e.g., `node --test dist/**/*.test.js`. Place test sources in `src/__tests__/` using `*.test.ts` naming so they mirror production modules. When behavior depends on external services, stub HTTP calls with lightweight fixtures and document them in the test file.
+
+**Note on Testing with File System I/O:** When testing scripts that interact with the file system, prefer robust, integration-style tests over heavy mocking. The `node:test` runner's mocking capabilities can be brittle for low-level modules like `fs`. A better pattern, demonstrated in `src/__tests__/task-picker.test.ts`, involves:
+- Using the real `fs` module within temporary directories created for each test.
+- Manually stubbing dependencies like loggers to capture output for assertions.
+- Overriding `process.exit` to throw a custom error, allowing you to verify termination logic without halting the test runner.
+- Ensuring complete cleanup of files and stubs in an `afterEach` block.
+This approach leads to more reliable tests that better reflect the script's end-to-end behavior.
 
 ## Commit & Pull Request Guidelines
 
@@ -161,6 +168,7 @@ chore(my-reforge-ai): run task
 ## Runner Requirements
 
 - GitHub self-hosted runner **with Codex CLI installed**.
+- All non-GitHub hosted agents have Node.js runtime installed.
 - Authentication configured for:
   - Target repos (push/PR).
   - Codex/LLM provider (env/secret).

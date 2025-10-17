@@ -29,7 +29,7 @@ jobs:
       - name: Select eligible task
         id: select_task
         run: |
-          yarn -s my-reforge-ai-picker --output-file task.json tasks/example-task.yaml
+          ./dist/task-picker/picker.js --output-file task.json tasks/example-task.yaml
           TASK_JSON=$(cat task.json | jq -c '.task')
           AGENT=$(cat task.json | jq -r '.agent')
           echo "task_json=$TASK_JSON" >> $GITHUB_OUTPUT
@@ -42,20 +42,9 @@ jobs:
       - name: Checkout my-reforge-ai repository
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '22'
-
-      - name: install yarn
-        run: npm install -g yarn
-
-      - name: Install deps
-        run: yarn install --frozen-lockfile
-
       - name: Build
         run: yarn build
 
       - name: Execute task
         run: |
-          yarn -s my-reforge-ai-executor src/task-executor/planning-promt-tmpl.md '${{ needs.pick-task.outputs.task_json }}'
+          npx ts-node src/task-executor/executor.ts src/task-executor/planning-promt-tmpl.md '${{ needs.pick-task.outputs.task_json }}'
