@@ -4,6 +4,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { tmpdir } from 'node:os';
 import type winston from 'winston';
+import * as yaml from 'js-yaml';
 import { main as matcherMain } from '../task-agent-matcher/matcher.js';
 import { UsageManager } from '../libs/usage-manager/usage-manager.js';
 import { Logger } from '../libs/logger/logger.js';
@@ -81,6 +82,29 @@ describe('Task Agent Matcher', () => {
     return filePath;
   };
 
+  const createTaskFileFromTask = (
+    overrides: Record<string, unknown> = {},
+    fileName = 'task.yaml',
+  ) => {
+    const baseTask = {
+      repo: 'owner/repo',
+      branch: 'main',
+      kind: 'feature',
+      idea: 'Default task idea',
+      stage: 'planning' as const,
+      taskDir: 'tasks/default-task',
+    };
+
+    const task = { ...baseTask, ...overrides };
+
+    if (!Object.hasOwn(task, 'agents')) {
+      delete (task as Record<string, unknown>).agents;
+    }
+
+    const content = yaml.dump({ tasks: [task] }, { lineWidth: -1 });
+    return createTaskFile(content, fileName);
+  };
+
   const readOutputFile = (filePath: string) =>
     JSON.parse(fs.readFileSync(filePath, 'utf8')) as MatchedTask;
 
@@ -94,15 +118,12 @@ describe('Task Agent Matcher', () => {
   };
 
   test('should write full task to output file when --output-file is provided', async () => {
-    const taskFile = createTaskFile(
-      `
-tasks:
-  - repo: owner/repo
-    branch: feature-branch
-    agents: ['gemini-2.5-flash']
-    idea: 'Do something cool'
-`.trim(),
-    );
+    const taskFile = createTaskFileFromTask({
+      branch: 'feature-branch',
+      agents: ['gemini-2.5-flash'],
+      idea: 'Do something cool',
+      taskDir: 'tasks/feature-branch',
+    });
     const outputFile = path.join(tempDir, 'output.json');
 
     await matcherMain(['--output-file', outputFile, taskFile]);
@@ -111,13 +132,20 @@ tasks:
     assert.strictEqual(payload.task.repo, 'owner/repo');
     assert.strictEqual(payload.task.branch, 'feature-branch');
     assert.strictEqual(payload.selectedAgent, AgentId.GoogleGemini25Flash);
-    assert.deepStrictEqual(payload.task, {
-      repo: 'owner/repo',
-      branch: 'feature-branch',
-      agents: [AgentId.GoogleGemini25Flash],
-      idea: 'Do something cool',
-      sourceFile: taskFile,
-    });
+    assert.deepStrictEqual(
+      payload.task,
+      {
+        repo: 'owner/repo',
+        branch: 'feature-branch',
+        kind: 'feature',
+        idea: 'Do something cool',
+        stage: 'planning',
+        taskDir: 'tasks/feature-branch',
+        agents: [AgentId.GoogleGemini25Flash],
+        sourceFile: taskFile,
+      },
+      'expected task payload to include required fields',
+    );
 
     assert.ok(
       infoLogs.some((log) =>
@@ -129,12 +157,7 @@ tasks:
 
   test('should log error and exit if no tokens are available', async () => {
     UsageManager.prototype.hasTokens = async () => false;
-    const taskFile = createTaskFile(
-      `
-tasks:
-  - repo: owner/repo
-`.trim(),
-    );
+    const taskFile = createTaskFileFromTask();
 
     await expectProcessExit(matcherMain([taskFile]));
 
@@ -145,13 +168,9 @@ tasks:
   });
 
   test('should output to console when --output-file is not provided', async () => {
-    const taskFile = createTaskFile(
-      `
-tasks:
-  - repo: owner/repo
-    branch: feature-branch
-`.trim(),
-    );
+    const taskFile = createTaskFileFromTask({
+      branch: 'feature-branch',
+    });
 
     await matcherMain([taskFile]);
 
@@ -197,13 +216,7 @@ tasks:
   });
 
   test('should handle task with no agents and default to codex', async () => {
-    const taskFile = createTaskFile(
-      `
-tasks:
-  - repo: owner/repo
-    branch: main
-`.trim(),
-    );
+    const taskFile = createTaskFileFromTask();
 
     await matcherMain([taskFile]);
 
@@ -213,14 +226,9 @@ tasks:
   });
 
   test('should handle task with empty agents array and default to codex', async () => {
-    const taskFile = createTaskFile(
-      `
-tasks:
-  - repo: owner/repo
-    branch: main
-    agents: []
-`.trim(),
-    );
+    const taskFile = createTaskFileFromTask({
+      agents: [],
+    });
 
     await matcherMain([taskFile]);
 
@@ -230,14 +238,9 @@ tasks:
   });
 
   test('should handle task with multiple agents and pick the first one', async () => {
-    const taskFile = createTaskFile(
-      `
-tasks:
-  - repo: owner/repo
-    branch: main
-    agents: ['gemini-2.5-flash', 'codex']
-`.trim(),
-    );
+    const taskFile = createTaskFileFromTask({
+      agents: ['gemini-2.5-flash', 'codex'],
+    });
 
     await matcherMain([taskFile]);
 
@@ -249,29 +252,10 @@ tasks:
     ]);
   });
 
-  test('should handle task with no repo and default branch', async () => {
-    const taskFile = createTaskFile(
-      `
-tasks:
-  - idea: 'Just an idea'
-`.trim(),
-    );
-
-    await matcherMain([taskFile]);
-
-    const payload = parseConsolePayload();
-    assert.strictEqual(payload.task.repo, undefined);
-    assert.strictEqual(payload.task.branch, undefined);
-  });
-
   test('should handle task with specified branch', async () => {
-    const taskFile = createTaskFile(
-      `
-tasks:
-  - repo: owner/repo
-    branch: custom-branch
-`.trim(),
-    );
+    const taskFile = createTaskFileFromTask({
+      branch: 'custom-branch',
+    });
 
     await matcherMain([taskFile]);
 
@@ -309,12 +293,11 @@ tasks:
   });
 
   test('should embed source file path in task summary', async () => {
-    const taskFile = createTaskFile(
-      `
-tasks:
-  - repo: owner/repo
-    branch: feature-branch
-`.trim(),
+    const taskFile = createTaskFileFromTask(
+      {
+        branch: 'feature-branch',
+        taskDir: 'tasks/sample',
+      },
       'nested/tasks/sample.yaml',
     );
 
@@ -323,5 +306,22 @@ tasks:
     const payload = parseConsolePayload();
     const task = payload.task;
     assert.ok(task, 'expected task to be defined in payload');
+  });
+
+  test('should retain required fields from task definition', async () => {
+    const taskFile = createTaskFileFromTask({
+      kind: 'bugfix',
+      idea: 'Fix a bug',
+      stage: 'implementing',
+      taskDir: 'tasks/fix-bug',
+    });
+
+    await matcherMain([taskFile]);
+
+    const payload = parseConsolePayload();
+    assert.strictEqual(payload.task.kind, 'bugfix');
+    assert.strictEqual(payload.task.idea, 'Fix a bug');
+    assert.strictEqual(payload.task.stage, 'implementing');
+    assert.strictEqual(payload.task.taskDir, 'tasks/fix-bug');
   });
 });
