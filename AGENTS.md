@@ -5,7 +5,7 @@
 Source code lives in `src/` as TypeScript modules. Services are organized into logical folders within `src/`.
 
 - `src/libs/usage-manager`: Contains the logic for fetching and calculating token usage.
-- `src/task-picker`: Contains task selection logic.
+- `src/task-agent-matcher`: Contains task and agent matching logic.
 - `src/task-executor`: Contains logic for executing tasks with the Codex CLI, including workspace management and prompt rendering.
   Compiled artifacts belong in `dist/` after running the build. Deployment assets sit in `deploy/`, with `deploy/gh-runner` and `deploy/workbench` providing Kubernetes manifests and bootstrap scripts; update them when your change requires infrastructure adjustments. Shared automation files (GitHub workflows, Husky hooks) reside under `.github/` and `.husky/`.
 
@@ -15,13 +15,13 @@ Install dependencies with `yarn install`. To transpile TypeScript, run `./node_m
 
 ## Coding Style & Naming Conventions
 
-Write modern TypeScript, targeting ES modules (`"type": "module"`). Use Prettier with the repository settings (`.prettierrc` enforces single quotes); format before committing. To ensure consistent code style, run `yarn format` before committing your changes. Keep indentation at two spaces, favor named exports, and suffix service entrypoints with the feature (e.g., `task-picker/cli.ts`). Configuration files should remain JSON with a trailing newline.
+Write modern TypeScript, targeting ES modules (`"type": "module"`). Use Prettier with the repository settings (`.prettierrc` enforces single quotes); format before committing. To ensure consistent code style, run `yarn format` before committing your changes. Keep indentation at two spaces, favor named exports, and suffix service entrypoints with the feature (e.g., `task-agent-matcher/matcher.ts`). Configuration files should remain JSON with a trailing newline.
 
 ## Testing Guidelines
 
 Every functional change should introduce or update tests. Compile first, then run Node’s test runner against the emitted code, e.g., `node --test dist/**/*.test.js`. Place test sources in `src/__tests__/` using `*.test.ts` naming so they mirror production modules. When behavior depends on external services, stub HTTP calls with lightweight fixtures and document them in the test file.
 
-**Note on Testing with File System I/O:** When testing scripts that interact with the file system, prefer robust, integration-style tests over heavy mocking. The `node:test` runner's mocking capabilities can be brittle for low-level modules like `fs`. A better pattern, demonstrated in `src/__tests__/task-picker.test.ts`, involves:
+**Note on Testing with File System I/O:** When testing scripts that interact with the file system, prefer robust, integration-style tests over heavy mocking. The `node:test` runner's mocking capabilities can be brittle for low-level modules like `fs`. A better pattern, demonstrated in `src/__tests__/task-agent-matcher.test.ts`, involves:
 - Using the real `fs` module within temporary directories created for each test.
 - Manually stubbing dependencies like loggers to capture output for assertions.
 - Overriding `process.exit` to throw a custom error, allowing you to verify termination logic without halting the test runner.
@@ -50,7 +50,7 @@ A minimal system where a **worker** reads tasks from a dedicated repo, executes 
 tasks:
   - repo: owner/target-repo
     branch: 'branch-name' # New: The branch to work on in the target repository
-    # Availabe agents list. can be codex, gemini-2.5-flash. The task-picker chooses executor.
+    # Availabe agents list. can be codex, gemini-2.5-flash. The task-agent-matcher chooses executor.
     agents: ['codex', 'gemini-2.5-flash']
     kind: feature
     idea: 'Make an archtecture for the project'
@@ -83,7 +83,7 @@ chore(my-reforge-ai): run task
 
 ## Components
 
-### 1) Task Picker
+### 1) Task Agent Matcher
 
 -   **Token Availability**: Before selecting any task, it checks with the `UsageManager` to ensure there are sufficient tokens available for the day. If not, it exits, preventing tasks from being picked when the budget is exhausted.
 - Scans the **tasks repo** for `task.yaml` files.
@@ -92,7 +92,7 @@ chore(my-reforge-ai): run task
   - If a review is in progress for `repo`, skip other `review_required: true` tasks for that `repo`.
 
 - Yields tasks in FIFO (or filename) order.
-- **GitHub Workflow Integration**: When used in a GitHub workflow, the Task Picker job will:
+- **GitHub Workflow Integration**: When used in a GitHub workflow, the Task Agent Matcher job will:
   - Checkout the repository containing the task definitions.
   - Execute logic to select an eligible task based on the defined rules.
   - Output the `repo` field of the selected task, making it available for subsequent jobs in the workflow (e.g., for cloning the target repository).
@@ -107,7 +107,7 @@ chore(my-reforge-ai): run task
 -   Splits weekly limit into 7 daily budgets.
 -   **Aggressive catch-up**: If on Day 5 you still have ~90% of the weekly budget, spend more than the equal share (e.g., 40% extra).
 -   Exposes **per-run token target** (hourly) to the worker.
--   The `hasTokens()` method is used by the `Task Picker` to determine if there are enough tokens remaining for the day to proceed with task selection.
+-   The `hasTokens()` method is used by the `Task Agent Matcher` to determine if there are enough tokens remaining for the day to proceed with task selection.
 
 ### 3) AI Agent Worker
 
@@ -123,7 +123,7 @@ chore(my-reforge-ai): run task
 ## Workflow
 
 1. **Cron/Runner triggers** the worker on schedule.
-2. **Task Picker** selects the next eligible task:
+2. **Task Agent Matcher** selects the next eligible task:
    - Skips any repo currently under a **review lock** if the picked task requires review.
 
 3. **Usage Manager** computes today’s/hour’s token budget.
@@ -189,7 +189,7 @@ chore(my-reforge-ai): run task
 
 ```
 cron/runner
-   └─▶ Task Picker (tasks repo)
+   └─▶ Task Agent Matcher (tasks repo)
         ├─ checks review locks per repo
         └─ yields next task
              └─▶ Usage Manager (compute hourly budget)

@@ -3,20 +3,8 @@ import * as yaml from 'js-yaml';
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { UsageManager } from '../libs/usage-manager/usage-manager.js';
+import { Task } from '../types/task.js';
 import { Logger } from '../libs/logger/logger.js';
-
-export interface Task {
-  repo: string;
-  branch?: string;
-  agents?: string[];
-  kind?: string;
-  idea?: string;
-  'description-file'?: string;
-  stage?: 'planning' | 'implementing';
-  pr_link?: string;
-  review_required?: boolean;
-  sourceFile?: string;
-}
 
 export interface MatcherOutput {
   repo: string;

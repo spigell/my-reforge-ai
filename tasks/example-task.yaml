@@ -1,7 +1,7 @@
 tasks:
   - repo: spigell/my-reforge-ai
     branch: 'ai/arch-1'
-    # Availabe agents list. can be codex, gemini-2.5-flash. The task-picker chooses executor.
+    # Availabe agents list. can be codex, gemini-2.5-flash. The task-agent-matcher chooses executor.
     agents: ['codex', 'gemini-2.5-flash']
     kind: feature
     idea: 'Make an archtecture for the project'
