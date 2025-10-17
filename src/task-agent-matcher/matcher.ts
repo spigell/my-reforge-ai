@@ -18,7 +18,7 @@ export interface Task {
   sourceFile?: string;
 }
 
-export interface PickerOutput {
+export interface MatcherOutput {
   repo: string;
   branch: string;
   agent: string;
@@ -54,7 +54,7 @@ export async function main(argv: string[]) {
 
   if (!taskFilePath) {
     logger.error(
-      'Usage: ts-node src/task-picker/picker.ts [--output-file <path>] <path/to/task.yaml>',
+      'Usage: ts-node src/task-agent-matcher/matcher.ts [--output-file <path>] <path/to/task.yaml>',
     );
     process.exit(1);
   }
@@ -97,7 +97,7 @@ export async function main(argv: string[]) {
       }
       logger.info('Tokens are available.');
 
-      const outputPayload: PickerOutput = {
+      const outputPayload: MatcherOutput = {
         repo: task.repo,
         branch: task.branch || 'main',
         agent,

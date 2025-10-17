@@ -22,7 +22,7 @@
     "format": "prettier --write ."
   },
   "bin": {
-    "my-reforge-ai-picker": "./dist/task-picker/picker.js",
+    "my-reforge-ai-agent-matcher": "./dist/task-agent-matcher/matcher.js",
     "my-reforge-ai-executor": "./dist/task-executor/executor.js"
   },
   "dependencies": {

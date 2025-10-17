@@ -18,8 +18,8 @@ export class UsageManager {
       case 'google-gemini':
         return new GoogleGeminiUsage(logger);
       default:
-        logger.warn(`Unknown agent: ${agent}. Using default Codex usage manager.`);
-        return new CodexUsage(logger);
+        // Return an error
+        throw new Error('unknown agent')
     }
   }
 

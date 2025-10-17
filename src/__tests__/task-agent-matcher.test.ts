@@ -4,7 +4,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { tmpdir } from 'node:os';
 import type winston from 'winston';
-import { main as pickerMain, PickerOutput } from '../task-picker/picker.js';
+import { main as matcherMain, MatcherOutput } from '../task-agent-matcher/matcher.js';
 import { UsageManager } from '../libs/usage-manager/usage-manager.js';
 import { Logger } from '../libs/logger/logger.js';
 
@@ -18,7 +18,7 @@ class ProcessExit extends Error {
   }
 }
 
-describe('Task Picker', () => {
+describe('Task Agent Matcher', () => {
   let tempDir: string;
   let capturedConsole: string[];
   let infoLogs: string[];
@@ -31,7 +31,7 @@ describe('Task Picker', () => {
   let originalLoggerInstance: unknown;
 
   beforeEach(() => {
-    tempDir = fs.mkdtempSync(path.join(tmpdir(), 'task-picker-tests-'));
+    tempDir = fs.mkdtempSync(path.join(tmpdir(), 'task-agent-matcher-tests-'));
     capturedConsole = [];
     infoLogs = [];
     errorLogs = [];
@@ -81,10 +81,10 @@ describe('Task Picker', () => {
   };
 
   const readOutputFile = (filePath: string) =>
-    JSON.parse(fs.readFileSync(filePath, 'utf8')) as PickerOutput;
+    JSON.parse(fs.readFileSync(filePath, 'utf8')) as MatcherOutput;
 
   const parseConsolePayload = (index = 0) =>
-    JSON.parse(capturedConsole[index]) as PickerOutput;
+    JSON.parse(capturedConsole[index]) as MatcherOutput;
 
   const expectProcessExit = async (promise: Promise<unknown>, code = 1) => {
     await assert.rejects(promise, (error: unknown) => {
@@ -104,7 +104,7 @@ tasks:
     );
     const outputFile = path.join(tempDir, 'output.json');
 
-    await pickerMain(['--output-file', outputFile, taskFile]);
+    await matcherMain(['--output-file', outputFile, taskFile]);
 
     const payload = readOutputFile(outputFile);
     assert.strictEqual(payload.repo, 'owner/repo');
@@ -133,7 +133,7 @@ tasks:
 `.trim(),
     );
 
-    await expectProcessExit(pickerMain([taskFile]));
+    await expectProcessExit(matcherMain([taskFile]));
 
     assert.ok(
       errorLogs.some((log) => /No tokens available/.test(log)),
@@ -150,7 +150,7 @@ tasks:
 `.trim(),
     );
 
-    await pickerMain([taskFile]);
+    await matcherMain([taskFile]);
 
     assert.strictEqual(capturedConsole.length, 1);
     const payload = parseConsolePayload();
@@ -160,7 +160,7 @@ tasks:
   });
 
   test('should log error and exit if no task file is provided', async () => {
-    await expectProcessExit(pickerMain([]));
+    await expectProcessExit(matcherMain([]));
 
     assert.ok(
       errorLogs.some((log) => /Usage:/.test(log)),
@@ -169,7 +169,7 @@ tasks:
   });
 
   test('should log error and exit if --output-file is provided without a path', async () => {
-    await expectProcessExit(pickerMain(['--output-file']));
+    await expectProcessExit(matcherMain(['--output-file']));
 
     assert.ok(
       errorLogs.some((log) =>
@@ -185,7 +185,7 @@ tasks:
     const taskFile = path.join(tempDir, 'task.yaml');
     fs.writeFileSync(taskFile, '', 'utf8');
 
-    await expectProcessExit(pickerMain(['--output-file=', taskFile]));
+    await expectProcessExit(matcherMain(['--output-file=', taskFile]));
 
     assert.ok(
       errorLogs.some((log) =>
@@ -204,7 +204,7 @@ tasks:
 `.trim(),
     );
 
-    await pickerMain([taskFile]);
+    await matcherMain([taskFile]);
 
     const payload = parseConsolePayload();
     assert.strictEqual(payload.agent, 'codex');
@@ -221,7 +221,7 @@ tasks:
 `.trim(),
     );
 
-    await pickerMain([taskFile]);
+    await matcherMain([taskFile]);
 
     const payload = parseConsolePayload();
     assert.strictEqual(payload.agent, 'codex');
@@ -238,7 +238,7 @@ tasks:
 `.trim(),
     );
 
-    await pickerMain([taskFile]);
+    await matcherMain([taskFile]);
 
     const payload = parseConsolePayload();
     assert.strictEqual(payload.agent, 'gemini-2.5-flash');
@@ -253,7 +253,7 @@ tasks:
 `.trim(),
     );
 
-    await pickerMain([taskFile]);
+    await matcherMain([taskFile]);
 
     const payload = parseConsolePayload();
     assert.strictEqual(payload.repo, undefined);
@@ -269,7 +269,7 @@ tasks:
 `.trim(),
     );
 
-    await pickerMain([taskFile]);
+    await matcherMain([taskFile]);
 
     const payload = JSON.parse(capturedConsole[0]) as Record<string, unknown>;
     assert.strictEqual(payload.branch, 'custom-branch');
@@ -285,7 +285,7 @@ tasks:
 `.trim(),
     );
 
-    await expectProcessExit(pickerMain([taskFile]));
+    await expectProcessExit(matcherMain([taskFile]));
 
     assert.ok(
       errorLogs.some((log) =>
@@ -298,7 +298,7 @@ tasks:
   test('should handle non-existent task file', async () => {
     const missingFile = path.join(tempDir, 'missing.yaml');
 
-    await expectProcessExit(pickerMain([missingFile]));
+    await expectProcessExit(matcherMain([missingFile]));
 
     assert.ok(
       errorLogs.some((log) =>
@@ -318,7 +318,7 @@ tasks:
       'nested/tasks/sample.yaml',
     );
 
-    await pickerMain([taskFile]);
+    await matcherMain([taskFile]);
 
     const payload = parseConsolePayload();
     const task = payload.task;
