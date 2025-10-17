@@ -4,18 +4,9 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { tmpdir } from 'node:os';
 import type winston from 'winston';
-import { main as pickerMain } from '../task-picker/picker.js';
+import { main as pickerMain, PickerOutput } from '../task-picker/picker.js';
 import { UsageManager } from '../libs/usage-manager/usage-manager.js';
 import { Logger } from '../libs/logger/logger.js';
-
-type PickerSummary = {
-  repo?: string;
-  branch?: string;
-  agent: string;
-  agents: string[];
-  fallbackAgents: string[];
-  task?: Record<string, unknown>;
-};
 
 class ProcessExit extends Error {
   public readonly code: number;
@@ -90,10 +81,10 @@ describe('Task Picker', () => {
   };
 
   const readOutputFile = (filePath: string) =>
-    JSON.parse(fs.readFileSync(filePath, 'utf8')) as PickerSummary;
+    JSON.parse(fs.readFileSync(filePath, 'utf8')) as PickerOutput;
 
   const parseConsolePayload = (index = 0) =>
-    JSON.parse(capturedConsole[index]) as PickerSummary;
+    JSON.parse(capturedConsole[index]) as PickerOutput;
 
   const expectProcessExit = async (promise: Promise<unknown>, code = 1) => {
     await assert.rejects(promise, (error: unknown) => {
@@ -119,8 +110,6 @@ tasks:
     assert.strictEqual(payload.repo, 'owner/repo');
     assert.strictEqual(payload.branch, 'feature-branch');
     assert.strictEqual(payload.agent, 'gemini-2.5-flash');
-    assert.deepStrictEqual(payload.agents, ['gemini-2.5-flash']);
-    assert.deepStrictEqual(payload.fallbackAgents, []);
     assert.deepStrictEqual(payload.task, {
       repo: 'owner/repo',
       branch: 'feature-branch',
@@ -137,8 +126,12 @@ tasks:
 
   test('should log error and exit if no tokens are available', async () => {
     UsageManager.prototype.hasTokens = async () => false;
-    const taskFile = path.join(tempDir, 'task.yaml');
-    fs.writeFileSync(taskFile, '', 'utf8');
+    const taskFile = createTaskFile(
+      `
+tasks:
+  - repo: owner/repo
+`.trim(),
+    );
 
     await expectProcessExit(pickerMain([taskFile]));
 
@@ -215,8 +208,7 @@ tasks:
 
     const payload = parseConsolePayload();
     assert.strictEqual(payload.agent, 'codex');
-    assert.deepStrictEqual(payload.agents, ['codex']);
-    assert.deepStrictEqual(payload.fallbackAgents, []);
+    assert.deepStrictEqual(payload.task.agents, ['codex']);
   });
 
   test('should handle task with empty agents array and default to codex', async () => {
@@ -233,8 +225,7 @@ tasks:
 
     const payload = parseConsolePayload();
     assert.strictEqual(payload.agent, 'codex');
-    assert.deepStrictEqual(payload.agents, ['codex']);
-    assert.deepStrictEqual(payload.fallbackAgents, []);
+    assert.deepStrictEqual(payload.task.agents, ['codex']);
   });
 
   test('should handle task with multiple agents and pick the first one', async () => {
@@ -251,8 +242,7 @@ tasks:
 
     const payload = parseConsolePayload();
     assert.strictEqual(payload.agent, 'gemini-2.5-flash');
-    assert.deepStrictEqual(payload.agents, ['gemini-2.5-flash', 'codex']);
-    assert.deepStrictEqual(payload.fallbackAgents, ['codex']);
+    assert.deepStrictEqual(payload.task.agents, ['gemini-2.5-flash', 'codex']);
   });
 
   test('should handle task with no repo and default branch', async () => {
@@ -331,7 +321,8 @@ tasks:
     await pickerMain([taskFile]);
 
     const payload = parseConsolePayload();
-    const task = payload.task as Record<string, unknown>;
-    assert.strictEqual(task?.sourceFile, taskFile);
+    const task = payload.task;
+    assert.ok(task, 'expected task to be defined in payload');
+    assert.strictEqual(task.sourceFile, taskFile);
   });
 });

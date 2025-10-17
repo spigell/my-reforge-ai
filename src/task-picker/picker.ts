@@ -5,18 +5,28 @@ import { fileURLToPath } from 'node:url';
 import { UsageManager } from '../libs/usage-manager/usage-manager.js';
 import { Logger } from '../libs/logger/logger.js';
 
+export interface Task {
+  repo: string;
+  branch?: string;
+  agents?: string[];
+  kind?: string;
+  idea?: string;
+  'description-file'?: string;
+  stage?: 'planning' | 'implementing';
+  pr_link?: string;
+  review_required?: boolean;
+  sourceFile?: string;
+}
+
+export interface PickerOutput {
+  repo: string;
+  branch: string;
+  agent: string;
+  task: Task;
+}
+
 export async function main(argv: string[]) {
   const logger = Logger.getLogger();
-  const usageManager = new UsageManager(logger);
-
-  logger.info('Checking for available tokens...');
-  const hasTokens = await usageManager.hasTokens();
-
-  if (!hasTokens) {
-    logger.error('No tokens available for today. Exiting.');
-    process.exit(1);
-  }
-  logger.info('Tokens are available.');
 
   let parsedArgs;
   try {
@@ -60,7 +70,7 @@ export async function main(argv: string[]) {
     const data: any = yaml.load(fileContents);
 
     if (data && data.tasks && data.tasks.length > 0) {
-      const task = data.tasks[0] ?? {};
+      const task: Task = data.tasks[0] ?? {};
       task.sourceFile = taskFilePath;
 
       const rawAgents = Array.isArray(task.agents) ? task.agents : [];
@@ -77,12 +87,20 @@ export async function main(argv: string[]) {
       const agent = normalizedAgents[0];
       task.agents = normalizedAgents;
 
-      const outputPayload = {
+      const usageManager = new UsageManager(agent, logger);
+      logger.info('Checking for available tokens...');
+      const hasTokens = await usageManager.hasTokens();
+
+      if (!hasTokens) {
+        logger.error('No tokens available for today. Exiting.');
+        process.exit(1);
+      }
+      logger.info('Tokens are available.');
+
+      const outputPayload: PickerOutput = {
         repo: task.repo,
         branch: task.branch || 'main',
         agent,
-        agents: normalizedAgents,
-        fallbackAgents: normalizedAgents.slice(1),
         task,
       };
 

@@ -4,16 +4,16 @@ import os from 'os';
 import winston from 'winston';
 
 // Define types for the data structures we expect.
-interface AuthTokens {
+export interface AuthTokens {
   access_token: string;
   account_id: string;
 }
 
-interface AuthFile {
+export interface AuthFile {
   tokens: AuthTokens;
 }
 
-interface RateLimitWindow {
+export interface RateLimitWindow {
   used_percent: number;
   limit_window_seconds: number;
   reset_after_seconds: number;
@@ -60,20 +60,14 @@ export class CodexApi {
     }
   }
 
-  public async fetchUsageData(
-    token: string,
-    accountId: string,
-  ): Promise<UsageData> {
+  public async fetchUsageData(token: string, accountId: string): Promise<UsageData> {
     try {
-      const response = await fetch(
-        'https://chatgpt.com/backend-api/wham/usage',
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'chatgpt-account-id': accountId,
-          },
+      const response = await fetch('https://chatgpt.com/backend-api/wham/usage', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'chatgpt-account-id': accountId,
         },
-      );
+      });
 
       if (!response.ok) {
         throw new Error(
@@ -87,7 +81,6 @@ export class CodexApi {
       if (error instanceof Error) {
         this.logger.error(error.message);
       }
-      // Do not exit here. Throw an error
       process.exit(1);
     }
   }
