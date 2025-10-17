@@ -9,6 +9,22 @@ Source code lives in `src/` as TypeScript modules. Services are organized into l
 - `src/task-executor`: Contains logic for executing tasks with the Codex CLI, including workspace management and prompt rendering.
   Compiled artifacts belong in `dist/` after running the build. Deployment assets sit in `deploy/`, with `deploy/gh-runner` and `deploy/workbench` providing Kubernetes manifests and bootstrap scripts; update them when your change requires infrastructure adjustments. Shared automation files (GitHub workflows, Husky hooks) reside under `.github/` and `.husky/`.
 
+### Type Definitions (`src/types/task.ts`)
+
+The `src/types/task.ts` file defines the core data structures for tasks and agent management. These types ensure consistency, type safety, and flexibility in how tasks are defined and processed by AI agents.
+
+-   **`AgentId` Enum**: Standardized identifiers for different AI agents (e.g., `OpenAICodex`, `GoogleGemini25Pro`, `GoogleGemini25Flash`). This provides a canonical way to refer to agents throughout the system.
+-   **`ALLOWED_AGENTS`**: A `readonly` array listing all currently supported `AgentId` values, used for validation.
+-   **`DEFAULT_AGENT`**: Specifies the default `AgentId` to be used when an agent is not explicitly defined for a task.
+-   **`AGENT_ALIAS_ENTRIES` & `AGENT_ALIAS_LOOKUP`**: These provide a mechanism to map various string aliases (e.g., "codex", "gemini-2.5-pro") to their canonical `AgentId` enum values, allowing for flexible input in task definitions.
+-   **`parseAgentId(value: unknown): AgentId | undefined`**: A utility function to convert a string alias into its corresponding `AgentId`.
+-   **`normalizeAgentList(agents: unknown[]): AgentId[]`**: A function to process an array of potential agent identifiers, filtering out invalid or unsupported entries and returning a list of unique, canonical `AgentId`s.
+-   **`Task` Type**: Defines the structure of a task, including properties like `repo`, `branch`, `kind`, `idea`, and importantly, `agents?: AgentId[]`. The `agents` field now explicitly uses `AgentId[]`, ensuring type safety for agent assignments.
+-   **`MatchedTask` Type**: Represents a task after the `Task Agent Matcher` has selected a specific agent. It includes the `selectedAgent: AgentId` and the `task: Task` itself.
+-   **`MatcherOutput` Type**: Defines the output structure of the `Task Agent Matcher`, containing `repo`, `branch`, `selectedAgent`, and the `task` object.
+
+These types are critical for the `Task Agent Matcher` to correctly identify, validate, and assign tasks to the appropriate AI agents, ensuring a robust and error-free workflow.
+
 ## Build, Test, and Development Commands
 
 Install dependencies with `yarn install`. To transpile TypeScript, run `./node_modules/.bin/tsc --build`, which outputs to `dist/`. For ad-hoc scripts, prefer `npx ts-node path/to/script.ts` so TypeScript stays the source of truth.
@@ -34,7 +50,7 @@ Write commits as concise, imperative sentences (`Add fetch usage cache`). Group 
 
 ---
 
-# my-reforge-ai — MVP Design Spec
+# MVP Design Spec
 
 ## Overview
 
@@ -87,7 +103,7 @@ chore(my-reforge-ai): run task
 
 -   **Token Availability**: Before selecting any task, it checks with the `UsageManager` to ensure there are sufficient tokens available for the day. If not, it exits, preventing tasks from being picked when the budget is exhausted.
 - Scans the **tasks repo** for `task.yaml` files.
-- Selects an executor based on the `agents` field in the task.
+- Selects an executor based on the `agents` field in the task. Agent IDs are normalized against the static enum in `src/types/task.ts`, so aliases like `codex` resolve to the canonical `openai-codex`. Unknown agents are ignored in favour of the default.
 - Applies **review lock** per repo:
   - If a review is in progress for `repo`, skip other `review_required: true` tasks for that `repo`.
 

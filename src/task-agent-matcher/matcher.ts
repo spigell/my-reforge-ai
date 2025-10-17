@@ -3,15 +3,13 @@ import * as yaml from 'js-yaml';
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { UsageManager } from '../libs/usage-manager/usage-manager.js';
-import { Task } from '../types/task.js';
+import {
+  MatchedTask,
+  DEFAULT_AGENT,
+  Task,
+  normalizeAgentList,
+} from '../types/task.js';
 import { Logger } from '../libs/logger/logger.js';
-
-export interface MatcherOutput {
-  repo: string;
-  branch: string;
-  agent: string;
-  task: Task;
-}
 
 export async function main(argv: string[]) {
   const logger = Logger.getLogger();
@@ -62,14 +60,10 @@ export async function main(argv: string[]) {
       task.sourceFile = taskFilePath;
 
       const rawAgents = Array.isArray(task.agents) ? task.agents : [];
-      const normalizedAgents = rawAgents
-        .map((agent: unknown) =>
-          typeof agent === 'string' ? agent.trim() : '',
-        )
-        .filter((agent: string) => agent.length > 0);
+      const normalizedAgents = normalizeAgentList(rawAgents);
 
       if (normalizedAgents.length === 0) {
-        normalizedAgents.push('codex');
+        normalizedAgents.push(DEFAULT_AGENT);
       }
 
       const agent = normalizedAgents[0];
@@ -85,10 +79,8 @@ export async function main(argv: string[]) {
       }
       logger.info('Tokens are available.');
 
-      const outputPayload: MatcherOutput = {
-        repo: task.repo,
-        branch: task.branch || 'main',
-        agent,
+      const outputPayload: MatchedTask = {
+        selectedAgent: agent,
         task,
       };
 

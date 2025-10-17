@@ -4,9 +4,10 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { tmpdir } from 'node:os';
 import type winston from 'winston';
-import { main as matcherMain, MatcherOutput } from '../task-agent-matcher/matcher.js';
+import { main as matcherMain } from '../task-agent-matcher/matcher.js';
 import { UsageManager } from '../libs/usage-manager/usage-manager.js';
 import { Logger } from '../libs/logger/logger.js';
+import { AgentId, DEFAULT_AGENT, MatchedTask } from '../types/task.js';
 
 class ProcessExit extends Error {
   public readonly code: number;
@@ -81,10 +82,10 @@ describe('Task Agent Matcher', () => {
   };
 
   const readOutputFile = (filePath: string) =>
-    JSON.parse(fs.readFileSync(filePath, 'utf8')) as MatcherOutput;
+    JSON.parse(fs.readFileSync(filePath, 'utf8')) as MatchedTask;
 
   const parseConsolePayload = (index = 0) =>
-    JSON.parse(capturedConsole[index]) as MatcherOutput;
+    JSON.parse(capturedConsole[index]) as MatchedTask;
 
   const expectProcessExit = async (promise: Promise<unknown>, code = 1) => {
     await assert.rejects(promise, (error: unknown) => {
@@ -107,13 +108,13 @@ tasks:
     await matcherMain(['--output-file', outputFile, taskFile]);
 
     const payload = readOutputFile(outputFile);
-    assert.strictEqual(payload.repo, 'owner/repo');
-    assert.strictEqual(payload.branch, 'feature-branch');
-    assert.strictEqual(payload.agent, 'gemini-2.5-flash');
+    assert.strictEqual(payload.task.repo, 'owner/repo');
+    assert.strictEqual(payload.task.branch, 'feature-branch');
+    assert.strictEqual(payload.selectedAgent, AgentId.GoogleGemini25Flash);
     assert.deepStrictEqual(payload.task, {
       repo: 'owner/repo',
       branch: 'feature-branch',
-      agents: ['gemini-2.5-flash'],
+      agents: [AgentId.GoogleGemini25Flash],
       idea: 'Do something cool',
       sourceFile: taskFile,
     });
@@ -154,9 +155,7 @@ tasks:
 
     assert.strictEqual(capturedConsole.length, 1);
     const payload = parseConsolePayload();
-    assert.strictEqual(payload.repo, 'owner/repo');
-    assert.strictEqual(payload.branch, 'feature-branch');
-    assert.strictEqual(payload.agent, 'codex');
+    assert.strictEqual(payload.selectedAgent, DEFAULT_AGENT);
   });
 
   test('should log error and exit if no task file is provided', async () => {
@@ -207,8 +206,8 @@ tasks:
     await matcherMain([taskFile]);
 
     const payload = parseConsolePayload();
-    assert.strictEqual(payload.agent, 'codex');
-    assert.deepStrictEqual(payload.task.agents, ['codex']);
+    assert.strictEqual(payload.selectedAgent, DEFAULT_AGENT);
+    assert.deepStrictEqual(payload.task.agents, [DEFAULT_AGENT]);
   });
 
   test('should handle task with empty agents array and default to codex', async () => {
@@ -224,8 +223,8 @@ tasks:
     await matcherMain([taskFile]);
 
     const payload = parseConsolePayload();
-    assert.strictEqual(payload.agent, 'codex');
-    assert.deepStrictEqual(payload.task.agents, ['codex']);
+    assert.strictEqual(payload.selectedAgent, DEFAULT_AGENT);
+    assert.deepStrictEqual(payload.task.agents, [DEFAULT_AGENT]);
   });
 
   test('should handle task with multiple agents and pick the first one', async () => {
@@ -241,8 +240,11 @@ tasks:
     await matcherMain([taskFile]);
 
     const payload = parseConsolePayload();
-    assert.strictEqual(payload.agent, 'gemini-2.5-flash');
-    assert.deepStrictEqual(payload.task.agents, ['gemini-2.5-flash', 'codex']);
+    assert.strictEqual(payload.selectedAgent, AgentId.GoogleGemini25Flash);
+    assert.deepStrictEqual(payload.task.agents, [
+      AgentId.GoogleGemini25Flash,
+      AgentId.OpenAICodex,
+    ]);
   });
 
   test('should handle task with no repo and default branch', async () => {
@@ -256,8 +258,8 @@ tasks:
     await matcherMain([taskFile]);
 
     const payload = parseConsolePayload();
-    assert.strictEqual(payload.repo, undefined);
-    assert.strictEqual(payload.branch, 'main');
+    assert.strictEqual(payload.task.repo, undefined);
+    assert.strictEqual(payload.task.branch, undefined);
   });
 
   test('should handle task with specified branch', async () => {
@@ -271,8 +273,8 @@ tasks:
 
     await matcherMain([taskFile]);
 
-    const payload = JSON.parse(capturedConsole[0]) as Record<string, unknown>;
-    assert.strictEqual(payload.branch, 'custom-branch');
+    const payload = parseConsolePayload();
+    assert.strictEqual(payload.task.branch, 'custom-branch');
   });
 
   test('should handle invalid YAML file', async () => {
