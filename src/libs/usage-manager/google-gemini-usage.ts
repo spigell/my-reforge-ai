@@ -9,7 +9,9 @@ export class GoogleGeminiUsage implements AgentUsage {
   }
 
   public async hasTokens(): Promise<boolean> {
-    this.logger.warn('GoogleGeminiUsage.hasTokens() is not implemented yet. Defaulting to true.');
+    this.logger.warn(
+      'GoogleGeminiUsage.hasTokens() is not implemented yet. Defaulting to true.',
+    );
     // In a real implementation, this would check Gemini API usage.
     return true;
   }

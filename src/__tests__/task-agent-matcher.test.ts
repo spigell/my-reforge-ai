@@ -120,7 +120,9 @@ tasks:
     });
 
     assert.ok(
-      infoLogs.some((log) => log.includes(`Task data written to ${outputFile}`)),
+      infoLogs.some((log) =>
+        log.includes(`Task data written to ${outputFile}`),
+      ),
       'expected a log about writing the output file',
     );
   });
@@ -290,9 +292,7 @@ tasks:
     await expectProcessExit(matcherMain([taskFile]));
 
     assert.ok(
-      errorLogs.some((log) =>
-        /Error reading or parsing task file:/.test(log),
-      ),
+      errorLogs.some((log) => /Error reading or parsing task file:/.test(log)),
       'expected parse error log',
     );
   });
@@ -303,9 +303,7 @@ tasks:
     await expectProcessExit(matcherMain([missingFile]));
 
     assert.ok(
-      errorLogs.some((log) =>
-        /Error reading or parsing task file:/.test(log),
-      ),
+      errorLogs.some((log) => /Error reading or parsing task file:/.test(log)),
       'expected missing file error log',
     );
   });

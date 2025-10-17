@@ -13,15 +13,15 @@ Source code lives in `src/` as TypeScript modules. Services are organized into l
 
 The `src/types/task.ts` file defines the core data structures for tasks and agent management. These types ensure consistency, type safety, and flexibility in how tasks are defined and processed by AI agents.
 
--   **`AgentId` Enum**: Standardized identifiers for different AI agents (e.g., `OpenAICodex`, `GoogleGemini25Pro`, `GoogleGemini25Flash`). This provides a canonical way to refer to agents throughout the system.
--   **`ALLOWED_AGENTS`**: A `readonly` array listing all currently supported `AgentId` values, used for validation.
--   **`DEFAULT_AGENT`**: Specifies the default `AgentId` to be used when an agent is not explicitly defined for a task.
--   **`AGENT_ALIAS_ENTRIES` & `AGENT_ALIAS_LOOKUP`**: These provide a mechanism to map various string aliases (e.g., "codex", "gemini-2.5-pro") to their canonical `AgentId` enum values, allowing for flexible input in task definitions.
--   **`parseAgentId(value: unknown): AgentId | undefined`**: A utility function to convert a string alias into its corresponding `AgentId`.
--   **`normalizeAgentList(agents: unknown[]): AgentId[]`**: A function to process an array of potential agent identifiers, filtering out invalid or unsupported entries and returning a list of unique, canonical `AgentId`s.
--   **`Task` Type**: Defines the structure of a task, including properties like `repo`, `branch`, `kind`, `idea`, and importantly, `agents?: AgentId[]`. The `agents` field now explicitly uses `AgentId[]`, ensuring type safety for agent assignments.
--   **`MatchedTask` Type**: Represents a task after the `Task Agent Matcher` has selected a specific agent. It includes the `selectedAgent: AgentId` and the `task: Task` itself.
--   **`MatcherOutput` Type**: Defines the output structure of the `Task Agent Matcher`, containing `repo`, `branch`, `selectedAgent`, and the `task` object.
+- **`AgentId` Enum**: Standardized identifiers for different AI agents (e.g., `OpenAICodex`, `GoogleGemini25Pro`, `GoogleGemini25Flash`). This provides a canonical way to refer to agents throughout the system.
+- **`ALLOWED_AGENTS`**: A `readonly` array listing all currently supported `AgentId` values, used for validation.
+- **`DEFAULT_AGENT`**: Specifies the default `AgentId` to be used when an agent is not explicitly defined for a task.
+- **`AGENT_ALIAS_ENTRIES` & `AGENT_ALIAS_LOOKUP`**: These provide a mechanism to map various string aliases (e.g., "codex", "gemini-2.5-pro") to their canonical `AgentId` enum values, allowing for flexible input in task definitions.
+- **`parseAgentId(value: unknown): AgentId | undefined`**: A utility function to convert a string alias into its corresponding `AgentId`.
+- **`normalizeAgentList(agents: unknown[]): AgentId[]`**: A function to process an array of potential agent identifiers, filtering out invalid or unsupported entries and returning a list of unique, canonical `AgentId`s.
+- **`Task` Type**: Defines the structure of a task, including properties like `repo`, `branch`, `kind`, `idea`, and importantly, `agents?: AgentId[]`. The `agents` field now explicitly uses `AgentId[]`, ensuring type safety for agent assignments.
+- **`MatchedTask` Type**: Represents a task after the `Task Agent Matcher` has selected a specific agent. It includes the `selectedAgent: AgentId` and the `task: Task` itself.
+- **`MatcherOutput` Type**: Defines the output structure of the `Task Agent Matcher`, containing `repo`, `branch`, `selectedAgent`, and the `task` object.
 
 These types are critical for the `Task Agent Matcher` to correctly identify, validate, and assign tasks to the appropriate AI agents, ensuring a robust and error-free workflow.
 
@@ -38,11 +38,12 @@ Write modern TypeScript, targeting ES modules (`"type": "module"`). Use Prettier
 Every functional change should introduce or update tests. Compile first, then run Node’s test runner against the emitted code, e.g., `node --test dist/**/*.test.js`. Place test sources in `src/__tests__/` using `*.test.ts` naming so they mirror production modules. When behavior depends on external services, stub HTTP calls with lightweight fixtures and document them in the test file.
 
 **Note on Testing with File System I/O:** When testing scripts that interact with the file system, prefer robust, integration-style tests over heavy mocking. The `node:test` runner's mocking capabilities can be brittle for low-level modules like `fs`. A better pattern, demonstrated in `src/__tests__/task-agent-matcher.test.ts`, involves:
+
 - Using the real `fs` module within temporary directories created for each test.
 - Manually stubbing dependencies like loggers to capture output for assertions.
 - Overriding `process.exit` to throw a custom error, allowing you to verify termination logic without halting the test runner.
 - Ensuring complete cleanup of files and stubs in an `afterEach` block.
-This approach leads to more reliable tests that better reflect the script's end-to-end behavior.
+  This approach leads to more reliable tests that better reflect the script's end-to-end behavior.
 
 ## Commit & Pull Request Guidelines
 
@@ -101,7 +102,7 @@ chore(my-reforge-ai): run task
 
 ### 1) Task Agent Matcher
 
--   **Token Availability**: Before selecting any task, it checks with the `UsageManager` to ensure there are sufficient tokens available for the day. If not, it exits, preventing tasks from being picked when the budget is exhausted.
+- **Token Availability**: Before selecting any task, it checks with the `UsageManager` to ensure there are sufficient tokens available for the day. If not, it exits, preventing tasks from being picked when the budget is exhausted.
 - Scans the **tasks repo** for `task.yaml` files.
 - Selects an executor based on the `agents` field in the task. Agent IDs are normalized against the static enum in `src/types/task.ts`, so aliases like `codex` resolve to the canonical `openai-codex`. Unknown agents are ignored in favour of the default.
 - Applies **review lock** per repo:
@@ -115,15 +116,15 @@ chore(my-reforge-ai): run task
 
 ### 2) Usage Manager
 
--   Fetches **current usage** and **weekly limit** via `src/libs/usage-manager/usage-manager.ts`.
-    -   Reads authentication tokens from `~/.codex/auth.json`.
-    -   Fetches usage data from the ChatGPT API.
-    -   Calculates the daily token budget based on a weekly allowance (100% split over 7 days) and consumed tokens.
-    -   Implements an "aggressive catch-up" mechanism to allow higher spending if the weekly budget is largely unused.
--   Splits weekly limit into 7 daily budgets.
--   **Aggressive catch-up**: If on Day 5 you still have ~90% of the weekly budget, spend more than the equal share (e.g., 40% extra).
--   Exposes **per-run token target** (hourly) to the worker.
--   The `hasTokens()` method is used by the `Task Agent Matcher` to determine if there are enough tokens remaining for the day to proceed with task selection.
+- Fetches **current usage** and **weekly limit** via `src/libs/usage-manager/usage-manager.ts`.
+  - Reads authentication tokens from `~/.codex/auth.json`.
+  - Fetches usage data from the ChatGPT API.
+  - Calculates the daily token budget based on a weekly allowance (100% split over 7 days) and consumed tokens.
+  - Implements an "aggressive catch-up" mechanism to allow higher spending if the weekly budget is largely unused.
+- Splits weekly limit into 7 daily budgets.
+- **Aggressive catch-up**: If on Day 5 you still have ~90% of the weekly budget, spend more than the equal share (e.g., 40% extra).
+- Exposes **per-run token target** (hourly) to the worker.
+- The `hasTokens()` method is used by the `Task Agent Matcher` to determine if there are enough tokens remaining for the day to proceed with task selection.
 
 ### 3) AI Agent Worker
 

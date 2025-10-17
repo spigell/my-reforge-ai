@@ -64,7 +64,7 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
-              drop: ["ALL"]
+              drop: ['ALL']
           volumeMounts:
             - name: codex-home
               mountPath: /home/runner/.codex

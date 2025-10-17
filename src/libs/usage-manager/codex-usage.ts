@@ -1,6 +1,10 @@
 import winston from 'winston';
 import { AgentUsage } from './agent-usage.js';
-import { CodexApi, UsageData, RateLimitWindow } from '../codex-api/codex-api.js';
+import {
+  CodexApi,
+  UsageData,
+  RateLimitWindow,
+} from '../codex-api/codex-api.js';
 
 interface UsageDetails {
   plan_type: string;

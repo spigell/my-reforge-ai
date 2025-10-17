@@ -60,14 +60,20 @@ export class CodexApi {
     }
   }
 
-  public async fetchUsageData(token: string, accountId: string): Promise<UsageData> {
+  public async fetchUsageData(
+    token: string,
+    accountId: string,
+  ): Promise<UsageData> {
     try {
-      const response = await fetch('https://chatgpt.com/backend-api/wham/usage', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'chatgpt-account-id': accountId,
+      const response = await fetch(
+        'https://chatgpt.com/backend-api/wham/usage',
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'chatgpt-account-id': accountId,
+          },
         },
-      });
+      );
 
       if (!response.ok) {
         throw new Error(
