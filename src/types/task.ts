@@ -50,20 +50,21 @@ export const normalizeAgentList = (agents: unknown[]): AgentId[] => {
 };
 
 export type Task = {
-  repo?: string;
+  repo: string;
   additionalRepos?: Array<{
     repo: string; // "owner/name"
     branch?: string; // optional; if missing, use repo default branch
     directoryName?: string; // optional folder name under ./workspace
   }>;
-  branch?: string;
-  agents?: AgentId[];
-  kind?: string;
-  idea?: string;
-  'description-file'?: string;
-  stage?: 'planning' | 'implementing';
+  branch: string;
+  agents: AgentId[];
+  kind: string;
+  idea: string;
+  stage: 'planning' | 'implementing';
   pr_link?: string;
   review_required?: boolean;
+  timeoutMs?: number;
+  taskDir: string;
   sourceFile?: string;
 };
 

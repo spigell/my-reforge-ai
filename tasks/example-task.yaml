@@ -5,10 +5,16 @@ tasks:
     agents: ['codex', 'gemini-2.5-flash']
     kind: feature
     idea: 'Make an archtecture for the project'
-    # description is a full description for the task, e.g. prompts. It should be created in planning stage.
-    description-file: ''
     # stage can be 'planning' or 'implementing'
     stage: planning
     # if PR is already created then link should be here
     pr_link: ''
     review_required: true
+    # Optional: The maximum time in milliseconds the task is allowed to run.
+    # If not specified, a default timeout will be applied by the executor.
+    timeoutMs: 600000 # Example: 10 minutes
+    # Optional: The directory within the target repository where executor artifacts (e.g., generated code, logs) will be stored.
+    # This path is relative to the root of the target repository.
+    taskDir: 'tasks/feature-1' # Example: current directory
+    # Optional: The path to the task file itself, set programmatically by the task-agent-matcher.
+    # sourceFile: 'tasks/example-task.yaml'

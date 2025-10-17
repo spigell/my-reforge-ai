@@ -1,25 +1,34 @@
 import * as fs from 'fs';
 import * as handlebars from 'handlebars';
 import { spawn } from 'child_process';
-import { prepareWorkspace } from './workspace-manager.js';
+import { prepareWorkspaces } from './workspace-manager.js';
+import { MatchedTask } from '../types/task.js';
 
 async function main() {
   const promptTemplatePath = process.argv[2];
-  const taskDataJson = process.argv[3]; // Expecting task data as JSON string
+  const taskDataFilePath = process.argv[3]; // Expecting path to task data file
 
-  if (!promptTemplatePath || !taskDataJson) {
+  if (!promptTemplatePath || !taskDataFilePath) {
     console.error(
-      'Usage: ts-node src/task-executor/executor.ts <path/to/prompt-template.md> <task-data-json>',
+      'Usage: ts-node src/task-executor/executor.ts <path/to/prompt-template.md> <path/to/task-data.json>',
     );
     process.exit(1);
   }
 
   try {
-    const taskData = JSON.parse(taskDataJson);
-    const workspacePath = `./workspace/${taskData.repo}`;
-    const repoUrl = `https://github.com/${taskData.repo}.git`;
+    const taskDataContent = fs.readFileSync(taskDataFilePath, 'utf8');
+    const data: MatchedTask = JSON.parse(taskDataContent);
+    const taskData = data.task;
+    const workspaceRoot = `./workspace`;
 
-    await prepareWorkspace(repoUrl, taskData.branch, workspacePath);
+    const preparedPaths = await prepareWorkspaces(
+      taskData.repo,
+      taskData.branch,
+      taskData.additionalRepos,
+      workspaceRoot,
+    );
+
+    const mainWorkspacePath = preparedPaths[0]; // Assuming the first path is the main repo
 
     const templateContent = fs.readFileSync(promptTemplatePath, 'utf8');
     const template = handlebars.compile(templateContent);
@@ -36,7 +45,7 @@ async function main() {
     // Execute codex cli
     const codexProcess = spawn('codex', ['cli', '--non-interactive'], {
       // Assuming '--non-interactive' is the flag
-      cwd: workspacePath, // Run codex in the prepared workspace
+      cwd: mainWorkspacePath, // Run codex in the prepared workspace
       stdio: ['pipe', process.stdout, process.stderr],
     });
 

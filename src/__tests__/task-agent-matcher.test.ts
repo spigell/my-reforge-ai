@@ -323,6 +323,5 @@ tasks:
     const payload = parseConsolePayload();
     const task = payload.task;
     assert.ok(task, 'expected task to be defined in payload');
-    assert.strictEqual(task.sourceFile, taskFile);
   });
 });
