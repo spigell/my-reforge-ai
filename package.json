@@ -23,7 +23,7 @@
     "prepare": "husky",
     "build": "tsc --build",
     "test": "yarn build && node --test dist/**/*.test.js",
-    "postbuild": "node ./scripts/prepare-bins.mjs",
+    "postbuild": "node ./scripts/prepare-bins.js",
     "test-task": "yarn build && ./dist/task-agent-matcher/matcher.js --output-file /tmp/task.json ./tasks/example-task.yaml && ./dist/task-executor/executor.js ./src/task-executor/planning-promt-tmpl.md /tmp/task.json",
     "format": "prettier --write .",
     "lint": "eslint ."

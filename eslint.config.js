@@ -5,22 +5,25 @@ import eslintPluginJest from 'eslint-plugin-jest';
 import globals from 'globals';
 
 export default tseslint.config(
+  {
+    ignores: ['dist/**', 'node_modules/**', 'workspace/**'],
+  },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   {
     files: ['**/*.ts'],
-    ignores: ['dist/**', 'node_modules/**'],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
-        ecmaVersion: 'latest',
+        ecmaVersion: 2024,
         sourceType: 'module',
-        project: './tsconfig.json', // Add project for type-aware linting
+        project: './tsconfig.json',
       },
       globals: {
         ...globals.node,
         ...globals.es2021,
         ...globals.jest,
+        ...globals.browser,
       },
     },
     plugins: {
@@ -28,13 +31,30 @@ export default tseslint.config(
       jest: eslintPluginJest,
     },
     rules: {
-      // Rules from eslint-plugin-import/typescript
       ...eslintPluginImport.configs.typescript.rules,
       'no-console': 'warn',
       '@typescript-eslint/no-unused-vars': [
         'warn',
         { argsIgnorePattern: '^_' },
       ],
+      '@typescript-eslint/no-this-alias': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      'prefer-const': 'warn',
+    },
+  },
+  {
+    files: ['**/*.js'], // Apply to all .js files
+    languageOptions: {
+      ecmaVersion: 2024,
+      sourceType: 'module',
+      globals: {
+        ...globals.node,
+        ...globals.es2021,
+      },
+    },
+    rules: {
+      'no-console': 'warn',
+      'prefer-const': 'warn',
     },
   },
 );

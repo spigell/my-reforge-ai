@@ -27,11 +27,15 @@ These types are critical for the `Task Agent Matcher` to correctly identify, val
 
 ## Build, Test, and Development Commands
 
-Install dependencies with `yarn install`. To transpile TypeScript, run `./node_modules/.bin/tsc --build`, which outputs to `dist/`. For ad-hoc scripts, prefer `npx ts-node path/to/script.ts` so TypeScript stays the source of truth.
+Install dependencies with `yarn install`. To transpile TypeScript, run `./node_modules/.bin/tsc --build`, which outputs to `dist/`.
 
 ## Coding Style & Naming Conventions
 
 Write modern TypeScript, targeting ES modules (`"type": "module"`). Use Prettier with the repository settings (`.prettierrc` enforces single quotes); format before committing. To ensure consistent code style, run `yarn format` before committing your changes. Keep indentation at two spaces, favor named exports, and suffix service entrypoints with the feature (e.g., `task-agent-matcher/matcher.ts`). Configuration files should remain JSON with a trailing newline.
+
+### Linting
+
+To check for code quality and style issues, run the linter using ESLint: `./node_modules/.bin/eslint . .`. All reported issues should be addressed before committing.
 
 ## Testing Guidelines
 
@@ -247,20 +251,3 @@ cron/runner
   - Result: `completed`, `awaiting-review`, or `skipped (lock)`
 
 ---
-
-# AI Agent Instructions
-
-This document provides instructions for AI agents interacting with this repository.
-
-## General Guidelines
-
-- Adhere to the project's coding style and conventions.
-- Ensure that all code changes are accompanied by corresponding tests.
-- Keep pull requests focused on a single issue or feature.
-- **Documentation**: Any changes to TypeScript scripts in the `src/` directory should be reflected and documented in this `AGENTS.md` file.
-
-## Specific Instructions
-
-- When creating new services, follow the existing service structure in the `src` directory.
-- Before making any changes, familiarize yourself with the deployment process outlined in the `deploy` directory.
-- Run `yarn lint` to check for linting errors before committing changes.

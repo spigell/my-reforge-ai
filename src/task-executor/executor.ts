@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import * as handlebars from 'handlebars';
+import handlebars from 'handlebars'; // Changed import statement
 import * as yaml from 'js-yaml';
 import { prepareWorkspaces } from './workspace-manager.js';
 import { MatchedTask } from '../types/task.js';
