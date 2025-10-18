@@ -139,22 +139,28 @@ chore(my-reforge-ai): run task
 
 ## Workflow
 
-1. **Cron/Runner triggers** the worker on schedule.
-2. **Task Agent Matcher** selects the next eligible task:
-   - Skips any repo currently under a **review lock** if the picked task requires review.
-
-3. **Usage Manager** computes today’s/hour’s token budget.
-4. **AI Agent Worker**:
-   - Prepares workspace (clones repo, checks out branch).
-   - Applies changes to `file`.
-   - Commits and pushes.
-   - If `review_required: true`:
-     - Opens/updates a PR.
-     - Communicates via **MCP** in the PR thread.
-     - Iterates on requested changes; amends/commits as needed.
-     - On approval/merge: release lock for that `repo`.
-
-5. **Completion**: logs execution summary and tokens used.
+1.  **Cron/Runner triggers** the worker on schedule.
+2.  **Task Agent Matcher** selects the next eligible task:
+    - Skips any repo currently under a **review lock** if the picked task requires review.
+3.  **Run Agent (with hard timeout)**
+    - **Responsibility**: Executor prepares the prompt and invokes the concrete agent implementation; the agent returns only a status/result payload.
+    - **Agent interface**: `run(options, signal) → Promise<{ status: "success" | "timeout" | "error", logs: string, diagnostics?: Record<string, unknown> }>`
+    - **Options (minimum)**: `{ targetWorkspace, additionalWorkspaces, model?, timeoutMs, prompt, runMetadata }`. Agents must honor the provided `AbortSignal`.
+    - **OpenAI Codex agent**: Spawns `codex cli --non-interactive` inside the primary workspace. Prompt is piped via `stdin`; all `stdout`/`stderr` are collected into the returned logs. On abort, kill the process and return `status: "timeout"`.
+    - **Gemini Pro / Flash**: Spawns the Gemini CLI (`gemini --model <name>`) with identical piping/timeout semantics.
+    - **Hard timeout**: Executor wraps each run with `AbortController` using `task.timeoutMs` (default 5 minutes). On expiry it aborts the subprocess and surfaces a timeout result.
+    - **Error handling**: Non-timeout failures resolve with `status: "error"` and captured diagnostics. Agents never touch git.
+4.  **Usage Manager** computes today’s/hour’s token budget.
+5.  **AI Agent Worker**:
+    - Prepares workspace (clones repo, checks out branch).
+    - Applies changes to `file`.
+    - Commits and pushes.
+    - If `review_required: true`:
+      - Opens/updates a PR.
+      - Communicates via **MCP** in the PR thread.
+      - Iterates on requested changes; amends/commits as needed.
+      - On approval/merge: release lock for that `repo`.
+6.  **Completion**: logs execution summary and tokens used.
 
 ---
 
@@ -257,3 +263,4 @@ This document provides instructions for AI agents interacting with this reposito
 
 - When creating new services, follow the existing service structure in the `src` directory.
 - Before making any changes, familiarize yourself with the deployment process outlined in the `deploy` directory.
+- Run `yarn lint` to check for linting errors before committing changes.

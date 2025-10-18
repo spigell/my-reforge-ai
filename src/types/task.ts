@@ -50,6 +50,7 @@ export const normalizeAgentList = (agents: unknown[]): AgentId[] => {
 };
 
 export type Task = {
+  id?: string;
   repo: string;
   additionalRepos?: Array<{
     repo: string; // "owner/name"

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { chmod, readFile, writeFile } from 'node:fs/promises';
+import { chmod, readFile, writeFile, cp, mkdir } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -44,6 +44,17 @@ async function main() {
       await chmod(executablePath, 0o755);
     }),
   );
+
+  const templateSource = resolve(
+    rootDir,
+    'src/task-executor/planning-promt-tmpl.md',
+  );
+  const templateDestination = resolve(
+    rootDir,
+    'dist/task-executor/planning-promt-tmpl.md',
+  );
+  await mkdir(dirname(templateDestination), { recursive: true });
+  await cp(templateSource, templateDestination);
 }
 
 main().catch((error) => {
