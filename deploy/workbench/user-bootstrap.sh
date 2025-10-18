@@ -21,7 +21,9 @@ cat >> "${USER_HOME}/.bashrc" <<'EOF'
 
 # -- Appended by user-bootstrap.sh --
 # Completions (ignore errors if not present)
-[ -f /usr/share/bash-completion/completions/make ] && source /usr/share/bash-completion/completions/make
+
+# Source /etc/profile.d scripts
+[ -d /etc/profile.d ] && for i in /etc/profile.d/*.sh; do [ -r "$i" ] && . "$i"; done
 
 export PATH=/usr/local/share/fnm/aliases/default/bin:/usr/local/share/pyenv/shims:/usr/local/share/pyenv/bin:/usr/local/share/dotnet:~/go/bin:/usr/local/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 EOF
