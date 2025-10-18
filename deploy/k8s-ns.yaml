@@ -28,3 +28,41 @@ spec:
     requests:
       storage: 1Gi
   storageClassName: local-path
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: dragonfish-shared
+  namespace: my-reforge-ai
+spec:
+  storageClassName: ''
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /var/local-path-provisioner/pvc-bd327295-3488-4d8b-af44-ef20a0194833_sync-hub_dragonfish-shared/my-reforge-ai-1
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - master-1
+  claimRef:
+    name: dragonfish-shared
+    namespace: my-reforge-ai
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dragonfish-shared
+  namespace: my-reforge-ai
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  volumeName: dragonfish-shared

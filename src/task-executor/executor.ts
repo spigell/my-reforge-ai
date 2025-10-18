@@ -10,7 +10,7 @@ async function main() {
 
   if (!promptTemplatePath || !taskDataFilePath) {
     console.error(
-      'Usage: ts-node src/task-executor/executor.ts <path/to/prompt-template.md> <path/to/task-data.json>',
+      'Usage: node dist/task-executor/executor.js <path/to/prompt-template.md> <path/to/task-data.json>',
     );
     process.exit(1);
   }

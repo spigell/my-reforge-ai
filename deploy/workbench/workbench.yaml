@@ -8,13 +8,18 @@ metadata:
   namespace: my-reforge-ai
 spec:
   automountServiceAccountToken: false
+  hostUsers: false
   containers:
     - command:
         - /bin/bash
         - -c
         - /project/deploy/workbench/user-bootstrap.sh codex
+        # - sleep 3600
       image: ghcr.io/spigell/codex-workbench:v0.46.0-5fc8ea
       name: codex-workbench
+      env:
+        - name: HOME
+          value: /home/ubuntu
       resources:
         limits:
           cpu: '2'
@@ -23,21 +28,15 @@ spec:
           cpu: '0.2'
           memory: 1Gi
       securityContext:
+        runAsUser: 1000
         allowPrivilegeEscalation: false
         capabilities:
-          add:
-            - CHOWN
-            - FOWNER
-            - SETGID
-            - SETFCAP
-            - SETUID
-            - DAC_OVERRIDE
           drop:
             - ALL
         seccompProfile:
           type: RuntimeDefault
       volumeMounts:
-        - mountPath: /home/spigell/.codex
+        - mountPath: /home/ubuntu/.codex
           name: codex
         - mountPath: /project
           name: project
@@ -48,6 +47,7 @@ spec:
         - /bin/bash
         - -c
         - /project/deploy/workbench/user-bootstrap.sh gemini
+        # - sleep 3600
       image: ghcr.io/spigell/google-gemini-workbench:0.9.0-d854d3
       name: gemini-workbench
       resources:
@@ -58,21 +58,15 @@ spec:
           cpu: '0.2'
           memory: 1Gi
       securityContext:
+        runAsUser: 1000
         allowPrivilegeEscalation: false
         capabilities:
-          add:
-            - CHOWN
-            - FOWNER
-            - SETGID
-            - SETFCAP
-            - SETUID
-            - DAC_OVERRIDE
           drop:
             - ALL
         seccompProfile:
           type: RuntimeDefault
       volumeMounts:
-        - mountPath: /home/spigell/.gemini
+        - mountPath: /home/ubuntu/.gemini
           name: gemini
         - mountPath: /project
           name: project
@@ -80,13 +74,10 @@ spec:
           name: tmp
       workingDir: /project
   enableServiceLinks: false
-  hostUsers: true
   terminationGracePeriodSeconds: 4
   volumes:
     - name: project
-      nfs:
-        path: /home/spigell/projects/my-ai-improvements
-        server: 192.168.1.48
+      persistentVolumeClaim: { claimName: dragonfish-shared }
     - name: codex
       persistentVolumeClaim:
         claimName: codex-home

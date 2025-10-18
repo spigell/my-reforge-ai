@@ -32,3 +32,4 @@ dist
 .npmrc
 
 workspace/*
+.stfolder
