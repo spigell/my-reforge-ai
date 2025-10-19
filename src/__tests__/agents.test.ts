@@ -182,6 +182,7 @@ describe('CodexAgent', () => {
       abortController.signal,
     );
 
+    await new Promise((resolve) => setImmediate(resolve));
     abortController.abort();
     const result = await resultPromise;
     await thread.waitForReturn();

@@ -1,0 +1,12 @@
+{
+  "selectedAgent": "gemini-2.5-flash",
+  "task": {
+    "repo": "spigell/my-reforge-ai",
+    "branch": "feat/test-task",
+    "kind": "feature",
+    "idea": "Implement a new test task for direct JSON execution",
+    "stage": "planning",
+    "pr_link": "",
+    "review_required": false
+  }
+}

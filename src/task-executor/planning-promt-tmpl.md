@@ -55,7 +55,7 @@ Conventions:
 # FIRST-TURN BOOTSTRAP
 
 #####################################################################
-If {{task.review_required}} is true AND {{task.pr_link}} == "":
+If task.review_required is true AND {{task.pr_link}} == "":
 
 - Create and write the initial planning doc to `{{task.taskDir}}/plan.md` on **{{task.branch}}** (git CLI add/commit/push).
 - Update the task YAML to set `pr_link` to the newly opened PR URL (git CLI add/commit/push).
@@ -64,7 +64,7 @@ If {{task.review_required}} is true AND {{task.pr_link}} == "":
 - Optionally label the PR with `planning` and `my-reforge-ai`.
 - Your PR comment should greet the reviewer, summarize the plan, and ask for explicit approval.
 
-If {{task.review_required}} is false:
+If task.review_required is false:
 
 - You may create/update the planning doc without opening a PR (if a discussion PR already exists, use it). End your comment with “No review required”.
 
@@ -78,7 +78,7 @@ If {{task.review_required}} is false:
 - `git fetch` and checkout **{{task.branch}}**; make minimal, diff-friendly edits to `{{task.taskDir}}/plan.md`.
 - Commit and `git push` to {{task.branch}}.
 - Keep the PR open until explicit “APPROVED”.
-- **If {{task.review_required}} is true, re-request review from @spigell on every turn** (idempotent) and @mention **@spigell** at the top of the comment.
+- **If task.review_required is true, re-request review from @spigell on every turn** (idempotent) and @mention **@spigell** at the top of the comment.
 - Do NOT switch stage to “implementing” here. Only propose it as a “Next step”.
 
 #####################################################################

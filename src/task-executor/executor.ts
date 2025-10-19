@@ -2,11 +2,32 @@ import * as fs from 'fs';
 import * as path from 'path';
 import handlebars from 'handlebars'; // Changed import statement
 import * as yaml from 'js-yaml';
+import { fileURLToPath } from 'node:url';
 import { prepareWorkspaces } from './workspace-manager.js';
 import { MatchedTask } from '../types/task.js';
 import { getAgent } from './agents/index.js';
 
-async function main() {
+type ExecutorDependencies = {
+  prepareWorkspaces: typeof prepareWorkspaces;
+  getAgent: typeof getAgent;
+};
+
+const defaultDependencies: ExecutorDependencies = {
+  prepareWorkspaces,
+  getAgent,
+};
+
+const dependencies: ExecutorDependencies = { ...defaultDependencies };
+
+export const __setExecutorDependencies = (overrides: Partial<ExecutorDependencies>) => {
+  Object.assign(dependencies, overrides);
+};
+
+export const __resetExecutorDependencies = () => {
+  Object.assign(dependencies, defaultDependencies);
+};
+
+export async function main() {
   const [, , arg1, arg2] = process.argv;
   let promptTemplatePath = arg2 ? arg1 : undefined;
   const taskDataFilePath = arg2 ?? arg1;
@@ -33,7 +54,7 @@ async function main() {
       throw new Error('Task repo and branch must be defined.');
     }
 
-    const preparedPaths = await prepareWorkspaces(
+    const preparedPaths = await dependencies.prepareWorkspaces(
       taskData.repo,
       taskData.branch,
       taskData.additionalRepos,
@@ -70,10 +91,6 @@ async function main() {
       task: taskData,
       file_stem: file_stem,
       serialized_task_yaml: yaml.dump(taskData),
-      review_context: '{{review_context}}',
-      repo_tree_context: '{{repo_tree_context}}',
-      current_pr_url: '{{current_pr_url}}',
-      tasks_repo_url: '{{tasks_repo_url}}',
     };
 
     const renderedPrompt = template(context);
@@ -87,7 +104,7 @@ async function main() {
       );
     }
 
-    const agent = getAgent(data.selectedAgent);
+    const agent = dependencies.getAgent(data.selectedAgent);
     const abortController = new AbortController();
     const timeout = taskData.timeoutMs || 300000; // Default 5 mins
 
@@ -128,4 +145,12 @@ async function main() {
   }
 }
 
-main();
+const isDirectExecution = () => {
+  if (!process.argv[1]) return false;
+  const executorPath = fileURLToPath(import.meta.url);
+  return path.resolve(process.argv[1]) === path.resolve(executorPath);
+};
+
+if (isDirectExecution()) {
+  void main();
+}
