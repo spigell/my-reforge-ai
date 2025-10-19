@@ -1,7 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import handlebars from 'handlebars'; // Changed import statement
-import * as yaml from 'js-yaml';
 import { fileURLToPath } from 'node:url';
 import { prepareWorkspaces } from './workspace-manager.js';
 import { MatchedTask } from '../types/task.js';
@@ -28,16 +27,11 @@ export const __resetExecutorDependencies = () => {
 };
 
 export async function main() {
-  const [, , arg1, arg2] = process.argv;
-  let promptTemplatePath = arg2 ? arg1 : undefined;
-  const taskDataFilePath = arg2 ?? arg1;
+  const taskDataFilePath = process.argv[2];
 
   if (!taskDataFilePath) {
     console.error(
-      'Usage: node dist/task-executor/executor.js <path/to/prompt-template.md> <path/to/task-data.json>',
-    );
-    console.error(
-      '       node dist/task-executor/executor.js <path/to/task-data.json> (planning stage only)',
+      'Usage: node dist/task-executor/executor.js <path/to/task-data.json>',
     );
     process.exit(1);
   }
@@ -63,17 +57,13 @@ export async function main() {
 
     const mainWorkspacePath = preparedPaths[0]; // Assuming the first path is the main repo
 
-    if (!promptTemplatePath) {
-      if (taskData.stage === 'planning') {
-        promptTemplatePath = path.resolve(
-          path.dirname(process.argv[1]),
-          'planning-promt-tmpl.md',
-        );
-      } else {
-        throw new Error(
-          'Prompt template path is required for non-planning stages.',
-        );
-      }
+    let promptTemplatePath = 'unknown';
+
+    if (taskData.stage === 'planning') {
+      promptTemplatePath = path.resolve(
+        path.dirname(process.argv[1]),
+        'planning-promt-tmpl.md',
+      );
     }
 
     const resolvedTemplatePath = path.resolve(promptTemplatePath);
@@ -83,17 +73,12 @@ export async function main() {
     const templateContent = fs.readFileSync(resolvedTemplatePath, 'utf8');
     const template = handlebars.compile(templateContent, { noEscape: true });
 
-    const file_stem = taskData.sourceFile
-      ? path.basename(taskData.sourceFile, path.extname(taskData.sourceFile))
-      : 'unknown';
-
     const context = {
       task: taskData,
-      file_stem: file_stem,
-      serialized_task_yaml: yaml.dump(taskData),
     };
 
     const renderedPrompt = template(context);
+    console.log(renderedPrompt);
 
     const unresolvedVars = renderedPrompt.match(/{{(.*?)}}/g);
     if (unresolvedVars) {
@@ -102,6 +87,18 @@ export async function main() {
           ', ',
         )}`,
       );
+    }
+
+    let agentPrompt = renderedPrompt;
+    if (taskData.stage === 'planning') {
+      const promptFileName = 'planning-prompt.md';
+      const promptFilePath = path.join(mainWorkspacePath, promptFileName);
+
+      fs.writeFileSync(promptFilePath, renderedPrompt, 'utf8');
+      console.log(`Planning prompt written to: ${promptFilePath}`);
+
+      agentPrompt =
+        'Read the prompt file ./planning-prompt.md in this workspace and execute.';
     }
 
     const agent = dependencies.getAgent(data.selectedAgent);
@@ -121,7 +118,7 @@ export async function main() {
       {
         targetWorkspace: mainWorkspacePath,
         additionalWorkspaces: preparedPaths.slice(1),
-        prompt: renderedPrompt,
+        prompt: agentPrompt,
         timeoutMs: timeout,
         model: data.selectedAgent,
       },
@@ -138,6 +135,7 @@ export async function main() {
 
     if (agentResult.status !== 'success') {
       console.error('Agent run was not successful.');
+      process.exit(1);
     }
   } catch (error: any) {
     console.error(`Error: ${error.message}`);

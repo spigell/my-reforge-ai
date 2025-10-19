@@ -1,7 +1,7 @@
 export enum AgentId {
   OpenAICodex = 'openai-codex',
-  GoogleGemini25Pro = 'google-gemini-2.5-pro',
-  GoogleGemini25Flash = 'google-gemini-2.5-flash',
+  GoogleGemini25Pro = 'gemini-2.5-pro',
+  GoogleGemini25Flash = 'gemini-2.5-flash',
 }
 
 export const ALLOWED_AGENTS: readonly AgentId[] = Object.freeze([
@@ -12,20 +12,17 @@ export const ALLOWED_AGENTS: readonly AgentId[] = Object.freeze([
 
 export const DEFAULT_AGENT: AgentId = AgentId.OpenAICodex;
 
-const AGENT_ALIAS_ENTRIES: ReadonlyArray<[string, AgentId]> = Object.freeze([
-  ['codex', AgentId.OpenAICodex],
-  ['openai-codex', AgentId.OpenAICodex],
-  ['google-gemini-2.5-pro', AgentId.GoogleGemini25Pro],
-  ['gemini-2.5-pro', AgentId.GoogleGemini25Pro],
-  ['google-gemini-2.5-flash', AgentId.GoogleGemini25Flash],
-  ['gemini-2.5-flash', AgentId.GoogleGemini25Flash],
-]);
+const AGENT_ALIAS_ENTRIES = Object.freeze({
+  codex: AgentId.OpenAICodex,
+  'openai-codex': AgentId.OpenAICodex,
+  'google-gemini-2.5-pro': AgentId.GoogleGemini25Pro,
+  'gemini-2.5-pro': AgentId.GoogleGemini25Pro,
+  'google-gemini-2.5-flash': AgentId.GoogleGemini25Flash,
+  'gemini-2.5-flash': AgentId.GoogleGemini25Flash,
+} satisfies Record<string, AgentId>);
 
 export const AGENT_ALIAS_LOOKUP: Readonly<Record<string, AgentId>> =
-  AGENT_ALIAS_ENTRIES.reduce<Record<string, AgentId>>((acc, [key, value]) => {
-    acc[key] = value;
-    return acc;
-  }, {});
+  AGENT_ALIAS_ENTRIES;
 
 export const parseAgentId = (value: unknown): AgentId | undefined => {
   if (typeof value !== 'string') {

@@ -26,14 +26,13 @@ Conventions:
   - review_required: {{task.review_required}}
 - PR title: my-reforge-ai: planning — {{file_stem}}
 - PR body must include:
-  - Embedded task YAML (or summarized table)
   - Link to planning doc
   - Short run summary (tokens used optional)
   - Reviewers: @spigell
 
 #####################################################################
 
-# CAPABILITIES AND IO (MCP-ONLY, Git CLI over HTTPS)
+# CAPABILITIES AND IO (MCP, Git CLI over HTTPS)
 
 #####################################################################
 
@@ -74,8 +73,7 @@ If task.review_required is false:
 
 #####################################################################
 
-- Read latest reviewer comments ({{review_context}}).
-- `git fetch` and checkout **{{task.branch}}**; make minimal, diff-friendly edits to `{{task.taskDir}}/plan.md`.
+- Read latest reviewer comments got from mcp call get_pull_request.
 - Commit and `git push` to {{task.branch}}.
 - Keep the PR open until explicit “APPROVED”.
 - **If task.review_required is true, re-request review from @spigell on every turn** (idempotent) and @mention **@spigell** at the top of the comment.
@@ -164,7 +162,7 @@ At the end of EVERY turn:
 
 - {{serialized_task_yaml}}
 - {{review_context}} # latest PR comments addressed to you
-- {{repo_tree_context?}} # optional listing if needed
+- {{repo_tree_context}} # optional listing if needed
 - {{current_pr_url}} # set after first turn
 - {{task.branch}} # pre-created working branch name
 
@@ -185,7 +183,7 @@ Post **one** PR comment in Markdown that includes:
   - Current PR: {{current_pr_url}}
 - Open Questions (bullets; keep focused)
 - **Review Gate**
-  - REVIEW REQUIRED: {{task.review_required ? "yes" : "no"}}
+  - REVIEW REQUIRED: {{#if task.review_required}}yes{{else}}no{{/if}}
   - Checklist:
     - [ ] Scope/Goals OK
     - [ ] Acceptance criteria OK

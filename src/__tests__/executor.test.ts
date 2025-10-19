@@ -27,10 +27,11 @@ describe('Task Executor', () => {
   let originalExit: typeof process.exit;
   let originalConsoleLog: typeof console.log;
   let taskDataPath: string;
-  let templatePath: string;
   let lastAgentOptions: AgentRunOptions | undefined;
   let lastAgentSignal: AbortSignal | undefined;
   let agentRunCallCount: number;
+  let workspacePath: string;
+  let fakeExecutorPath: string;
 
   beforeEach(() => {
     tempDir = fs.mkdtempSync(path.join(tmpdir(), 'task-executor-tests-'));
@@ -50,8 +51,17 @@ describe('Task Executor', () => {
     lastAgentSignal = undefined;
     agentRunCallCount = 0;
 
+    workspacePath = path.join(tempDir, 'workspace');
+    fs.mkdirSync(workspacePath, { recursive: true });
+
+    const fakeDistDir = path.join(tempDir, 'dist', 'task-executor');
+    fs.mkdirSync(fakeDistDir, { recursive: true });
+    fakeExecutorPath = path.join(fakeDistDir, 'executor.js');
+    const templatePath = path.join(fakeDistDir, 'planning-promt-tmpl.md');
+    fs.writeFileSync(templatePath, 'Idea: {{task.idea}}');
+
     __setExecutorDependencies({
-      prepareWorkspaces: async () => ['/fake/workspace'],
+      prepareWorkspaces: async () => [workspacePath],
       getAgent: () => ({
         run: async (options: AgentRunOptions, signal: AbortSignal): Promise<AgentRunResult> => {
           agentRunCallCount += 1;
@@ -83,12 +93,6 @@ describe('Task Executor', () => {
 
     taskDataPath = path.join(tempDir, 'task-data.json');
     fs.writeFileSync(taskDataPath, JSON.stringify(matchedTask));
-
-    templatePath = path.join(tempDir, 'template.md');
-    fs.writeFileSync(
-      templatePath,
-      'Idea: {{task.idea}}, File Stem: {{file_stem}}',
-    );
   });
 
   afterEach(() => {
@@ -101,8 +105,7 @@ describe('Task Executor', () => {
   test('should render planning template with correct context', async () => {
     process.argv = [
       'node',
-      'dist/task-executor/executor.js',
-      templatePath,
+      fakeExecutorPath,
       taskDataPath,
     ];
     await executorMain();
@@ -112,7 +115,11 @@ describe('Task Executor', () => {
     assert.ok(lastAgentSignal, 'Agent run AbortSignal should be captured');
     assert.strictEqual(
       lastAgentOptions?.prompt,
-      'Idea: Test idea, File Stem: test',
+      'Read the prompt file ./planning-prompt.md in this workspace and execute.',
     );
+    const promptFilePath = path.join(workspacePath, 'planning-prompt.md');
+    assert.ok(fs.existsSync(promptFilePath), 'Prompt file should be written to workspace');
+    const promptFileContent = fs.readFileSync(promptFilePath, 'utf8');
+    assert.strictEqual(promptFileContent, 'Idea: Test idea');
   });
 });
