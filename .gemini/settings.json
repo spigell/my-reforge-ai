@@ -31,6 +31,8 @@
       "run_shell_command(chmod)",
       "run_shell_command(git add)",
       "run_shell_command(git push)",
+      "run_shell_command(git fetch)",
+      "run_shell_command(git merge)",
       "run_shell_command(git status)",
       "run_shell_command(git diff)",
       "run_shell_command(git restore)",
