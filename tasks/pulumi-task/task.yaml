@@ -1,0 +1,9 @@
+tasks:
+  - repo: spigell/my-reforge-ai
+    branch: 'feat/pulumi-task'
+    agents: ['codex', 'google-gemini-2.5-flash']
+    kind: feature
+    idea: 'Implement a Pulumi IaC for deploying github runner'
+    stage: planning
+    pr_link: 'https://github.com/spigell/my-reforge-ai/pull/5'
+    review_required: true
