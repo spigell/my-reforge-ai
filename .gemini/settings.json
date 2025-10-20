@@ -29,6 +29,7 @@
       "run_shell_command(cat)",
       "run_shell_command(mkdir)",
       "run_shell_command(chmod)",
+      "run_shell_command(grep)",
       "run_shell_command(git)",
       "ls",
       "read_file",

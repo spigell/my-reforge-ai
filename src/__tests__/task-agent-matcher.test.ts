@@ -150,7 +150,6 @@ describe('Task Agent Matcher', () => {
         stage: 'planning',
         task_dir: 'tasks/feature-branch',
         agents: [AgentId.GoogleGemini25Flash],
-        sourceFile: taskFile,
       },
       'expected task payload to include required fields',
     );
@@ -298,22 +297,6 @@ tasks:
       errorLogs.some((log) => /Error reading or parsing task file:/.test(log)),
       'expected missing file error log',
     );
-  });
-
-  test('should embed source file path in task summary', async () => {
-    const taskFile = createTaskFileFromTask(
-      {
-        branch: 'feature-branch',
-        task_dir: 'tasks/sample',
-      },
-      'nested/tasks/sample.yaml',
-    );
-
-    await matcherMain([taskFile]);
-
-    const payload = parseConsolePayload();
-    const task = payload.task;
-    assert.ok(task, 'expected task to be defined in payload');
   });
 
   test('should retain required fields from task definition', async () => {

@@ -66,7 +66,7 @@ export async function main(argv: string[]) {
       return;
     }
 
-    const task = normalizeTaskEntry(rawEntry as Task | Idea, taskFilePath);
+    const task = normalizeTaskEntry(rawEntry as Task | Idea);
 
     const rawAgents = Array.isArray((rawEntry as { agents?: unknown }).agents)
       ? ((rawEntry as { agents: unknown[] }).agents ?? [])
@@ -109,7 +109,7 @@ export async function main(argv: string[]) {
   }
 }
 
-const normalizeTaskEntry = (entry: Task | Idea, sourceFile: string): Task => {
+const normalizeTaskEntry = (entry: Task | Idea): Task => {
   const candidate = { ...entry } as Record<string, unknown>;
 
   if (
@@ -154,7 +154,6 @@ const normalizeTaskEntry = (entry: Task | Idea, sourceFile: string): Task => {
       typeof candidate.timeout_ms === 'number'
         ? candidate.timeout_ms
         : undefined,
-    sourceFile,
   };
 
   if (Array.isArray(candidate.additionalRepos)) {

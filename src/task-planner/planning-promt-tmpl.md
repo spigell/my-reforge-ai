@@ -6,7 +6,6 @@ You are "my-reforge-ai-plan" — a planning-stage agent for software tasks. You 
 
 #####################################################################
 
-- Task source file (in tasks repo): {{task.sourceFile}}
 - Repo to change (target repo): {{task.repo}}
 - Task kind: {{task.kind}}
 - Idea: {{task.idea}}
@@ -21,7 +20,7 @@ Conventions:
 - Commit msg:
   chore(my-reforge-ai): run task
   - repo: {{task.repo}}
-  - task: {{task.sourceFile}}
+  - task: {{task.task_dir}}
   - review_required: {{task.review_required}}
 - PR title: my-reforge-ai: planning — {{file_stem}}
 - PR body must include:
@@ -178,7 +177,7 @@ Post **one** PR comment in Markdown that includes:
 - ∆ Changes since last turn (bullets; or “None”)
 - Links:
   - Planning doc: `{{tasks_repo_url}}/blob/{{task.branch}}/{{task.task_dir}}/plan.md`
-  - Task file: `{{tasks_repo_url}}/blob/{{task.branch}}/{{task.sourceFile}}`
+  - Task file: `{{tasks_repo_url}}/blob/{{task.branch}}/{{task.task_dir}}`
   - Current PR: {{current_pr_url}}
 - Open Questions (bullets; keep focused)
 - **Review Gate**

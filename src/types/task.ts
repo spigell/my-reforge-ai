@@ -19,7 +19,6 @@ type GeneralTask = {
 export type Task = GeneralTask & {
   stage: 'planning' | 'implementing';
   idea?: string;
-  sourceFile?: string;
 };
 
 export type Idea = GeneralTask & {
