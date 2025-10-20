@@ -5,9 +5,14 @@
 Source code lives in `src/` as TypeScript modules. Services are organized into logical folders within `src/`.
 
 - `src/libs/usage-manager`: Contains the logic for fetching and calculating token usage.
+- `src/libs/agents`: Contains the base agent interface and implementations for different AI agents (e.g., Codex, Gemini).
+- `src/libs/codex-api`: Contains the API client for interacting with the Codex service.
+- `src/libs/logger`: Contains logging utilities.
 - `src/task-agent-matcher`: Contains task and agent matching logic.
 - `src/task-planner`: Contains logic for creating a `plan.md` from an `ideas.yaml` file.
 - `src/task-implementor`: Contains logic for executing tasks based on `plan.md`.
+- `src/types`: Contains shared TypeScript type definitions.
+- `src/__tests__`: Contains unit and integration tests.
   Compiled artifacts belong in `dist/` after running the build. Deployment assets sit in `deploy/` with `deploy/gh-runner` and `deploy/workbench` providing Kubernetes manifests and bootstrap scripts; update them when your change requires infrastructure adjustments. Shared automation files (GitHub workflows, Husky hooks) reside under `.github/` and `.husky/`.
 
 ## Build, Test, and Development Commands
