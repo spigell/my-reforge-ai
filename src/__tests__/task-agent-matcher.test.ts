@@ -8,7 +8,8 @@ import * as yaml from 'js-yaml';
 import { main as matcherMain } from '../task-agent-matcher/matcher.js';
 import { UsageManager } from '../libs/usage-manager/usage-manager.js';
 import { Logger } from '../libs/logger/logger.js';
-import { AgentId, DEFAULT_AGENT, MatchedTask } from '../types/task.js';
+import { MatchedTask } from '../types/task.js';
+import { AgentId, DEFAULT_AGENT } from '../types/agent.js';
 
 class ProcessExit extends Error {
   public readonly code: number;
@@ -84,7 +85,8 @@ describe('Task Agent Matcher', () => {
 
   const createTaskFileFromTask = (
     overrides: Record<string, unknown> = {},
-    fileName = 'task.yaml',
+    fileName = 'ideas.yaml',
+    collectionKey: 'tasks' | 'ideas' = 'ideas',
   ) => {
     const baseTask = {
       repo: 'owner/repo',
@@ -92,7 +94,7 @@ describe('Task Agent Matcher', () => {
       kind: 'feature',
       idea: 'Default task idea',
       stage: 'planning' as const,
-      taskDir: 'tasks/default-task',
+      task_dir: 'tasks/default-task',
     };
 
     const task = { ...baseTask, ...overrides };
@@ -101,7 +103,13 @@ describe('Task Agent Matcher', () => {
       delete (task as Record<string, unknown>).agents;
     }
 
-    const content = yaml.dump({ tasks: [task] }, { lineWidth: -1 });
+    for (const [key, value] of Object.entries(task)) {
+      if (value === undefined) {
+        delete (task as Record<string, unknown>)[key];
+      }
+    }
+
+    const content = yaml.dump({ [collectionKey]: [task] }, { lineWidth: -1 });
     return createTaskFile(content, fileName);
   };
 
@@ -122,7 +130,7 @@ describe('Task Agent Matcher', () => {
       branch: 'feature-branch',
       agents: ['gemini-2.5-flash'],
       idea: 'Do something cool',
-      taskDir: 'tasks/feature-branch',
+      task_dir: 'tasks/feature-branch',
     });
     const outputFile = path.join(tempDir, 'output.json');
 
@@ -140,7 +148,7 @@ describe('Task Agent Matcher', () => {
         kind: 'feature',
         idea: 'Do something cool',
         stage: 'planning',
-        taskDir: 'tasks/feature-branch',
+        task_dir: 'tasks/feature-branch',
         agents: [AgentId.GoogleGemini25Flash],
         sourceFile: taskFile,
       },
@@ -296,7 +304,7 @@ tasks:
     const taskFile = createTaskFileFromTask(
       {
         branch: 'feature-branch',
-        taskDir: 'tasks/sample',
+        task_dir: 'tasks/sample',
       },
       'nested/tasks/sample.yaml',
     );
@@ -313,7 +321,7 @@ tasks:
       kind: 'bugfix',
       idea: 'Fix a bug',
       stage: 'implementing',
-      taskDir: 'tasks/fix-bug',
+      task_dir: 'tasks/fix-bug',
     });
 
     await matcherMain([taskFile]);
@@ -322,6 +330,24 @@ tasks:
     assert.strictEqual(payload.task.kind, 'bugfix');
     assert.strictEqual(payload.task.idea, 'Fix a bug');
     assert.strictEqual(payload.task.stage, 'implementing');
-    assert.strictEqual(payload.task.taskDir, 'tasks/fix-bug');
+    assert.strictEqual(payload.task.task_dir, 'tasks/fix-bug');
+  });
+
+  test('should normalize legacy camelCase fields', async () => {
+    const taskFile = createTaskFileFromTask(
+      {
+        task_dir: undefined,
+        taskDir: 'tasks/legacy',
+        timeoutMs: 90000,
+      },
+      'legacy-task.yaml',
+      'tasks',
+    );
+
+    await matcherMain([taskFile]);
+
+    const payload = parseConsolePayload();
+    assert.strictEqual(payload.task.task_dir, 'tasks/legacy');
+    assert.strictEqual(payload.task.timeout_ms, 90000);
   });
 });

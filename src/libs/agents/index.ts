@@ -1,4 +1,4 @@
-import { AgentId } from '../../types/task.js';
+import { AgentId } from '../../types/agent.js';
 import { Agent } from './base.js';
 import { CodexAgent } from './codex.js';
 import { GeminiAgent } from './gemini.js';

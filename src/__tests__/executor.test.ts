@@ -3,8 +3,12 @@ import { afterEach, beforeEach, describe, test } from 'node:test';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { tmpdir } from 'node:os';
-import type { AgentRunOptions, AgentRunResult } from '../task-executor/agents/index.js';
-import { AgentId, MatchedTask, Task } from '../types/task.js';
+import type {
+  AgentRunOptions,
+  AgentRunResult,
+} from '../task-executor/agents/index.js';
+import { AgentId } from '../types/agent.js';
+import { MatchedTask, Task } from '../types/task.js';
 import {
   __resetExecutorDependencies,
   __setExecutorDependencies,
@@ -54,11 +58,7 @@ describe('Task Executor', () => {
     workspacePath = path.join(tempDir, 'workspace');
     fs.mkdirSync(workspacePath, { recursive: true });
 
-    const fakeDistDir = path.join(tempDir, 'dist', 'task-executor');
-    fs.mkdirSync(fakeDistDir, { recursive: true });
-    fakeExecutorPath = path.join(fakeDistDir, 'executor.js');
-    const templatePath = path.join(fakeDistDir, 'planning-promt-tmpl.md');
-    fs.writeFileSync(templatePath, 'Idea: {{task.idea}}');
+    fakeExecutorPath = path.join(tempDir, 'dist', 'task-executor', 'executor.js');
 
     __setExecutorDependencies({
       prepareWorkspaces: async () => [workspacePath],
@@ -82,7 +82,7 @@ describe('Task Executor', () => {
       kind: 'feature',
       idea: 'Test idea',
       stage: 'planning',
-      taskDir: 'tasks/test',
+      task_dir: 'tasks/test',
       sourceFile: 'tasks/test.yaml',
     };
 
@@ -120,6 +120,6 @@ describe('Task Executor', () => {
     const promptFilePath = path.join(workspacePath, 'planning-prompt.md');
     assert.ok(fs.existsSync(promptFilePath), 'Prompt file should be written to workspace');
     const promptFileContent = fs.readFileSync(promptFilePath, 'utf8');
-    assert.strictEqual(promptFileContent, 'Idea: Test idea');
+    assert.match(promptFileContent, /Test idea/, 'Prompt should include the task idea');
   });
 });

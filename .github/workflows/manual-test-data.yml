@@ -30,8 +30,8 @@ jobs:
         id: match_agent
         run: |
           ./dist/task-agent-matcher/matcher.js --output-file task.json tasks/example-task.yaml
-          TASK_JSON=$(cat task.json | jq -c '.task')
-          AGENT=$(cat task.json | jq -r '.agent')
+          TASK_JSON=$(cat task.json | jq -c '.')
+          AGENT=$(echo $TASK_JSON | jq -r '.selectedAgent')
           echo "task_json=$TASK_JSON" >> $GITHUB_OUTPUT
           echo "agent=$AGENT" >> $GITHUB_OUTPUT
 
@@ -47,4 +47,5 @@ jobs:
 
       - name: Execute task
         run: |
-          npx ts-node src/task-executor/executor.ts src/task-executor/planning-promt-tmpl.md '${{ needs.match-task-agent.outputs.task_json }}'
+          echo '${{ needs.match-task-agent.outputs.task_json }}' > task.json
+          ./dist/task-executor/executor.js task.json

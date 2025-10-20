@@ -22,7 +22,7 @@
       "edit",
       "run_shell_command(yarn add)",
       "run_shell_command(yarn install)",
-      "run_shell_command(./node_modules/.bin/eslint . .)",
+      "run_shell_command(./node_modules/.bin/eslint .)",
       "run_shell_command(./node_modules/.bin/tsc --build)",
       "run_shell_command(node --test dist/**/*.test.js)",
       "run_shell_command(curl)",

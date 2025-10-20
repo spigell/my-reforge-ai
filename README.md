@@ -47,14 +47,27 @@ My Reforge AI is a personal platform for experimenting with AI-driven self-impro
 2.  Run the Task Agent Matcher to select an agent for the task:
 
     ```bash
-    npx ts-node src/task-agent-matcher/matcher.ts
+    yarn build
+    ./dist/task-agent-matcher/matcher.js --output-file /tmp/task.json ./tasks/ideas.yaml
     ```
 
-3.  Run the AI Agent Worker to execute the task:
+3.  Feed the matcher output into the AI Agent Planner. This step renders the planning template, writes `planning-prompt.md`, and runs the selected agent in planning mode:
 
     ```bash
-    npx ts-node src/task-executor/executor.ts
+    yarn plan /tmp/task.json
+    # or, using the bin directly
+    my-reforge-ai-planner /tmp/task.json
     ```
+
+4.  Once the plan is approved and the task’s stage is switched to `implementing`, run the AI Agent Implementor to apply the plan:
+
+    ```bash
+    yarn implement /tmp/task.json
+    # or, using the bin directly
+    my-reforge-ai-implementor /tmp/task.json
+    ```
+
+   The implementor reads the `plan.md` located under `task_dir` inside the target repository and executes the task against the prepared workspace.
 
 ## Project Structure
 
@@ -63,7 +76,8 @@ The repository is organized as follows:
 - `src/`: Contains the source code for the AI tools and services.
   - `src/libs/usage-manager`: Contains the logic for fetching and calculating token usage.
   - `src/task-agent-matcher`: Contains task and agent matching logic.
-  - `src/task-executor`: Contains logic for executing tasks with the Codex CLI, including workspace management and prompt rendering.
+  - `src/task-planner`: Contains logic for creating a `plan.md` from an `ideas.yaml` file.
+  - `src/task-implementor`: Contains logic for executing tasks based on `plan.md`.
 - `deploy/`: Contains the deployment configurations for Kubernetes.
   - `mcp/`: MCP server deployment.
   - `gh-runner/`: GitHub Actions runner deployment.

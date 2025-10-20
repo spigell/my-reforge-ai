@@ -6,7 +6,8 @@ Source code lives in `src/` as TypeScript modules. Services are organized into l
 
 - `src/libs/usage-manager`: Contains the logic for fetching and calculating token usage.
 - `src/task-agent-matcher`: Contains task and agent matching logic.
-- `src/task-executor`: Contains logic for executing tasks with the Codex CLI, including workspace management and prompt rendering.
+- `src/task-planner`: Contains logic for creating a `plan.md` from an `ideas.yaml` file.
+- `src/task-implementor`: Contains logic for executing tasks based on `plan.md`.
   Compiled artifacts belong in `dist/` after running the build. Deployment assets sit in `deploy/`, with `deploy/gh-runner` and `deploy/workbench` providing Kubernetes manifests and bootstrap scripts; update them when your change requires infrastructure adjustments. Shared automation files (GitHub workflows, Husky hooks) reside under `.github/` and `.husky/`.
 
 ### Type Definitions (`src/types/task.ts`)
@@ -130,14 +131,22 @@ chore(my-reforge-ai): run task
 - Exposes **per-run token target** (hourly) to the worker.
 - The `hasTokens()` method is used by the `Task Agent Matcher` to determine if there are enough tokens remaining for the day to proceed with task selection.
 
-### 3) AI Agent Worker
+### 3) AI Agent Planner
+- Implements the planning flow in `src/task-planner/planner.ts`.
+- Hydrates `planning-promt-tmpl.md`, writes `planning-prompt.md` into the active workspace, and runs the selected agent with instructions to execute the generated plan file.
+- Requires an `idea` field; attempts to plan without one fail fast.
+- CLI entrypoint: `my-reforge-ai-planner` (or `yarn plan`) accepts a matcher JSON payload and performs the full planning pass.
 
-- Executes tasks using the `src/task-executor` component, which runs the `codex` binary with a templated prompt.
-  - **Workspace**: Prepares the workspace by cloning the target repository and checking out the correct branch using a TypeScript git library (`src/task-executor/workspace-manager.ts`).
-  - **Git**: pull target repo, modify `file` as needed, commit & push branches.
+### 4) AI Agent Implementor
+
+- Executes tasks using the `src/task-implementor` component, which runs the `codex` binary (or other agents) with a prompt derived from the previously generated plan.
+  - **Workspace**: Prepares the workspace by cloning the target repository and checking out the correct branch using `src/task-implementor/workspace-manager.ts`.
+  - **Prompting**: Directs the agent to follow the plan stored at `<task_dir>/plan.md` and attaches run metadata pointing to the absolute plan path.
+  - **Git**: pull target repo, modify files as needed, commit & push branches.
   - **PR**: open/update PR when `review_required: true`.
   - **MCP**: converse in PR like a human for reviews (post, read replies, iterate, fix commits).
 - Respects per-run token budget from the Usage Manager.
+- CLI entrypoint: `my-reforge-ai-implementor` (or `yarn implement`) consumes the same matcher payload and executes the task according to the existing plan.
 
 ---
 
@@ -147,23 +156,17 @@ chore(my-reforge-ai): run task
 2.  **Task Agent Matcher** selects the next eligible task:
     - Skips any repo currently under a **review lock** if the picked task requires review.
 3.  **Run Agent (with hard timeout)**
-    - **Responsibility**: Executor prepares the prompt and invokes the concrete agent implementation; the agent returns only a status/result payload.
+    - **Responsibility**: The planner or implementor prepares the prompt and invokes the concrete agent implementation; the agent returns only a status/result payload.
     - **Agent interface**: `run(options, signal) → Promise<{ status: "success" | "timeout" | "error", logs: string, diagnostics?: Record<string, unknown> }>`
     - **Options (minimum)**: `{ targetWorkspace, additionalWorkspaces, model?, timeoutMs, prompt, runMetadata }`. Agents must honor the provided `AbortSignal`.
     - **OpenAI Codex agent**: Spawns `codex cli --non-interactive` inside the primary workspace. Prompt is piped via `stdin`; all `stdout`/`stderr` are collected into the returned logs. On abort, kill the process and return `status: "timeout"`.
     - **Gemini Pro / Flash**: Spawns the Gemini CLI (`gemini --model <name>`) with identical piping/timeout semantics.
-    - **Hard timeout**: Executor wraps each run with `AbortController` using `task.timeoutMs` (default 5 minutes). On expiry it aborts the subprocess and surfaces a timeout result.
+    - **Hard timeout**: Executor wraps each run with `AbortController` using `task.timeout_ms` (default 5 minutes). On expiry it aborts the subprocess and surfaces a timeout result.
     - **Error handling**: Non-timeout failures resolve with `status: "error"` and captured diagnostics. Agents never touch git.
 4.  **Usage Manager** computes today’s/hour’s token budget.
-5.  **AI Agent Worker**:
-    - Prepares workspace (clones repo, checks out branch).
-    - Applies changes to `file`.
-    - Commits and pushes.
-    - If `review_required: true`:
-      - Opens/updates a PR.
-      - Communicates via **MCP** in the PR thread.
-      - Iterates on requested changes; amends/commits as needed.
-      - On approval/merge: release lock for that `repo`.
+5.  **AI Agent Planner / Implementor**:
+    - Planner focuses on writing the plan file and recording context for the implementor.
+    - Implementor applies the plan: prepares workspace, edits files, commits, and manages PR workflows (including MCP conversations) when review is required.
 6.  **Completion**: logs execution summary and tokens used.
 
 ---

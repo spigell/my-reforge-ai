@@ -1,5 +1,5 @@
 import winston from 'winston';
-import { AgentId } from '../../types/task.js';
+import { AgentId } from '../../types/agent.js';
 import { AgentUsage } from './agent-usage.js';
 import { CodexUsage } from './codex-usage.js';
 import { GoogleGeminiUsage } from './google-gemini-usage.js';

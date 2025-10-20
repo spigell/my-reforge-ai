@@ -24,13 +24,17 @@
     "build": "tsc --build",
     "test": "yarn build && node --test dist/**/*.test.js",
     "postbuild": "node ./scripts/prepare-bins.js",
-    "test-task": "yarn build && ./dist/task-agent-matcher/matcher.js --output-file /tmp/task.json ./tasks/example-task.yaml && ./dist/task-executor/executor.js /tmp/task.json",
-    "test-task-planning-only": "yarn build && ./dist/task-executor/executor.js ./tasks/test-task.json",
+    "plan": "node ./dist/task-planner/cli.js",
+    "implement": "node ./dist/task-implementor/cli.js",
+    "test-task": "yarn build && ./dist/task-agent-matcher/matcher.js --output-file /tmp/task.json ./tasks/ideas.yaml && ./dist/task-planner/cli.js /tmp/task.json",
+    "test-task-implement": "yarn build && ./dist/task-agent-matcher/matcher.js --output-file /tmp/task.json ./tasks/ideas.yaml && node --input-type=module -e \"import fs from 'node:fs'; const data = JSON.parse(fs.readFileSync('/tmp/task.json', 'utf8')); data.task.stage = 'implementing'; fs.writeFileSync('/tmp/task.json', JSON.stringify(data));\" && ./dist/task-implementor/cli.js /tmp/task.json",
     "format": "prettier --write .",
     "lint": "eslint ."
   },
   "bin": {
     "my-reforge-ai-agent-matcher": "./dist/task-agent-matcher/matcher.js",
+    "my-reforge-ai-planner": "./dist/task-planner/cli.js",
+    "my-reforge-ai-implementor": "./dist/task-implementor/cli.js",
     "my-reforge-ai-executor": "./dist/task-executor/executor.js"
   },
   "dependencies": {
