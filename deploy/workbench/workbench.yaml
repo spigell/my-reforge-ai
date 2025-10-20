@@ -20,6 +20,8 @@ spec:
       env:
         - name: HOME
           value: /home/ubuntu
+        - name: CODEX_HOME
+          value: /home/ubuntu/.codex
       resources:
         limits:
           cpu: '2'

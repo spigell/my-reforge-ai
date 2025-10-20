@@ -66,7 +66,7 @@ export async function main(argv: string[]) {
       return;
     }
 
-    const task = normalizeTaskEntry(rawEntry as Task | Idea);
+    const task = normalizeTaskEntry(rawEntry as Idea);
 
     const rawAgents = Array.isArray((rawEntry as { agents?: unknown }).agents)
       ? ((rawEntry as { agents: unknown[] }).agents ?? [])

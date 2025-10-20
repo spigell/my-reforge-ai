@@ -23,7 +23,6 @@ export type Task = GeneralTask & {
 
 export type Idea = GeneralTask & {
   idea: string;
-  stage?: 'planning' | 'implementing';
 };
 
 export type MatchedTask = {

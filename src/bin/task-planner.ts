@@ -1,5 +1,3 @@
-import { fileURLToPath } from 'node:url';
-import path from 'path';
 import { main as plannerMain } from '../core/entrypoints/plannerMain.js';
 
 export async function main() {
@@ -25,12 +23,4 @@ export async function main() {
   }
 }
 
-const isDirectExecution = () => {
-  if (!process.argv[1]) return false;
-  const modulePath = fileURLToPath(import.meta.url);
-  return path.resolve(process.argv[1]) === path.resolve(modulePath);
-};
-
-if (isDirectExecution()) {
-  void main();
-}
+void main();

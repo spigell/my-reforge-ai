@@ -119,7 +119,7 @@ tasks:
 ### 4) AI Agent Implementor
 
 - Executes tasks using the `src/task-implementor` component, which runs the `codex` binary (or other agents) with a prompt derived from the previously generated plan.
-  - **Workspace**: Prepares the workspace by cloning the target repository and checking out the correct branch using `src/task-implementor/workspace-manager.ts`.
+  - **Workspace**: Prepares the workspace by cloning the target repository and checking out the correct branch using `src/libs/workspace/workspace-manager.ts`.
   - **Prompting**: Directs the agent to follow the plan stored at `<task_dir>/plan.md` and attaches run metadata pointing to the absolute plan path.
   - **Git**: pull target repo, modify files as needed, commit & push branches.
   - **PR**: update PR when `review_required: true`. Note that the PR is created by a separate process, not by the agent itself.

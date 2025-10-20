@@ -1,7 +1,7 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import simpleGit, { SimpleGit } from 'simple-git';
-import fs from 'fs';
-import path from 'path';
-import { Task } from '../types/task.js';
+import type { Task } from '../../types/task.js';
 
 export async function prepareWorkspaces(
   mainRepoSlug: string,
@@ -11,8 +11,6 @@ export async function prepareWorkspaces(
 ): Promise<string[]> {
   const preparedPaths: string[] = [];
   const git: SimpleGit = simpleGit();
-
-  // Removed git.addConfig as per new authentication method
 
   const prepareSingleRepo = async (
     repoSlug: string,
@@ -25,7 +23,7 @@ export async function prepareWorkspaces(
       repoUrl = `https://x-access-token:${process.env.GH_TOKEN}@github.com/${repoSlug}.git`;
     }
 
-    const targetDirectoryName = directoryName || repoSlug;
+    const targetDirectoryName = directoryName ?? repoSlug;
     const repoPath = path.join(workspaceRoot, targetDirectoryName);
 
     try {
@@ -48,8 +46,9 @@ export async function prepareWorkspaces(
           await git.checkoutLocalBranch(branch);
         }
       }
+
       console.log(
-        `Workspace prepared at: ${repoPath} for branch: ${branch || 'default'}`,
+        `Workspace prepared at: ${repoPath} for branch: ${branch ?? 'default'}`,
       );
       return repoPath;
     } catch (error: unknown) {
@@ -62,11 +61,9 @@ export async function prepareWorkspaces(
     }
   };
 
-  // Prepare main repository
   const mainRepoPath = await prepareSingleRepo(mainRepoSlug, mainBranch);
   preparedPaths.push(mainRepoPath);
 
-  // Prepare additional repositories
   if (additionalRepos) {
     for (const additionalRepo of additionalRepos) {
       const additionalRepoPath = await prepareSingleRepo(
