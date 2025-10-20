@@ -6,11 +6,11 @@
 
 # Goal & Non-Goals
 
-- Goal: To implement Infrastructure as Code (IaC) using Pulumi for deploying a GitHub Actions self-hosted runner on a Kubernetes cluster, ensuring automated, repeatable, and consistent deployment.
+- Goal: To implement Infrastructure as Code (IaC) using Pulumi for deploying a GitHub Actions self-hosted runner on a bare-metal Talos Kubernetes cluster, ensuring automated, repeatable, and consistent deployment.
 - Non-Goals:
     - Implementing the GitHub Actions workflow itself.
     - Managing the applications running on the GitHub runner.
-    - Managing the Kubernetes cluster itself.
+    - Managing the Talos Kubernetes cluster itself.
     - Supporting cloud providers other than the existing Kubernetes cluster.
 
 # Deliverables
@@ -25,8 +25,8 @@
 
 # Approach
 
-- **Summary:** I will create a new Pulumi project using TypeScript in the `deploy/gh-runner/pulumi` directory. This project will define the Kubernetes resources required for a GitHub Actions runner. I will use the `@pulumi/kubernetes` package. The Pulumi code will create a Deployment to run the runner, a Secret to hold the GitHub registration token, and other necessary resources. The runner will be registered with the `spigell/my-reforge-ai` repository.
-- **Platform:** Kubernetes
+- **Summary:** I will create a new Pulumi project using TypeScript in the `deploy/gh-runner/pulumi` directory. This project will define the Kubernetes resources required for a GitHub Actions runner. I will use the `@pulumi/kubernetes` package. The Pulumi code will create a Deployment to run the runner, a Secret to hold the GitHub registration token, and other necessary resources. The runner will be registered with the `spigell/my-reforge-ai` repository. The runner will be deployed as a pod in a dedicated namespace. The runner image will be based on the official GitHub runner image, with any necessary customizations applied via a `Dockerfile`. The registration token will be fetched from the GitHub API and stored securely as a Kubernetes secret.
+- **Platform:** Bare-metal Talos Kubernetes cluster
 - **Affected paths (target repo):** `deploy/gh-runner/pulumi/` (new directory and files)
 - **Interfaces/IO:** Pulumi CLI for deployment, GitHub API for runner registration.
 - **Security/Secrets:** The GitHub token for runner registration will be managed as a Kubernetes secret, which in turn will be managed as a Pulumi secret.
@@ -34,7 +34,7 @@
 # Acceptance Criteria
 
 - [ ] A new Pulumi project is created under `deploy/gh-runner/pulumi`.
-- [ ] `pulumi up` successfully deploys a functional GitHub Actions runner in the Kubernetes cluster.
+- [ ] `pulumi up` successfully deploys a functional GitHub Actions runner in the Talos Kubernetes cluster.
 - [ ] The deployed runner appears in the "Actions runners" settings of the `spigell/my-reforge-ai` repository and is online.
 - [ ] The runner can successfully pick up and execute jobs from the repository.
 - [ ] `pulumi destroy` successfully and cleanly removes all created resources.
