@@ -6,37 +6,38 @@
 
 # Goal & Non-Goals
 
-- Goal: Implement a Pulumi Infrastructure as Code (IaC) solution to deploy a GitHub Actions self-hosted runner.
+- Goal: To implement a Pulumi Infrastructure as Code (IaC) solution for deploying a GitHub Actions self-hosted runner, ensuring it is scalable, maintainable, and integrated with the existing `my-reforge-ai` project.
 - Non-Goals:
-    - Implementing the actual GitHub Actions workflow that uses the runner.
-    - Managing the lifecycle of the runner beyond initial deployment (e.g., auto-scaling, updates).
-    - Detailed configuration of the runner's software environment.
+    - Implementing the GitHub Actions workflow itself.
+    - Managing the lifecycle of the GitHub Actions runner beyond its initial deployment.
+    - Creating a generic Pulumi component for all types of GitHub Actions runners.
 
 # Deliverables
 
-- [ ] Pulumi project for GitHub Actions runner deployment (e.g., `pulumi/github-runner`).
-- [ ] Pulumi stack definition (e.g., `pulumi/github-runner/dev`).
-- [ ] Basic configuration for the GitHub runner (e.g., OS, instance type).
-- [ ] Documentation on how to deploy and configure the Pulumi stack.
+- [ ] Pulumi program (TypeScript) for deploying a GitHub Actions runner.
+- [ ] Configuration files for the Pulumi program.
+- [ ] Documentation for deploying and managing the Pulumi stack.
+- [ ] Basic tests for the Pulumi infrastructure.
 
 # Approach
 
-- Summary: Utilize Pulumi with a chosen cloud provider (e.g., AWS, GCP, Azure) to define and deploy the necessary infrastructure for a GitHub Actions self-hosted runner. The Pulumi project will be structured to allow for easy customization and deployment across different environments.
-- Affected paths (target repo): `src/pulumi-runner/` (new directory), `tasks/pulumi-task/plan.md`
-- Interfaces/IO: Pulumi CLI, cloud provider APIs, GitHub API (for runner registration).
-- Security/Secrets: Pulumi secrets management for sensitive configuration (e.g., GitHub PAT, cloud provider credentials). These will be handled securely and not exposed in plain text.
+- Summary: The Pulumi program will define the necessary cloud resources (e.g., VM, networking, security groups) to host a GitHub Actions runner. It will use TypeScript for infrastructure definition. The runner will be configured to register with the `spigell/my-reforge-ai` repository.
+- Affected paths (target repo): `deploy/pulumi-runner/` (new directory), `deploy/pulumi-runner/Pulumi.yaml`, `deploy/pulumi-runner/index.ts`, `deploy/pulumi-runner/package.json`, `deploy/pulumi-runner/tsconfig.json`
+- Interfaces/IO: Pulumi CLI for deployment, GitHub API for runner registration.
+- Security/Secrets: GitHub Personal Access Token (PAT) for runner registration will be managed as a Pulumi secret. No PATs will be hardcoded or exposed in plain text.
 
 # Acceptance Criteria
 
-- [ ] A Pulumi project is created that can deploy a GitHub Actions self-hosted runner.
-- [ ] The Pulumi project can be successfully deployed to a cloud provider.
-- [ ] The deployed runner successfully registers with GitHub.
-- [ ] Documentation is provided for deploying and configuring the Pulumi stack.
+- [ ] A Pulumi stack can be successfully deployed, creating a functional GitHub Actions runner.
+- [ ] The deployed runner successfully registers with the `spigell/my-reforge-ai` repository.
+- [ ] The Pulumi program can be updated and redeployed without downtime for existing runners (if applicable, for future scaling).
+- [ ] The Pulumi stack can be destroyed, cleaning up all created resources.
 
 # Risks & Mitigations
 
-- Risk: Complexity of cloud provider setup → Mitigation: Start with a simple, well-documented cloud provider and instance type.
-- Risk: GitHub API rate limits during runner registration → Mitigation: Implement retry mechanisms and exponential backoff for API calls.
+- Risk: Complexity of cloud resource configuration. → Mitigation: Start with a minimal viable runner setup and iterate.
+- Risk: Security of GitHub PAT. → Mitigation: Use Pulumi secrets management and ensure PAT has minimal necessary scope.
+- Risk: Compatibility issues with existing infrastructure. → Mitigation: Isolate the Pulumi deployment to its own directory and stack.
 
 # Rollout & Review
 
