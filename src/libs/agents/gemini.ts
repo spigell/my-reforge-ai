@@ -21,8 +21,17 @@ export class GeminiAgent implements Agent {
     signal.throwIfAborted();
 
     return new Promise((resolve) => {
-      const args = ['--model', options.model || 'gemini-2.5-flash', options.prompt, '--debug', '--yolo'];
-      console.log('[GeminiAgent] invoking gemini CLI with args:', JSON.stringify(args));
+      const args = [
+        '--model',
+        options.model || 'gemini-2.5-flash',
+        options.prompt,
+        '--debug',
+        '--yolo',
+      ];
+      console.log(
+        '[GeminiAgent] invoking gemini CLI with args:',
+        JSON.stringify(args),
+      );
       const geminiProcess = this.spawnFn('gemini', args, {
         cwd: options.targetWorkspace,
         stdio: ['pipe', 'pipe', 'pipe'],

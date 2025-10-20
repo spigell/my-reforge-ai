@@ -67,7 +67,7 @@ My Reforge AI is a personal platform for experimenting with AI-driven self-impro
     my-reforge-ai-implementor /tmp/task.json
     ```
 
-   The implementor reads the `plan.md` located under `task_dir` inside the target repository and executes the task against the prepared workspace.
+The implementor reads the `plan.md` located under `task_dir` inside the target repository and executes the task against the prepared workspace.
 
 ## Project Structure
 

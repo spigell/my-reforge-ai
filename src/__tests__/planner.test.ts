@@ -61,7 +61,10 @@ describe('Task Planner', () => {
     );
 
     const promptFile = path.join(workspacePath, 'planning-prompt.md');
-    assert.ok(fs.existsSync(promptFile), 'expected planning prompt file to be created');
+    assert.ok(
+      fs.existsSync(promptFile),
+      'expected planning prompt file to be created',
+    );
     const promptContents = fs.readFileSync(promptFile, 'utf8');
     assert.match(promptContents, /Create a plan to refactor modules/);
   });

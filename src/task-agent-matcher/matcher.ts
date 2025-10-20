@@ -56,12 +56,12 @@ export async function main(argv: string[]) {
     const rawTasks = Array.isArray(data?.tasks) ? data?.tasks : undefined;
     const rawIdeas = Array.isArray(data?.ideas) ? data?.ideas : undefined;
 
-    const rawEntry =
-      rawTasks?.[0] ??
-      rawIdeas?.[0];
+    const rawEntry = rawTasks?.[0] ?? rawIdeas?.[0];
 
     if (!rawEntry) {
-      logger.error('No tasks or ideas found in the YAML file or invalid format.');
+      logger.error(
+        'No tasks or ideas found in the YAML file or invalid format.',
+      );
       process.exit(1);
       return;
     }
@@ -137,15 +137,13 @@ const normalizeTaskEntry = (entry: Task | Idea): Task => {
     branch: typeof candidate.branch === 'string' ? candidate.branch : '',
     kind: typeof candidate.kind === 'string' ? candidate.kind : '',
     agents: [],
-    task_dir:
-      typeof candidate.task_dir === 'string' ? candidate.task_dir : '',
+    task_dir: typeof candidate.task_dir === 'string' ? candidate.task_dir : '',
     stage,
-    idea:
-      typeof candidate.idea === 'string'
-        ? candidate.idea
-        : undefined,
+    idea: typeof candidate.idea === 'string' ? candidate.idea : undefined,
     planning_pr_id:
-      typeof candidate.planning_pr_id === 'string' ? candidate.planning_pr_id : undefined,
+      typeof candidate.planning_pr_id === 'string'
+        ? candidate.planning_pr_id
+        : undefined,
     review_required:
       typeof candidate.review_required === 'boolean'
         ? candidate.review_required

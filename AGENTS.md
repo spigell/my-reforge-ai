@@ -73,15 +73,6 @@ tasks:
     review_required: true
 ```
 
-**Worker output (commit message convention):**
-
-```
-chore(my-reforge-ai): run task
-- repo: owner/target-repo
-- task: path/to/task.yaml
-- review_required: true
-```
-
 ---
 
 ## Review Blocking Rule
@@ -120,10 +111,10 @@ chore(my-reforge-ai): run task
 - The `hasTokens()` method is used by the `Task Agent Matcher` to determine if there are enough tokens remaining for the day to proceed with task selection.
 
 ### 3) AI Agent Planner
+
 - Implements the planning flow in `src/task-planner/planner.ts`.
 - Hydrates `planning-promt-tmpl.md`, writes `planning-prompt.md` into the active workspace, and runs the selected agent with instructions to execute the generated plan file.
 - Requires an `idea` field; attempts to plan without one fail fast.
-- CLI entrypoint: `my-reforge-ai-planner` (or `yarn plan`) accepts a matcher JSON payload and performs the full planning pass.
 
 ### 4) AI Agent Implementor
 
@@ -131,7 +122,7 @@ chore(my-reforge-ai): run task
   - **Workspace**: Prepares the workspace by cloning the target repository and checking out the correct branch using `src/task-implementor/workspace-manager.ts`.
   - **Prompting**: Directs the agent to follow the plan stored at `<task_dir>/plan.md` and attaches run metadata pointing to the absolute plan path.
   - **Git**: pull target repo, modify files as needed, commit & push branches.
-  - **PR**: open/update PR when `review_required: true`. Note that the PR is created by a separate process, not by the agent itself.
+  - **PR**: update PR when `review_required: true`. Note that the PR is created by a separate process, not by the agent itself.
   - **MCP**: converse in PR like a human for reviews (post, read replies, iterate, fix commits).
 - Respects per-run token budget from the Usage Manager.
 - CLI entrypoint: `my-reforge-ai-implementor` (or `yarn implement`) consumes the same matcher payload and executes the task according to the existing plan.
@@ -215,8 +206,8 @@ cron/runner
                        ├─ git pull/branch/edit/file
                        ├─ commit & push
                        ├─ if review_required:
-                       │     ├─ open/update PR
                        │     ├─ MCP: read PR messages
+                       │     ├─ update PR
                        │     ├─ codex changes → fix commits
                        │     └─ on approval/merge: release lock
                        └─ log usage and result
