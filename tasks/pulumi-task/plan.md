@@ -6,37 +6,37 @@
 
 # Goal & Non-Goals
 
-- Goal: Implement a Pulumi Infrastructure as Code (IaC) solution for deploying a GitHub Actions self-hosted runner.
+- Goal: Implement a Pulumi Infrastructure as Code (IaC) solution to deploy a GitHub Actions self-hosted runner.
 - Non-Goals:
-  - Implementing the GitHub Actions workflow itself.
-  - Managing secrets or sensitive data within Pulumi directly (will use existing secrets management).
-  - Supporting multiple cloud providers in this initial implementation.
+    - Implementing the actual GitHub Actions workflow that uses the runner.
+    - Managing the lifecycle of the runner beyond initial deployment (e.g., auto-scaling, updates).
+    - Detailed configuration of the runner's software environment.
 
 # Deliverables
 
-- [ ] Pulumi project for GitHub runner deployment (e.g., `infra/github-runner/`)
-- [ ] Pulumi stack configuration for development and production environments.
-- [ ] Documentation on how to deploy and manage the Pulumi stack.
-- [ ] Basic tests for the Pulumi infrastructure (e.g., `pulumi preview` validation).
+- [ ] Pulumi project for GitHub Actions runner deployment (e.g., `pulumi/github-runner`).
+- [ ] Pulumi stack definition (e.g., `pulumi/github-runner/dev`).
+- [ ] Basic configuration for the GitHub runner (e.g., OS, instance type).
+- [ ] Documentation on how to deploy and configure the Pulumi stack.
 
 # Approach
 
-- Summary: Use Pulumi with TypeScript to define the infrastructure for a GitHub self-hosted runner. This will involve defining the necessary cloud resources (e.g., VM, networking, security groups) and configuring the GitHub runner agent.
-- Affected paths (target repo): `infra/github-runner/`, potentially updates to `.github/workflows` for integration.
-- Interfaces/IO: Pulumi CLI for deployment, GitHub API for runner registration, cloud provider API (e.g., AWS, GCP, Azure).
-- Security/Secrets: Pulumi will use its built-in secrets management for sensitive configuration. GitHub token for runner registration will be provided via environment variables or Pulumi secrets.
+- Summary: Utilize Pulumi with a chosen cloud provider (e.g., AWS, GCP, Azure) to define and deploy the necessary infrastructure for a GitHub Actions self-hosted runner. The Pulumi project will be structured to allow for easy customization and deployment across different environments.
+- Affected paths (target repo): `src/pulumi-runner/` (new directory), `tasks/pulumi-task/plan.md`
+- Interfaces/IO: Pulumi CLI, cloud provider APIs, GitHub API (for runner registration).
+- Security/Secrets: Pulumi secrets management for sensitive configuration (e.g., GitHub PAT, cloud provider credentials). These will be handled securely and not exposed in plain text.
 
 # Acceptance Criteria
 
-- [ ] A Pulumi project is created and configured for the GitHub runner.
-- [ ] The Pulumi stack can be successfully deployed to a target cloud provider.
-- [ ] A GitHub self-hosted runner is successfully registered and online after deployment.
-- [ ] The Pulumi code is well-documented and follows best practices.
+- [ ] A Pulumi project is created that can deploy a GitHub Actions self-hosted runner.
+- [ ] The Pulumi project can be successfully deployed to a cloud provider.
+- [ ] The deployed runner successfully registers with GitHub.
+- [ ] Documentation is provided for deploying and configuring the Pulumi stack.
 
 # Risks & Mitigations
 
-- Risk: Complexity of cloud provider configuration → Mitigation: Start with a minimal viable cloud setup and iterate.
-- Risk: GitHub runner registration issues → Mitigation: Thorough testing of the registration process and clear error logging.
+- Risk: Complexity of cloud provider setup → Mitigation: Start with a simple, well-documented cloud provider and instance type.
+- Risk: GitHub API rate limits during runner registration → Mitigation: Implement retry mechanisms and exponential backoff for API calls.
 
 # Rollout & Review
 
