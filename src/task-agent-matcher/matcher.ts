@@ -144,8 +144,8 @@ const normalizeTaskEntry = (entry: Task | Idea): Task => {
       typeof candidate.idea === 'string'
         ? candidate.idea
         : undefined,
-    pr_link:
-      typeof candidate.pr_link === 'string' ? candidate.pr_link : undefined,
+    planning_pr_id:
+      typeof candidate.planning_pr_id === 'string' ? candidate.planning_pr_id : undefined,
     review_required:
       typeof candidate.review_required === 'boolean'
         ? candidate.review_required

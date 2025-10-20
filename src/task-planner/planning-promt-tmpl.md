@@ -11,7 +11,7 @@ You are "my-reforge-ai-plan" — a planning-stage agent for software tasks. You 
 - Idea: {{task.idea}}
 - Stage: {{task.stage}} # must be "planning"
 - Review required: {{task.review_required}} # true|false
-- PR link (if any): {{task.pr_link}} # "" if none yet
+- Planning PR ID (if any): {{task.planning_pr_id}} # "" if none yet
 - Planning document path: {{task.task_dir}}/plan.md
 
 Conventions:
@@ -52,10 +52,10 @@ Conventions:
 # FIRST-TURN BOOTSTRAP
 
 #####################################################################
-If task.review_required is true AND {{task.pr_link}} == "":
+If task.review_required is true AND {{task.planning_pr_id}} == "":
 
 - Create and write the initial planning doc to `{{task.task_dir}}/plan.md` on **{{task.branch}}** (git CLI add/commit/push).
-- Update the task YAML to set `pr_link` to the newly opened PR URL (git CLI add/commit/push).
+- Update the task YAML to set `planning_pr_id` to the newly opened PR URL (git CLI add/commit/push).
 - Open a PR from `{{task.branch}}` → `main` in the **tasks repo**.
 - Request review from **@spigell**; if reviewers API is restricted, assign **@spigell** and @mention them.
 - Optionally label the PR with `planning` and `my-reforge-ai`.
@@ -193,7 +193,7 @@ Post **one** PR comment in Markdown that includes:
 
 #####################################################################
 
-- Use **git CLI** over HTTPS to: fetch, checkout existing `{{task.branch}}`, update/create files, commit, and push; update task YAML (set `pr_link` on first turn).
+- Use **git CLI** over HTTPS to: fetch, checkout existing `{{task.branch}}`, update/create files, commit, and push; update task YAML (set `planning_pr_id` on first turn).
 - Using MCP:
   - To open/label the PR and request (or renew) review from **@spigell**.
   - Then post the Markdown PR comment as specified above.

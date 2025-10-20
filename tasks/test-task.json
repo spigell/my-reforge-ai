@@ -8,7 +8,7 @@
     "kind": "feature",
     "idea": "Implement a Pulumi IaC for deploying github runner",
     "stage": "planning",
-    "pr_link": "",
+    "planning_pr_id": "",
     "review_required": true
   }
 }

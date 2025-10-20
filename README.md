@@ -85,6 +85,10 @@ The repository is organized as follows:
 - `.github/`: Contains GitHub Actions workflows.
 - `AGENTS.md`: Contains detailed architecture and guidelines for AI agents.
 
+## PR Creation
+
+Note that pull requests are created by a separate, out-of-band process, not by the AI agent itself. The agent will reference the PR once it is created.
+
 ## Contributing
 
 The project reflects personal workflows, but feel free to open an issue or pull request if you notice something that can be improved.

@@ -8,7 +8,7 @@ ideas:
     # stage can be 'planning' or 'implementing'
     stage: planning
     # if PR is already created then link should be here
-    pr_link: ''
+    planning_pr_id: ''
     review_required: true
     # Optional: The maximum time in milliseconds the task is allowed to run.
     # If not specified, a default timeout will be applied by the executor.

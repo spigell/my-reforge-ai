@@ -10,7 +10,7 @@ type GeneralTask = {
     branch?: string;
     directoryName?: string;
   }>;
-  pr_link?: string;
+  planning_pr_id?: string;
   review_required?: boolean;
   timeout_ms?: number;
   task_dir: string;
