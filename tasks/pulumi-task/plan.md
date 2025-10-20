@@ -6,38 +6,38 @@
 
 # Goal & Non-Goals
 
-- Goal: To implement a Pulumi Infrastructure as Code (IaC) solution for deploying a GitHub Actions self-hosted runner, ensuring it is scalable, maintainable, and integrated with the existing `my-reforge-ai` project.
+- Goal: To implement Infrastructure as Code (IaC) using Pulumi for deploying a GitHub Actions self-hosted runner, ensuring automated and consistent deployment.
 - Non-Goals:
     - Implementing the GitHub Actions workflow itself.
-    - Managing the lifecycle of the GitHub Actions runner beyond its initial deployment.
-    - Creating a generic Pulumi component for all types of GitHub Actions runners.
+    - Managing the applications running on the GitHub runner.
+    - Detailed cost optimization beyond basic resource provisioning.
 
 # Deliverables
 
-- [ ] Pulumi program (TypeScript) for deploying a GitHub Actions runner.
-- [ ] Configuration files for the Pulumi program.
-- [ ] Documentation for deploying and managing the Pulumi stack.
-- [ ] Basic tests for the Pulumi infrastructure.
+- [ ] Pulumi project structure for the GitHub runner deployment (main.go, Pulumi.yaml, etc.)
+- [ ] Pulumi code to provision necessary cloud resources (e.g., VM, networking, security groups) for a GitHub runner.
+- [ ] Configuration for the GitHub runner to register with the `spigell/my-reforge-ai` repository.
+- [ ] Documentation on how to deploy and manage the Pulumi stack.
 
 # Approach
 
-- Summary: The Pulumi program will define the necessary cloud resources (e.g., VM, networking, security groups) to host a GitHub Actions runner. It will use TypeScript for infrastructure definition. The runner will be configured to register with the `spigell/my-reforge-ai` repository.
-- Affected paths (target repo): `deploy/pulumi-runner/` (new directory), `deploy/pulumi-runner/Pulumi.yaml`, `deploy/pulumi-runner/index.ts`, `deploy/pulumi-runner/package.json`, `deploy/pulumi-runner/tsconfig.json`
+- Summary: I will create a new Pulumi project in Go within the `deploy/gh-runner/pulumi` directory. This project will define the cloud resources required for a GitHub Actions runner. The Pulumi code will provision a virtual machine, configure its networking, and install the GitHub Actions runner software, registering it with the target repository.
+- Affected paths (target repo): `deploy/gh-runner/pulumi/` (new directory and files)
 - Interfaces/IO: Pulumi CLI for deployment, GitHub API for runner registration.
-- Security/Secrets: GitHub Personal Access Token (PAT) for runner registration will be managed as a Pulumi secret. No PATs will be hardcoded or exposed in plain text.
+- Security/Secrets: GitHub token for runner registration will be managed as a Pulumi secret. Cloud provider credentials will be handled by Pulumi's standard authentication mechanisms (e.g., environment variables, cloud provider CLI configuration).
 
 # Acceptance Criteria
 
-- [ ] A Pulumi stack can be successfully deployed, creating a functional GitHub Actions runner.
-- [ ] The deployed runner successfully registers with the `spigell/my-reforge-ai` repository.
-- [ ] The Pulumi program can be updated and redeployed without downtime for existing runners (if applicable, for future scaling).
-- [ ] The Pulumi stack can be destroyed, cleaning up all created resources.
+- [ ] A new Pulumi project is created under `deploy/gh-runner/pulumi`.
+- [ ] The Pulumi project successfully deploys a functional GitHub Actions runner.
+- [ ] The deployed runner registers itself with the `spigell/my-reforge-ai` repository.
+- [ ] The Pulumi stack can be updated and destroyed cleanly.
 
 # Risks & Mitigations
 
-- Risk: Complexity of cloud resource configuration. → Mitigation: Start with a minimal viable runner setup and iterate.
-- Risk: Security of GitHub PAT. → Mitigation: Use Pulumi secrets management and ensure PAT has minimal necessary scope.
-- Risk: Compatibility issues with existing infrastructure. → Mitigation: Isolate the Pulumi deployment to its own directory and stack.
+- Risk: Complexity of cloud resource provisioning → Mitigation: Start with a minimal viable runner setup and iterate.
+- Risk: GitHub runner registration issues → Mitigation: Thorough testing of the registration process and clear error logging.
+- Risk: Security of secrets management → Mitigation: Utilize Pulumi's built-in secrets management and follow best practices for credential handling.
 
 # Rollout & Review
 
