@@ -185,20 +185,17 @@ chore(my-reforge-ai): run task
 
 ## Runner Requirements
 
-- GitHub self-hosted runner **with Codex CLI installed**.
-  - The `codex-gh-runner` deployment uses `ghcr.io/spigell/codex-github-runner:2.329.0-549871` image.
-  - It runs with 2 replicas and is labeled `codex`.
-  - The model used is `gpt-5-codex` with `danger-full-access` sandbox mode and network access enabled.
+- GitHub self-hosted runners are used for executing tasks. These runners have the necessary AI agent CLIs installed (e.g., Codex CLI, Gemini CLI).
 - All non-GitHub hosted agents have Node.js runtime installed.
 - Authentication configured for:
   - Target repos (push/PR).
-  - Codex/LLM provider (env/secret).
+  - AI agent provider (env/secret).
   - MCP server access.
   - Codex CLI auth material at `~/.codex/auth.json` (present on the shared runners).
 
 ---
 
-## Budgeting Policy (Weekly → Daily → Hourly)
+## Budgeting Policy (Codex Runner)
 
 - **Weekly limit** split evenly across **7 days**.
 - **Aggressive mode** kicks in when behind (e.g., Day 5 you still have ~90% of the weekly budget, spend more than the equal share (e.g., 40% extra)).
