@@ -1,8 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import handlebars from 'handlebars';
-import { fileURLToPath } from 'node:url';
-import { Agent } from '../task-executor/agents/base.js';
+import { Agent } from '../libs/agents/base.js';
 import { AgentId } from '../types/agent.js';
 import { Task } from '../types/task.js';
 
@@ -69,6 +68,6 @@ export async function runPlanner({
 }
 
 const getPlanningTemplatePath = () => {
-  const templateUrl = new URL('../task-executor/planning-promt-tmpl.md', import.meta.url);
-  return fileURLToPath(templateUrl);
+  // Assumes the script is run from the project root
+  return path.resolve('src', 'task-planner', 'planning-promt-tmpl.md');
 };

@@ -4,7 +4,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { tmpdir } from 'node:os';
 import { runPlanner } from '../task-planner/planner.js';
-import type { Agent } from '../task-executor/agents/base.js';
+import type { Agent } from '../libs/agents/base.js';
 import { AgentId } from '../types/agent.js';
 import type { Task } from '../types/task.js';
 

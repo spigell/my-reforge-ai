@@ -1,5 +1,5 @@
 import path from 'path';
-import { Agent } from '../task-executor/agents/base.js';
+import { Agent } from '../libs/agents/base.js';
 import { AgentId } from '../types/agent.js';
 import { Task } from '../types/task.js';
 

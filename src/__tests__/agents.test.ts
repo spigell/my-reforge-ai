@@ -5,7 +5,7 @@ import type {
   ThreadEvent,
   ThreadOptions,
 } from '@openai/codex-sdk';
-import { CodexAgent } from '../task-executor/agents/codex.js';
+import { CodexAgent } from '../libs/agents/codex.js';
 
 class StubThread {
   private readonly events: ThreadEvent[];
