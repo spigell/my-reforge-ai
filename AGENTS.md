@@ -186,6 +186,9 @@ chore(my-reforge-ai): run task
 ## Runner Requirements
 
 - GitHub self-hosted runner **with Codex CLI installed**.
+  - The `codex-gh-runner` deployment uses `ghcr.io/spigell/codex-github-runner:2.329.0-549871` image.
+  - It runs with 2 replicas and is labeled `codex`.
+  - The model used is `gpt-5-codex` with `danger-full-access` sandbox mode and network access enabled.
 - All non-GitHub hosted agents have Node.js runtime installed.
 - Authentication configured for:
   - Target repos (push/PR).
