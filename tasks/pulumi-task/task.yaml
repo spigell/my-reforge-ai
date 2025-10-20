@@ -5,5 +5,5 @@ tasks:
     kind: feature
     idea: 'Implement a Pulumi IaC for deploying github runner'
     stage: planning
-    pr_link: 'https://github.com/spigell/my-reforge-ai/pull/5'
+    pr_link: 'https://github.com/spigell/my-reforge-ai/pull/6'
     review_required: true
