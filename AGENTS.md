@@ -4,6 +4,7 @@
 
 Source code lives in `src/` as TypeScript modules. Services are organized into logical folders within `src/`.
 
+- `src/bin`: Contains executable scripts.
 - `src/libs/usage-manager`: Contains the logic for fetching and calculating token usage.
 - `src/libs/agents`: Contains the base agent interface and implementations for different AI agents (e.g., Codex, Gemini).
 - `src/libs/codex-api`: Contains the API client for interacting with the Codex service.
