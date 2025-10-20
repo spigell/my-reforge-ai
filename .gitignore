@@ -23,7 +23,7 @@ go.work.sum
 
 build/*
 test-project/*
-bin/
+./bin/
 node_modules
 __debug*
 test-template
