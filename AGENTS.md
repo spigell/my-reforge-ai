@@ -8,23 +8,7 @@ Source code lives in `src/` as TypeScript modules. Services are organized into l
 - `src/task-agent-matcher`: Contains task and agent matching logic.
 - `src/task-planner`: Contains logic for creating a `plan.md` from an `ideas.yaml` file.
 - `src/task-implementor`: Contains logic for executing tasks based on `plan.md`.
-  Compiled artifacts belong in `dist/` after running the build. Deployment assets sit in `deploy/`, with `deploy/gh-runner` and `deploy/workbench` providing Kubernetes manifests and bootstrap scripts; update them when your change requires infrastructure adjustments. Shared automation files (GitHub workflows, Husky hooks) reside under `.github/` and `.husky/`.
-
-### Type Definitions (`src/types/task.ts`)
-
-The `src/types/task.ts` file defines the core data structures for tasks and agent management. These types ensure consistency, type safety, and flexibility in how tasks are defined and processed by AI agents.
-
-- **`AgentId` Enum**: Standardized identifiers for different AI agents (e.g., `OpenAICodex`, `GoogleGemini25Pro`, `GoogleGemini25Flash`). This provides a canonical way to refer to agents throughout the system.
-- **`ALLOWED_AGENTS`**: A `readonly` array listing all currently supported `AgentId` values, used for validation.
-- **`DEFAULT_AGENT`**: Specifies the default `AgentId` to be used when an agent is not explicitly defined for a task.
-- **`AGENT_ALIAS_ENTRIES` & `AGENT_ALIAS_LOOKUP`**: These provide a mechanism to map various string aliases (e.g., "codex", "gemini-2.5-pro") to their canonical `AgentId` enum values, allowing for flexible input in task definitions.
-- **`parseAgentId(value: unknown): AgentId | undefined`**: A utility function to convert a string alias into its corresponding `AgentId`.
-- **`normalizeAgentList(agents: unknown[]): AgentId[]`**: A function to process an array of potential agent identifiers, filtering out invalid or unsupported entries and returning a list of unique, canonical `AgentId`s.
-- **`Task` Type**: Defines the structure of a task, including properties like `repo`, `branch`, `kind`, `idea`, and importantly, `agents?: AgentId[]`. The `agents` field now explicitly uses `AgentId[]`, ensuring type safety for agent assignments.
-- **`MatchedTask` Type**: Represents a task after the `Task Agent Matcher` has selected a specific agent. It includes the `selectedAgent: AgentId` and the `task: Task` itself.
-- **`MatcherOutput` Type**: Defines the output structure of the `Task Agent Matcher`, containing `repo`, `branch`, `selectedAgent`, and the `task` object.
-
-These types are critical for the `Task Agent Matcher` to correctly identify, validate, and assign tasks to the appropriate AI agents, ensuring a robust and error-free workflow.
+  Compiled artifacts belong in `dist/` after running the build. Deployment assets sit in `deploy/` with `deploy/gh-runner` and `deploy/workbench` providing Kubernetes manifests and bootstrap scripts; update them when your change requires infrastructure adjustments. Shared automation files (GitHub workflows, Husky hooks) reside under `.github/` and `.husky/`.
 
 ## Build, Test, and Development Commands
 
@@ -54,8 +38,6 @@ Every functional change should introduce or update tests. Compile first, then ru
 
 Write commits as concise, imperative sentences (`Add fetch usage cache`). Group related changes together and keep noise out of the diff. Pull requests must include a summary, linked issue (if applicable), testing notes, and confirmation that deployment artifacts in `deploy/` remain valid or describe the needed follow-up. Ensure the PR addresses only a single feature or fix and contains accompanying tests.
 
----
-
 # MVP Design Spec
 
 ## Overview
@@ -81,7 +63,7 @@ tasks:
     # stage can be 'planning' or 'implementing'
     stage: planning
     # if PR is already created then link should be here
-    pr_link: ''
+    planning_pr_id: ''
     review_required: true
 ```
 
@@ -143,7 +125,7 @@ chore(my-reforge-ai): run task
   - **Workspace**: Prepares the workspace by cloning the target repository and checking out the correct branch using `src/task-implementor/workspace-manager.ts`.
   - **Prompting**: Directs the agent to follow the plan stored at `<task_dir>/plan.md` and attaches run metadata pointing to the absolute plan path.
   - **Git**: pull target repo, modify files as needed, commit & push branches.
-  - **PR**: open/update PR when `review_required: true`.
+  - **PR**: open/update PR when `review_required: true`. Note that the PR is created by a separate process, not by the agent itself.
   - **MCP**: converse in PR like a human for reviews (post, read replies, iterate, fix commits).
 - Respects per-run token budget from the Usage Manager.
 - CLI entrypoint: `my-reforge-ai-implementor` (or `yarn implement`) consumes the same matcher payload and executes the task according to the existing plan.
@@ -252,5 +234,3 @@ cron/runner
   - `tokens_in`, `tokens_out`, `total_tokens`
   - PR URL (if any)
   - Result: `completed`, `awaiting-review`, or `skipped (lock)`
-
----
