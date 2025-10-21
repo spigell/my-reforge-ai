@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { WorkspacePort } from '../../core/ports/WorkspacePort.js';
+import type { WorkspacePort } from '../../core/ports/workspace-port.js';
 import { prepareWorkspaces } from '../../libs/workspace/workspace-manager.js';
 
 export class WorkspaceManager implements WorkspacePort {

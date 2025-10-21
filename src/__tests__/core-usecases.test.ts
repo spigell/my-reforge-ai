@@ -7,7 +7,7 @@ import type { Agent } from '../libs/agents/base.js';
 import { AgentId } from '../types/agent.js';
 import type { MatchedTask } from '../types/task.js';
 import type { Services } from '../core/usecases/types.js';
-import type { GitService } from '../core/services/GitService.js';
+import type { GitService } from '../core/services/git-service.js';
 import { planTask } from '../core/usecases/plan-task/plan-task.js';
 import { implementTask } from '../core/usecases/implementTask.js';
 
@@ -174,7 +174,8 @@ describe('core usecases', () => {
       headBranch: matchedTask.task.branch,
       baseBranch: undefined,
       title: 'planning: <change here>',
-      body: `Auto-created planning PR for task with idea: \n${matchedTask.task.idea}`,
+      body: `Auto-created planning PR for task with idea: 
+${matchedTask.task.idea}`,
       draft: true,
     });
     const taskYamlPath = path.join(mainWorkspace, 'tasks/refactor/task.yaml');

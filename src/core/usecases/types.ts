@@ -1,8 +1,8 @@
-import type { WorkspacePort } from '../ports/WorkspacePort.js';
-import type { PullRequestPort } from '../ports/PullRequestPort.js';
-import type { AgentsPort } from '../ports/AgentsPort.js';
-import type { LoggerPort } from '../ports/LoggerPort.js';
-import type { GitService } from '../services/GitService.js';
+import type { WorkspacePort } from '../ports/workspace-port.js';
+import type { PullRequestPort } from '../ports/pull-request-port.js';
+import type { AgentsPort } from '../ports/agents-port.js';
+import type { LoggerPort } from '../ports/logger-port.js';
+import type { GitService } from '../services/git-service.js';
 
 export type Services = {
   workspace: WorkspacePort;

@@ -14,4 +14,4 @@ jobs:
       - name: Build project
         run: yarn build
       - name: Run Task Planner
-        run: yarn plan
+        run: node ./dist/task-planner/cli.js tasks/test-task.json

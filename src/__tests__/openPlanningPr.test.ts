@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 import { describe, test } from 'node:test';
-import type { PullRequestPort } from '../core/ports/PullRequestPort.js';
+import type { PullRequestPort } from '../core/ports/pull-request-port.js';
 import { openPlanningPr } from '../core/usecases/plan-task/open-pr.js';
 
 describe('openPlanningPr', () => {

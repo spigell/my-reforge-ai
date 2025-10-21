@@ -1,5 +1,5 @@
-import type { LoggerPort } from '../../ports/LoggerPort.js';
-import type { PullRequestPort } from '../../ports/PullRequestPort.js';
+import type { LoggerPort } from '../../ports/logger-port.js';
+import type { PullRequestPort } from '../../ports/pull-request-port.js';
 
 export type OpenPlanningPrDeps = {
   pr: PullRequestPort;
