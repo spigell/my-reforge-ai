@@ -24,10 +24,6 @@ export async function runPlanner({
   timeoutMs,
   signal,
 }: PlannerOptions) {
-  if (!task.idea) {
-    throw new Error('Planning stage requires an idea to generate a plan.');
-  }
-
   const templatePath = getPlanningTemplatePath();
   console.log(`Using planning template: ${templatePath}`);
 

@@ -1,13 +1,15 @@
-import { runPlanner } from '../../task-planner/planner.js';
-import type { MatchedTask } from '../../types/task.js';
-import type { Services, UseCaseRunOptions } from './types.js';
+import { runPlanner } from '../../../task-planner/planner.js';
+import type { MatchedTask } from '../../../types/task.js';
+import type { Services, UseCaseRunOptions } from '../types.js';
+import fs from 'node:fs';
 import {
-  deriveTaskStem,
   deriveTimeout,
   resolveWorkspaceRoot,
   setupAbortHandling,
-} from './helpers.js';
-import { openPlanningPr } from './openPlanningPr.js';
+  writeYamlFile,
+} from '../helpers.js';
+import { openPlanningPr } from './open-pr.js';
+import path from 'node:path';
 
 export async function planTask(
   matchedTask: MatchedTask,
@@ -17,8 +19,13 @@ export async function planTask(
   const { task, selectedAgent } = matchedTask;
   const { workspace, agents, pr, logger, git } = services;
 
+  // TO DO: It should be checked in validation layer. @spigell
   if (!task.repo || !task.branch) {
     throw new Error('Task repo and branch must be defined.');
+  }
+
+  if (!task.idea) {
+    throw new Error('Planning stage requires an idea to generate a plan.');
   }
 
   const workspaceRoot = resolveWorkspaceRoot(options.workspaceRoot);
@@ -44,27 +51,55 @@ export async function planTask(
 
   const [mainWorkspacePath, ...additionalWorkspaces] = preparedPaths;
 
-  if (task.review_required && !task.planning_pr_id) {
-    const taskStem = deriveTaskStem(task.task_dir);
+  if (!task.planning_pr_id) {
+
+    git.commitEmpty({cwd: mainWorkspacePath, message: 'Test commit'})
+    git.push({cwd: mainWorkspacePath, branch: task.branch, setUpstream: true})
+
     const prResult = await openPlanningPr(
       {
         owner,
         repo: repoName,
         workspacePath: mainWorkspacePath,
-        taskId: taskStem,
         taskDir: task.task_dir,
         taskObject: { ...task },
         featureBranch: task.branch,
         baseBranch: undefined,
-        prTitle: `planning: ${taskStem}`,
-        prBody: `Auto-created planning PR for task ${taskStem}`,
+        prTitle: `planning: <change here>`,
+        prBody: `Auto-created planning PR for task with idea: \n${task.idea}`,
         draft: true,
       },
-      { git, pr, logger },
+      { pr, logger },
     );
 
+    await git.ensureBranchAndSync({cwd: mainWorkspacePath, branch: 'main'})
+
     task.planning_pr_id = prResult.number.toString();
-    (task as Record<string, unknown> & { staging?: string }).staging = 'planning';
+    task.stage = 'planning';
+
+    const absoluteTaskDir = path.join(mainWorkspacePath, task.task_dir);
+    const yamlPath = path.join(absoluteTaskDir, 'task.yaml');
+
+    fs.mkdirSync(absoluteTaskDir, { recursive: true });
+
+    writeYamlFile(yamlPath, task);
+
+    await git.commitAll({
+      cwd: mainWorkspacePath,
+      message: `chore(task): add ${task.task_dir}/task.yaml`,
+    });
+
+    await git.push({
+      cwd: mainWorkspacePath,
+      branch: 'main'
+    });
+
+    await git.ensureBranchAndSync({cwd: mainWorkspacePath, branch: task.branch})
+    await git.mergeBranch({cwd: mainWorkspacePath, from: 'main'})
+    await git.push({
+      cwd: mainWorkspacePath,
+      branch: task.branch
+    });
   }
   const agent = agents.getAgent(selectedAgent);
   const timeoutMs = deriveTimeout(task, options.timeoutMs);

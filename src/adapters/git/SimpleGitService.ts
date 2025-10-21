@@ -63,6 +63,24 @@ export class SimpleGitService implements GitService {
     return true;
   }
 
+  async commitEmpty({
+    cwd,
+    message,
+  }: Parameters<GitService['commitEmpty']>[0]): Promise<boolean> {
+    const git = this.getGit(cwd);
+    await git.commit(['--allow-empty', '-m', message]);
+    return true;
+  }
+
+  async mergeBranch({
+    cwd,
+    from,
+  }: Parameters<GitService['mergeBranch']>[0]): Promise<boolean> {
+    const git = this.getGit(cwd);
+    const mergeResult = await git.merge([from]);
+    return mergeResult.failed
+  }
+
   async push({
     cwd,
     branch,

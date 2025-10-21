@@ -2,7 +2,6 @@ import { runImplementer } from '../../task-implementor/implementor.js';
 import type { MatchedTask } from '../../types/task.js';
 import type { Services, UseCaseRunOptions } from './types.js';
 import {
-  deriveTaskStem,
   deriveTimeout,
   resolveWorkspaceRoot,
   setupAbortHandling,
@@ -68,8 +67,7 @@ export async function implementTask(
     const shouldEnsurePr = result.status === 'success' && task.review_required;
 
     if (shouldEnsurePr) {
-      const taskStem = deriveTaskStem(task.task_dir);
-      const title = `feat(${task.repo}@${task.branch}): ${taskStem}`;
+      const title = `feat(${task.repo}@${task.branch}): ${task.task_dir}`;
       logger.info(
         `Ensuring implementation PR exists for ${task.repo}@${task.branch} (title: "${title}")`,
       );

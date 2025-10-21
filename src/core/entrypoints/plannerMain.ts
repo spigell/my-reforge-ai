@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { planTask } from '../usecases/planTask.js';
+import { planTask } from '../usecases/plan-task/plan-task.js';
 import type { UseCaseRunOptions, Services } from '../usecases/types.js';
 import { defaultServices } from './services.default.js';
 import type { MatchedTask } from '../../types/task.js';

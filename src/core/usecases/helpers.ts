@@ -1,6 +1,7 @@
-import path from 'node:path';
 import type { MatchedTask } from '../../types/task.js';
 import type { LoggerPort } from '../ports/LoggerPort.js';
+import { dump as dumpYaml } from 'js-yaml';
+import fs from 'node:fs';
 
 export const DEFAULT_WORKSPACE_ROOT = './workspace';
 
@@ -21,13 +22,6 @@ export const deriveTimeout = (
 
   const legacyTimeout = (task as { timeoutMs?: unknown }).timeoutMs;
   return typeof legacyTimeout === 'number' ? legacyTimeout : 300_000;
-};
-
-export const deriveTaskStem = (taskDir: string | undefined) => {
-  if (!taskDir) {
-    return 'task';
-  }
-  return path.posix.basename(taskDir);
 };
 
 export const setupAbortHandling = ({
@@ -75,4 +69,9 @@ export const setupAbortHandling = ({
     signal: abortController.signal,
     dispose,
   };
+};
+
+export function writeYamlFile(filePath: string, data: Record<string, unknown>): void {
+  const serialized = dumpYaml(data, { noRefs: true });
+  fs.writeFileSync(filePath, serialized, 'utf8');
 };
