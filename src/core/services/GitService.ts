@@ -5,14 +5,11 @@ export interface GitService {
     base?: string;
   }): Promise<void>;
 
-  commitEmpty(opts: {cwd: string; message: string;}): Promise<boolean>;
+  commitEmpty(opts: { cwd: string; message: string }): Promise<boolean>;
 
-  mergeBranch(opts: {cwd: string; from: string}): Promise<boolean>;
+  mergeBranch(opts: { cwd: string; from: string }): Promise<boolean>;
 
-  commitAll(opts: {
-    cwd: string;
-    message: string;
-  }): Promise<boolean>;
+  commitAll(opts: { cwd: string; message: string }): Promise<boolean>;
 
   push(opts: {
     cwd: string;

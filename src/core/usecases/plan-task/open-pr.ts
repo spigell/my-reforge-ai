@@ -23,15 +23,8 @@ export async function openPlanningPr(
   input: OpenPlanningPrInput,
   deps: OpenPlanningPrDeps,
 ) {
-  const {
-    owner,
-    repo,
-    featureBranch,
-    baseBranch,
-    prTitle,
-    prBody,
-    draft,
-  } = input;
+  const { owner, repo, featureBranch, baseBranch, prTitle, prBody, draft } =
+    input;
   const { pr, logger } = deps;
 
   const prResult = await pr.openOrGetPullRequest({
@@ -39,7 +32,7 @@ export async function openPlanningPr(
     repo,
     headBranch: featureBranch,
     baseBranch,
-    title: prTitle ?? "test",
+    title: prTitle ?? 'test',
     body: prBody,
     draft: draft ?? true,
   });

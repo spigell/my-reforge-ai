@@ -42,7 +42,9 @@ describe('planTask use case', () => {
 
   test('prepares workspace, ensures planning PR, writes task.yaml, and runs planner', async () => {
     const gitCalls: Array<{ method: string; args: unknown }> = [];
-    const prCalls: Array<Parameters<Services['pr']['openOrGetPullRequest']>[0]> = [];
+    const prCalls: Array<
+      Parameters<Services['pr']['openOrGetPullRequest']>[0]
+    > = [];
 
     const gitStub: GitService = {
       async ensureBranchAndSync(opts) {
@@ -106,7 +108,9 @@ describe('planTask use case', () => {
       },
     };
 
-    const result = await planTask(matchedTask, services, { workspaceRoot: tmpDir });
+    const result = await planTask(matchedTask, services, {
+      workspaceRoot: tmpDir,
+    });
 
     assert.strictEqual(result.status, 'success');
     assert.strictEqual(prCalls.length, 1);

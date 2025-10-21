@@ -21,7 +21,9 @@ export async function implementTask(
 
   const [owner, repoName] = task.repo.split('/');
   if (!owner || !repoName) {
-    throw new Error(`Task repo must be in "owner/repo" format. Received "${task.repo}".`);
+    throw new Error(
+      `Task repo must be in "owner/repo" format. Received "${task.repo}".`,
+    );
   }
 
   const workspaceRoot = resolveWorkspaceRoot(options.workspaceRoot);

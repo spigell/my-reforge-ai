@@ -5,7 +5,9 @@ import { openPlanningPr } from '../core/usecases/plan-task/open-pr.js';
 
 describe('openPlanningPr', () => {
   test('passes provided PR metadata through to the pull request port', async () => {
-    const receivedCalls: Array<Parameters<PullRequestPort['openOrGetPullRequest']>[0]> = [];
+    const receivedCalls: Array<
+      Parameters<PullRequestPort['openOrGetPullRequest']>[0]
+    > = [];
     const prStub: PullRequestPort = {
       async openOrGetPullRequest(params) {
         receivedCalls.push(params);
@@ -62,7 +64,9 @@ describe('openPlanningPr', () => {
   });
 
   test('applies defaults when optional fields are omitted', async () => {
-    let receivedParams: Parameters<PullRequestPort['openOrGetPullRequest']>[0] | undefined;
+    let receivedParams:
+      | Parameters<PullRequestPort['openOrGetPullRequest']>[0]
+      | undefined;
     const loggerStub = {
       info() {},
       warn() {},

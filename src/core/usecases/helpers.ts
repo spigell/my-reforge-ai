@@ -49,7 +49,9 @@ export const setupAbortHandling = ({
     if (externalSignal.aborted) {
       handleExternalAbort();
     } else {
-      externalSignal.addEventListener('abort', handleExternalAbort, { once: true });
+      externalSignal.addEventListener('abort', handleExternalAbort, {
+        once: true,
+      });
     }
   }
 
@@ -71,7 +73,10 @@ export const setupAbortHandling = ({
   };
 };
 
-export function writeYamlFile(filePath: string, data: Record<string, unknown>): void {
+export function writeYamlFile(
+  filePath: string,
+  data: Record<string, unknown>,
+): void {
   const serialized = dumpYaml(data, { noRefs: true });
   fs.writeFileSync(filePath, serialized, 'utf8');
-};
+}

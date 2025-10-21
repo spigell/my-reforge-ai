@@ -11,7 +11,9 @@ import type { GitService } from '../core/services/GitService.js';
 import { planTask } from '../core/usecases/plan-task/plan-task.js';
 import { implementTask } from '../core/usecases/implementTask.js';
 
-const createAgentStub = (onRun?: (options: Parameters<Agent['run']>[0]) => void): Agent => ({
+const createAgentStub = (
+  onRun?: (options: Parameters<Agent['run']>[0]) => void,
+): Agent => ({
   async run(options) {
     onRun?.(options);
     return {
@@ -58,8 +60,12 @@ describe('core usecases', () => {
   });
 
   test('planTask prepares workspace, runs agent, and ensures PR when review is required', async () => {
-    const workspaceCalls: Array<Parameters<Services['workspace']['prepare']>[0]> = [];
-    const prCalls: Array<Parameters<Services['pr']['openOrGetPullRequest']>[0]> = [];
+    const workspaceCalls: Array<
+      Parameters<Services['workspace']['prepare']>[0]
+    > = [];
+    const prCalls: Array<
+      Parameters<Services['pr']['openOrGetPullRequest']>[0]
+    > = [];
     const gitCalls: Array<{ method: string; args: unknown }> = [];
     const agent = createAgentStub();
     const loggerStub = createLoggerStub();
@@ -183,14 +189,20 @@ describe('core usecases', () => {
       'expected planning prompt to be written in workspace',
     );
     assert.ok(
-      loggerStub.messages.some((message) => message.includes('Planner finished')),
+      loggerStub.messages.some((message) =>
+        message.includes('Planner finished'),
+      ),
       'expected planner to log completion',
     );
   });
 
   test('implementTask prepares workspace and ensures PR when review is required', async () => {
-    const workspaceCalls: Array<Parameters<Services['workspace']['prepare']>[0]> = [];
-    const prCalls: Array<Parameters<Services['pr']['openOrGetPullRequest']>[0]> = [];
+    const workspaceCalls: Array<
+      Parameters<Services['workspace']['prepare']>[0]
+    > = [];
+    const prCalls: Array<
+      Parameters<Services['pr']['openOrGetPullRequest']>[0]
+    > = [];
     let capturedPrompt: string | undefined;
     const agent = createAgentStub((options) => {
       capturedPrompt = options.prompt;

@@ -35,7 +35,9 @@ export async function planTask(
 
   const [owner, repoName] = task.repo.split('/');
   if (!owner || !repoName) {
-    throw new Error(`Task repo must be in "owner/repo" format. Received "${task.repo}".`);
+    throw new Error(
+      `Task repo must be in "owner/repo" format. Received "${task.repo}".`,
+    );
   }
 
   const preparedPaths = await workspace.prepare({
@@ -52,54 +54,90 @@ export async function planTask(
   const [mainWorkspacePath, ...additionalWorkspaces] = preparedPaths;
 
   if (!task.planning_pr_id) {
+    try {
+      logger.info(`Git: Committing empty commit in ${mainWorkspacePath}`);
+      git.commitEmpty({ cwd: mainWorkspacePath, message: 'Test commit' });
+      logger.info(
+        `Git: Pushing branch ${task.branch} to upstream from ${mainWorkspacePath}`,
+      );
+      git.push({
+        cwd: mainWorkspacePath,
+        branch: task.branch,
+        setUpstream: true,
+      });
 
-    git.commitEmpty({cwd: mainWorkspacePath, message: 'Test commit'})
-    git.push({cwd: mainWorkspacePath, branch: task.branch, setUpstream: true})
+      const prResult = await openPlanningPr(
+        {
+          owner,
+          repo: repoName,
+          workspacePath: mainWorkspacePath,
+          taskDir: task.task_dir,
+          taskObject: { ...task },
+          featureBranch: task.branch,
+          baseBranch: undefined,
+          prTitle: `planning: <change here>`,
+          prBody: `Auto-created planning PR for task with idea: 
+${task.idea}`,
+          draft: true,
+        },
+        { pr, logger },
+      );
 
-    const prResult = await openPlanningPr(
-      {
-        owner,
-        repo: repoName,
-        workspacePath: mainWorkspacePath,
-        taskDir: task.task_dir,
-        taskObject: { ...task },
-        featureBranch: task.branch,
-        baseBranch: undefined,
-        prTitle: `planning: <change here>`,
-        prBody: `Auto-created planning PR for task with idea: \n${task.idea}`,
-        draft: true,
-      },
-      { pr, logger },
-    );
+      logger.info(
+        `Git: Ensuring and syncing branch 'main' in ${mainWorkspacePath}`,
+      );
+      await git.ensureBranchAndSync({ cwd: mainWorkspacePath, branch: 'main' });
 
-    await git.ensureBranchAndSync({cwd: mainWorkspacePath, branch: 'main'})
+      task.planning_pr_id = prResult.number.toString();
+      task.stage = 'planning';
 
-    task.planning_pr_id = prResult.number.toString();
-    task.stage = 'planning';
+      const absoluteTaskDir = path.join(mainWorkspacePath, task.task_dir);
+      const yamlPath = path.join(absoluteTaskDir, 'task.yaml');
 
-    const absoluteTaskDir = path.join(mainWorkspacePath, task.task_dir);
-    const yamlPath = path.join(absoluteTaskDir, 'task.yaml');
+      fs.mkdirSync(absoluteTaskDir, { recursive: true });
 
-    fs.mkdirSync(absoluteTaskDir, { recursive: true });
+      writeYamlFile(yamlPath, task);
 
-    writeYamlFile(yamlPath, task);
+      logger.info(
+        `Git: Committing all changes in ${mainWorkspacePath} with message: "chore(task): add ${task.task_dir}/task.yaml"`,
+      );
+      await git.commitAll({
+        cwd: mainWorkspacePath,
+        message: `chore(task): add ${task.task_dir}/task.yaml`,
+      });
 
-    await git.commitAll({
-      cwd: mainWorkspacePath,
-      message: `chore(task): add ${task.task_dir}/task.yaml`,
-    });
+      logger.info(`Git: Pushing branch 'main' from ${mainWorkspacePath}`);
+      await git.push({
+        cwd: mainWorkspacePath,
+        branch: 'main',
+      });
 
-    await git.push({
-      cwd: mainWorkspacePath,
-      branch: 'main'
-    });
-
-    await git.ensureBranchAndSync({cwd: mainWorkspacePath, branch: task.branch})
-    await git.mergeBranch({cwd: mainWorkspacePath, from: 'main'})
-    await git.push({
-      cwd: mainWorkspacePath,
-      branch: task.branch
-    });
+      logger.info(
+        `Git: Ensuring and syncing branch ${task.branch} in ${mainWorkspacePath}`,
+      );
+      await git.ensureBranchAndSync({
+        cwd: mainWorkspacePath,
+        branch: task.branch,
+      });
+      logger.info(
+        `Git: Merging branch 'main' into ${task.branch} in ${mainWorkspacePath}`,
+      );
+      await git.mergeBranch({ cwd: mainWorkspacePath, from: 'main' });
+      logger.info(
+        `Git: Pushing branch ${task.branch} from ${mainWorkspacePath}`,
+      );
+      await git.push({
+        cwd: mainWorkspacePath,
+        branch: task.branch,
+      });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        logger.error(`Git operation failed: ${error.message}`);
+      } else {
+        logger.error(`Git operation failed: ${String(error)}`);
+      }
+      throw error;
+    }
   }
   const agent = agents.getAgent(selectedAgent);
   const timeoutMs = deriveTimeout(task, options.timeoutMs);

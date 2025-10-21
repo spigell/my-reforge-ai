@@ -78,7 +78,7 @@ export class SimpleGitService implements GitService {
   }: Parameters<GitService['mergeBranch']>[0]): Promise<boolean> {
     const git = this.getGit(cwd);
     const mergeResult = await git.merge([from]);
-    return mergeResult.failed
+    return mergeResult.failed;
   }
 
   async push({
