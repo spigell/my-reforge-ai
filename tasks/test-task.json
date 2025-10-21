@@ -3,12 +3,12 @@
   "task": {
     "repo": "spigell/my-reforge-ai",
     "timeout_ms": 500000,
-    "task_dir": "tasks/pulumi-task",
-    "branch": "feat/pulumi-task",
+    "task_dir": "tasks/pulumi-task-new",
+    "branch": "feat/pulumi-task-new",
     "kind": "feature",
     "idea": "Implement a Pulumi IaC for deploying github runner",
     "stage": "planning",
-    "planning_pr_id": "7",
+    "planning_pr_id": "",
     "review_required": true
   }
 }

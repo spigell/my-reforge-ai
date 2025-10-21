@@ -69,7 +69,7 @@ describe('Task Planner', () => {
     assert.match(promptContents, /Create a plan to refactor modules/);
   });
 
-  test('throws when idea is missing for planning stage', async () => {
+  test('still runs when idea is missing (validated earlier in pipeline)', async () => {
     const agentStub: Agent = {
       async run() {
         return {
@@ -88,18 +88,18 @@ describe('Task Planner', () => {
       task_dir: 'tasks/plan-only',
     } satisfies Task;
 
-    await assert.rejects(
-      () =>
-        runPlanner({
-          task,
-          agent: agentStub,
-          agentId: AgentId.GoogleGemini25Flash,
-          mainWorkspacePath: workspacePath,
-          additionalWorkspaces: [],
-          timeoutMs: 120000,
-          signal: new AbortController().signal,
-        }),
-      /requires an idea/,
-    );
+    const result = await runPlanner({
+      task,
+      agent: agentStub,
+      agentId: AgentId.GoogleGemini25Flash,
+      mainWorkspacePath: workspacePath,
+      additionalWorkspaces: [],
+      timeoutMs: 120000,
+      signal: new AbortController().signal,
+    });
+
+    assert.strictEqual(result.status, 'success');
+    const promptFile = path.join(workspacePath, 'planning-prompt.md');
+    assert.ok(fs.existsSync(promptFile));
   });
 });

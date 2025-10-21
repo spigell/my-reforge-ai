@@ -8,7 +8,7 @@ import { AgentId } from '../types/agent.js';
 import type { MatchedTask } from '../types/task.js';
 import type { Services } from '../core/usecases/types.js';
 import type { GitService } from '../core/services/GitService.js';
-import { planTask } from '../core/usecases/planTask.js';
+import { planTask } from '../core/usecases/plan-task/plan-task.js';
 import { implementTask } from '../core/usecases/implementTask.js';
 
 const createAgentStub = (onRun?: (options: Parameters<Agent['run']>[0]) => void): Agent => ({
@@ -68,6 +68,14 @@ describe('core usecases', () => {
     const gitStub: GitService = {
       async ensureBranchAndSync(opts) {
         gitCalls.push({ method: 'ensureBranchAndSync', args: opts });
+      },
+      async commitEmpty(opts) {
+        gitCalls.push({ method: 'commitEmpty', args: opts });
+        return true;
+      },
+      async mergeBranch(opts) {
+        gitCalls.push({ method: 'mergeBranch', args: opts });
+        return true;
       },
       async commitAll(opts) {
         gitCalls.push({ method: 'commitAll', args: opts });
@@ -134,13 +142,40 @@ describe('core usecases', () => {
       rootDir: tmpDir,
     });
     assert.strictEqual(prCalls.length, 1);
-    assert.strictEqual(gitCalls.length, 5);
-    assert.strictEqual(commitInvocation, 2);
+    assert.strictEqual(gitCalls.length, 8);
+    assert.deepStrictEqual(
+      gitCalls.map((call) => call.method),
+      [
+        'commitEmpty',
+        'push',
+        'ensureBranchAndSync',
+        'commitAll',
+        'push',
+        'ensureBranchAndSync',
+        'mergeBranch',
+        'push',
+      ],
+    );
+    assert.strictEqual(commitInvocation, 1);
+    assert.deepStrictEqual(gitCalls[1].args, {
+      cwd: mainWorkspace,
+      branch: matchedTask.task.branch,
+      setUpstream: true,
+    });
+    assert.deepStrictEqual(prCalls[0], {
+      owner: 'owner',
+      repo: 'repo',
+      headBranch: matchedTask.task.branch,
+      baseBranch: undefined,
+      title: 'planning: <change here>',
+      body: `Auto-created planning PR for task with idea: \n${matchedTask.task.idea}`,
+      draft: true,
+    });
     const taskYamlPath = path.join(mainWorkspace, 'tasks/refactor/task.yaml');
     assert.ok(fs.existsSync(taskYamlPath), 'expected task.yaml to be written');
     const yamlContent = fs.readFileSync(taskYamlPath, 'utf8');
-    assert.match(yamlContent, /staging: planning/);
-    assert.match(yamlContent, /planning_pr_id: 1/);
+    assert.match(yamlContent, /stage: planning/);
+    assert.match(yamlContent, /planning_pr_id: '?1'?/);
     assert.strictEqual(matchedTask.task.planning_pr_id, '1');
     const planPrompt = path.join(mainWorkspace, 'planning-prompt.md');
     assert.ok(
@@ -163,6 +198,12 @@ describe('core usecases', () => {
     const loggerStub = createLoggerStub();
     const gitStub: GitService = {
       async ensureBranchAndSync() {},
+      async commitEmpty() {
+        return false;
+      },
+      async mergeBranch() {
+        return false;
+      },
       async commitAll() {
         return false;
       },
@@ -223,6 +264,13 @@ describe('core usecases', () => {
       rootDir: tmpDir,
     });
     assert.strictEqual(prCalls.length, 1);
+    assert.strictEqual(prCalls[0].owner, 'owner');
+    assert.strictEqual(prCalls[0].repo, 'repo');
+    assert.strictEqual(prCalls[0].headBranch, matchedTask.task.branch);
+    assert.strictEqual(
+      prCalls[0].title,
+      `feat(${matchedTask.task.repo}@${matchedTask.task.branch}): ${matchedTask.task.task_dir}`,
+    );
     assert.ok(
       capturedPrompt?.includes('plan.md'),
       'implementor prompt should reference plan.md',
