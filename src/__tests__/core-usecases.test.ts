@@ -7,6 +7,7 @@ import type { Agent } from '../libs/agents/base.js';
 import { AgentId } from '../types/agent.js';
 import type { MatchedTask } from '../types/task.js';
 import type { Services } from '../core/usecases/types.js';
+import type { GitService } from '../core/services/GitService.js';
 import { planTask } from '../core/usecases/planTask.js';
 import { implementTask } from '../core/usecases/implementTask.js';
 
@@ -58,9 +59,25 @@ describe('core usecases', () => {
 
   test('planTask prepares workspace, runs agent, and ensures PR when review is required', async () => {
     const workspaceCalls: Array<Parameters<Services['workspace']['prepare']>[0]> = [];
-    const prCalls: Array<Parameters<Services['pr']['ensurePr']>[0]> = [];
+    const prCalls: Array<Parameters<Services['pr']['openOrGetPullRequest']>[0]> = [];
+    const gitCalls: Array<{ method: string; args: unknown }> = [];
     const agent = createAgentStub();
     const loggerStub = createLoggerStub();
+    let commitInvocation = 0;
+
+    const gitStub: GitService = {
+      async ensureBranchAndSync(opts) {
+        gitCalls.push({ method: 'ensureBranchAndSync', args: opts });
+      },
+      async commitAll(opts) {
+        gitCalls.push({ method: 'commitAll', args: opts });
+        commitInvocation += 1;
+        return true;
+      },
+      async push(opts) {
+        gitCalls.push({ method: 'push', args: opts });
+      },
+    };
 
     const services: Services = {
       workspace: {
@@ -75,12 +92,19 @@ describe('core usecases', () => {
         },
       },
       pr: {
-        async ensurePr(params) {
+        async openOrGetPullRequest(params) {
           prCalls.push(params);
-          return { url: 'http://example.com/pr/1', number: 1, created: true };
+          return {
+            id: 1,
+            number: 1,
+            url: 'http://example.com/pr/1',
+            created: true,
+            baseBranch: params.baseBranch ?? 'main',
+          };
         },
       },
       logger: loggerStub.logger,
+      git: gitStub,
     };
 
     const matchedTask: MatchedTask = {
@@ -110,6 +134,14 @@ describe('core usecases', () => {
       rootDir: tmpDir,
     });
     assert.strictEqual(prCalls.length, 1);
+    assert.strictEqual(gitCalls.length, 5);
+    assert.strictEqual(commitInvocation, 2);
+    const taskYamlPath = path.join(mainWorkspace, 'tasks/refactor/task.yaml');
+    assert.ok(fs.existsSync(taskYamlPath), 'expected task.yaml to be written');
+    const yamlContent = fs.readFileSync(taskYamlPath, 'utf8');
+    assert.match(yamlContent, /staging: planning/);
+    assert.match(yamlContent, /planning_pr_id: 1/);
+    assert.strictEqual(matchedTask.task.planning_pr_id, '1');
     const planPrompt = path.join(mainWorkspace, 'planning-prompt.md');
     assert.ok(
       fs.existsSync(planPrompt),
@@ -123,12 +155,19 @@ describe('core usecases', () => {
 
   test('implementTask prepares workspace and ensures PR when review is required', async () => {
     const workspaceCalls: Array<Parameters<Services['workspace']['prepare']>[0]> = [];
-    const prCalls: Array<Parameters<Services['pr']['ensurePr']>[0]> = [];
+    const prCalls: Array<Parameters<Services['pr']['openOrGetPullRequest']>[0]> = [];
     let capturedPrompt: string | undefined;
     const agent = createAgentStub((options) => {
       capturedPrompt = options.prompt;
     });
     const loggerStub = createLoggerStub();
+    const gitStub: GitService = {
+      async ensureBranchAndSync() {},
+      async commitAll() {
+        return false;
+      },
+      async push() {},
+    };
 
     const services: Services = {
       workspace: {
@@ -143,12 +182,19 @@ describe('core usecases', () => {
         },
       },
       pr: {
-        async ensurePr(params) {
+        async openOrGetPullRequest(params) {
           prCalls.push(params);
-          return { url: 'http://example.com/pr/2', number: 2, created: true };
+          return {
+            id: 2,
+            number: 2,
+            url: 'http://example.com/pr/2',
+            created: true,
+            baseBranch: params.baseBranch ?? 'main',
+          };
         },
       },
       logger: loggerStub.logger,
+      git: gitStub,
     };
 
     const matchedTask: MatchedTask = {

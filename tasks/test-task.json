@@ -2,13 +2,13 @@
   "selectedAgent": "gemini-2.5-flash",
   "task": {
     "repo": "spigell/my-reforge-ai",
-    "timeout_ms": 50000,
+    "timeout_ms": 500000,
     "task_dir": "tasks/pulumi-task",
     "branch": "feat/pulumi-task",
     "kind": "feature",
     "idea": "Implement a Pulumi IaC for deploying github runner",
     "stage": "planning",
-    "planning_pr_id": "",
+    "planning_pr_id": "7",
     "review_required": true
   }
 }

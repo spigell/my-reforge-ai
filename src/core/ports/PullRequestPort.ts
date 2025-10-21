@@ -1,9 +1,17 @@
 export interface PullRequestPort {
-  ensurePr(params: {
+  openOrGetPullRequest(params: {
+    owner: string;
     repo: string;
-    branch: string;
+    headBranch: string;
+    baseBranch?: string;
     title: string;
     body?: string;
     draft?: boolean;
-  }): Promise<{ url: string; number: number; created: boolean }>;
+  }): Promise<{
+    id: number;
+    number: number;
+    url: string;
+    created: boolean;
+    baseBranch: string;
+  }>;
 }

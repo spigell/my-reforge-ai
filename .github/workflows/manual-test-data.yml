@@ -38,6 +38,9 @@ jobs:
   execute-task:
     needs: match-task-agent
     runs-on: ${{ needs.match-task-agent.outputs.agent }}
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - name: Checkout my-reforge-ai repository
         uses: actions/checkout@v3

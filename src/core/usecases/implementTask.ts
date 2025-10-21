@@ -20,6 +20,11 @@ export async function implementTask(
     throw new Error('Task repo and branch must be defined.');
   }
 
+  const [owner, repoName] = task.repo.split('/');
+  if (!owner || !repoName) {
+    throw new Error(`Task repo must be in "owner/repo" format. Received "${task.repo}".`);
+  }
+
   const workspaceRoot = resolveWorkspaceRoot(options.workspaceRoot);
   logger.info(
     `Preparing workspace for implementation: ${task.repo}@${task.branch} (root: ${workspaceRoot})`,
@@ -68,9 +73,10 @@ export async function implementTask(
       logger.info(
         `Ensuring implementation PR exists for ${task.repo}@${task.branch} (title: "${title}")`,
       );
-      await pr.ensurePr({
-        repo: task.repo,
-        branch: task.branch,
+      await pr.openOrGetPullRequest({
+        owner,
+        repo: repoName,
+        headBranch: task.branch,
         title,
         body: result.logs,
       });

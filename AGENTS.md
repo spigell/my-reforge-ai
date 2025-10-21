@@ -136,7 +136,7 @@ tasks:
     - Skips any repo currently under a **review lock** if the picked task requires review.
 3.  **Run Agent (with hard timeout)**
     - **Responsibility**: The planner or implementor prepares the prompt and invokes the concrete agent implementation; the agent returns only a status/result payload.
-    - **Agent interface**: `run(options, signal) → Promise<{ status: "success" | "timeout" | "error", logs: string, diagnostics?: Record<string, unknown> }>`
+    - **Agent interface**: `run(options, signal) → Promise<{ status: "success" | "timeout" | "error", logs: string, diagnostics?: Record<string, unknown> }> `
     - **Options (minimum)**: `{ targetWorkspace, additionalWorkspaces, model?, timeoutMs, prompt, runMetadata }`. Agents must honor the provided `AbortSignal`.
     - **OpenAI Codex agent**: Spawns `codex cli --non-interactive` inside the primary workspace. Prompt is piped via `stdin`; all `stdout`/`stderr` are collected into the returned logs. On abort, kill the process and return `status: "timeout"`.
     - **Gemini Pro / Flash**: Spawns the Gemini CLI (`gemini --model <name>`) with identical piping/timeout semantics.
