@@ -22,9 +22,10 @@
 # Approach
 
 - Summary: I will create a new Pulumi project within the `my-reforge-ai` repository, likely under a new `pulumi/` directory. This project will define the resources required for a GitHub Actions runner, such as a virtual machine, necessary networking, and any required secrets management. The implementation will use TypeScript.
+- Environment Considerations: The GitHub Actions runner will be deployed to a Talos cluster.
 - Affected paths (target repo): `pulumi/github-runner/` (new directory), `package.json`, `tsconfig.json` (potentially for Pulumi setup).
 - Interfaces/IO: Pulumi CLI for deployment, GitHub API for runner registration.
-- Security/Secrets: GitHub Personal Access Token (PAT) for runner registration will be managed securely via Pulumi secrets.
+- Security/Secrets: GitHub Personal Access Token (PAT) for runner registration will be managed securely via GCP Secret Manager.
 
 # Acceptance Criteria
 
@@ -36,7 +37,7 @@
 # Risks & Mitigations
 
 - Risk: Complexity of Pulumi setup and integration with GitHub. → Mitigation: Start with a minimal viable runner and iterate. Leverage existing Pulumi examples for GitHub runners.
-- Risk: Secure management of GitHub PAT. → Mitigation: Use Pulumi's built-in secret management.
+- Risk: Secure management of GitHub PAT. → Mitigation: Use GCP Secret Manager for PAT.
 
 # Rollout & Review
 
