@@ -5,5 +5,5 @@ branch: feat/pulumi-task-new-3
 kind: feature
 idea: Implement a Pulumi IaC for deploying github runner
 stage: planning
-planning_pr_id: '0'
+planning_pr_id: '10'
 review_required: true

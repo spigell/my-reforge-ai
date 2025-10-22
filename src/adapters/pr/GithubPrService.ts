@@ -1,4 +1,4 @@
-import type { PullRequestPort } from '../../core/ports/PullRequestPort.js';
+import type { PullRequestPort } from '../../core/ports/pull-request-port.js';
 
 export class GithubPrService implements PullRequestPort {
   async openOrGetPullRequest({

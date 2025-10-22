@@ -1,5 +1,5 @@
 import simpleGit, { SimpleGit } from 'simple-git';
-import type { GitService } from '../../core/services/GitService.js';
+import type { GitService } from '../../core/services/git-service.js';
 
 export class SimpleGitService implements GitService {
   private getGit(cwd: string): SimpleGit {
@@ -26,10 +26,7 @@ export class SimpleGitService implements GitService {
     } catch {
       if (base) {
         await git.checkoutBranch(branch, `origin/${base}`);
-      } else {
-        await git.checkoutLocalBranch(branch);
       }
-      checkedOut = true;
     }
 
     if (base) {

@@ -1,4 +1,4 @@
-import type { LoggerPort } from '../../core/ports/LoggerPort.js';
+import type { LoggerPort } from '../../core/ports/logger-port.js';
 
 export class ConsoleLogger implements LoggerPort {
   info(message: string) {

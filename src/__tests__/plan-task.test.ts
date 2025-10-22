@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, test } from 'node:test';
 import type { Agent } from '../libs/agents/base.js';
-import type { GitService } from '../core/services/GitService.js';
+import type { GitService } from '../core/services/git-service.js';
 import type { Services } from '../core/usecases/types.js';
 import { planTask } from '../core/usecases/plan-task/plan-task.js';
 import type { MatchedTask } from '../types/task.js';
@@ -120,7 +120,8 @@ describe('planTask use case', () => {
       headBranch: 'feature/sample',
       baseBranch: undefined,
       title: 'planning: <change here>',
-      body: `Auto-created planning PR for task with idea: \n${matchedTask.task.idea}`,
+      body: `Auto-created planning PR for task with idea: 
+${matchedTask.task.idea}`,
       draft: true,
     });
     assert.deepStrictEqual(

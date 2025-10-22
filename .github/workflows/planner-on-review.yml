@@ -1,0 +1,17 @@
+name: Run Planner on Review Comment
+
+on:
+  pull_request_review_comment:
+    types: [created]
+
+jobs:
+  run-planner:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: yarn install
+      - name: Build project
+        run: yarn build
+      - name: Run Task Planner
+        run: node ./dist/task-planner/cli.js tasks/test-task.json
