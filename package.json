@@ -1,0 +1,49 @@
+{
+  "name": "my-reforge-ai",
+  "version": "0.0.0",
+  "type": "module",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^20.0.0",
+    "@types/winston": "^2.4.4",
+    "@typescript-eslint/eslint-plugin": "^8.46.1",
+    "@typescript-eslint/parser": "^8.46.1",
+    "concurrently": "^9.2.1",
+    "eslint": "^9.38.0",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-jest": "^29.0.1",
+    "handlebars": "^4.7.8",
+    "husky": "^9.1.5",
+    "js-yaml": "^4.1.0",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.46.1"
+  },
+  "scripts": {
+    "prepare": "husky",
+    "build": "tsc --build",
+    "test": "yarn build && node --test dist/**/*.test.js",
+    "format": "prettier --write .",
+    "lint": "eslint .",
+    "watch": "tsc --build --watch",
+    "match-idea": "node ./dist/bin/task-agent-matcher.js pick tasks/ideas.yaml --output-file test-task.json",
+    "plan-test-init": "node ./dist/bin/task-planner.js init --task-file tasks/test-task.json",
+    "plan-test-update": "node ./dist/bin/task-planner.js update --task-file tasks/test-task.json"
+  },
+  "bin": {
+    "my-reforge-ai-agent-matcher": "./dist/bin/task-agent-matcher.js",
+    "my-reforge-ai-planner": "./dist/task-planner/cli.js",
+    "my-reforge-ai-implementor": "./dist/task-implementor/cli.js"
+  },
+  "dependencies": {
+    "@octokit/rest": "^22.0.0",
+    "@openai/codex": "^0.47.0",
+    "@openai/codex-sdk": "^0.47.0",
+    "@types/dotenv-safe": "^8.1.6",
+    "dotenv": "^16.4.5",
+    "dotenv-safe": "^9.1.0",
+    "octokit": "^5.0.4",
+    "simple-git": "^3.28.0",
+    "winston": "^3.18.3"
+  }
+}

@@ -1,0 +1,90 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: my-reforge-ai
+  name: my-reforge-ai-workbench
+  namespace: my-reforge-ai
+spec:
+  automountServiceAccountToken: false
+  hostUsers: false
+  containers:
+    - command:
+        - /bin/bash
+        - -c
+        - /project/deploy/workbench/user-bootstrap.sh codex
+        # - sleep 3600
+      image: ghcr.io/spigell/codex-workbench:v0.47.0-4b760b
+      name: codex-workbench
+      env:
+        - name: HOME
+          value: /home/ubuntu
+        - name: CODEX_HOME
+          value: /home/ubuntu/.codex
+      resources:
+        limits:
+          cpu: '2'
+          memory: 2Gi
+        requests:
+          cpu: '0.2'
+          memory: 1Gi
+      securityContext:
+        runAsUser: 1000
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+        seccompProfile:
+          type: RuntimeDefault
+      volumeMounts:
+        - mountPath: /home/ubuntu/.codex
+          name: codex
+        - mountPath: /project
+          name: project
+        - mountPath: /tmp
+          name: tmp
+      workingDir: /project
+    - command:
+        - /bin/bash
+        - -c
+        - /project/deploy/workbench/user-bootstrap.sh gemini
+        # - sleep 3600
+      image: ghcr.io/spigell/google-gemini-workbench:0.9.0-d854d3
+      name: gemini-workbench
+      resources:
+        limits:
+          cpu: '2'
+          memory: 2Gi
+        requests:
+          cpu: '0.2'
+          memory: 1Gi
+      securityContext:
+        runAsUser: 1000
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+        seccompProfile:
+          type: RuntimeDefault
+      volumeMounts:
+        - mountPath: /home/ubuntu/.gemini
+          name: gemini
+        - mountPath: /project
+          name: project
+        - mountPath: /tmp
+          name: tmp
+      workingDir: /project
+  enableServiceLinks: false
+  terminationGracePeriodSeconds: 4
+  volumes:
+    - name: project
+      persistentVolumeClaim: { claimName: dragonfish-shared }
+    - name: codex
+      persistentVolumeClaim:
+        claimName: codex-home
+    - name: gemini
+      persistentVolumeClaim:
+        claimName: gemini-home
+    - emptyDir: {}
+      name: tmp

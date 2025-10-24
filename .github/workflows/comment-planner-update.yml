@@ -1,0 +1,56 @@
+name: Run Planner on Review Comment
+
+on:
+  pull_request_review_comment:
+    types: [created]
+
+jobs:
+  match-task:
+    runs-on: ubuntu-24.04
+    outputs:
+      task_json: '${{ steps.match_agent.outputs.task_json }}'
+      agent: '${{ steps.match_agent.outputs.agent }}'
+    steps:
+      - name: Checkout my-reforge-ai repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22'
+
+      - name: install yarn
+        run: npm install -g yarn
+
+      - name: Install deps
+        run: yarn install --frozen-lockfile
+
+      - name: Build
+        run: yarn build
+
+      - name: Match agent to task
+        id: match_agent
+        run: |
+          ./dist/bin/task-agent-matcher.js take-from-pr --output-file task.json
+          TASK_JSON=$(cat task.json | jq -c '.')
+          AGENT=$(echo $TASK_JSON | jq -r '.selectedAgent')
+          echo "task_json=$TASK_JSON" >> $GITHUB_OUTPUT
+          echo "agent=$AGENT" >> $GITHUB_OUTPUT
+
+  plan-task:
+    needs: match-task-agent
+    runs-on: ${{ needs.match-task-agent.outputs.agent }}
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout my-reforge-ai repository
+        uses: actions/checkout@v3
+
+      - name: Build
+        run: yarn build
+
+      - name: Plan the task
+        run: |
+          echo '${{ needs.match-task-agent.outputs.task_json }}' > task.json
+          ./dist/bin/task-planner.js update --task-file task.json
