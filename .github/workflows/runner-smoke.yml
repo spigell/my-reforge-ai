@@ -1,0 +1,21 @@
+name: Runner Smoke Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  print-info:
+    runs-on: [self-hosted, codex]
+    steps:
+      - name: Check runner
+        run: |
+          echo "Hostname: $(hostname)"
+          echo "Runner labels: $RUNNER_TRACKING_ID"
+          codex --version || echo "codex binary not available"
+      - name: Workspace check
+        uses: actions/checkout@v4
+      - name: List repository files
+        run: ls -al

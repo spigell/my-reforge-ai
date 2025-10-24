@@ -1,0 +1,11 @@
+model_provider = "openai"
+model = "gpt-5-codex"
+sandbox_mode = "danger-full-access"
+network_access = true
+model_reasoning_effort="low"
+model_reasoning_summary = "detailed"
+model_verbosity = "low"
+approval_policy = "never"
+
+[mcp_servers.github-mcp]
+url = "http://mcp-github:8080/mcp/"

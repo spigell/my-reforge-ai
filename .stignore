@@ -1,0 +1,34 @@
+# build outputs
+dist/
+build/
+out/
+.tmp/
+
+# dependencies
+node_modules/
+vendor/
+
+# editors
+.idea/
+.vscode/
+*.code-workspace
+
+# caches
+.cache/
+*.swp
+*.swo
+*.pyc
+
+# system files
+.DS_Store
+Thumbs.db
+
+# logs
+*.log
+npm-debug.log*
+
+# custom project dirs
+.next/
+.turbo/
+coverage/
+
