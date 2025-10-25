@@ -1,0 +1,13 @@
+repo: spigell/my-reforge-ai
+branch: my-reforge-ai/drop-gh-token-support
+kind: refactor
+agents:
+  - gpt-5-codex
+  - gemini-2.5-flash
+task_dir: tasks/feature-drop-gh-token
+stage: planning
+idea: Drop GH_TOKEN support across runners and tooling
+planning_pr_id: '15'
+priority: medium
+review_required: true
+timeout_ms: 600000
