@@ -6,11 +6,12 @@
 
 # Goal & Non-Goals
 
-- Goal: Ship a Pulumi TypeScript project that reproduces the existing GitHub runner Kubernetes deployment with stack config for namespace, image, and secrets.
+- Goal: Ship a Pulumi TypeScript project that reproduces the existing GitHub runner Kubernetes deployment with stack config for namespace, image, secrets, and runner labels.
 - Non-Goals:
   - Managing runtime secrets beyond referencing Pulumi config/secret values.
   - Automating Pulumi stack execution in CI/CD.
   - Redesigning the runner topology or scaling strategy beyond current manifest parity.
+  - Migrating existing clusters automatically; rollout stays manual.
 
 # Deliverables
 
@@ -22,10 +23,35 @@
 
 # Approach
 
-- Summary: Introduce a Pulumi TypeScript program backed by `@pulumi/pulumi` and `@pulumi/kubernetes` that instantiates the current `deploy/gh-runner/deployment.yaml` resources, parameterized via Pulumi config for namespace, runner labels, image, and GitHub registration token secret.
+- Current baseline: `deploy/gh-runner/deployment.yaml` plus related manifests provide a single-runner Deployment + ServiceAccount in namespace `my-reforge-ai`.
+- Summary: Introduce a Pulumi TypeScript program backed by `@pulumi/pulumi` and `@pulumi/kubernetes` that instantiates the same Kubernetes resources, parameterized via Pulumi config for namespace, runner labels, image, GitHub repo, and runner token secret.
+- Implementation steps:
+  1. Scaffold Pulumi project (`Pulumi.yaml`, `package.json` workspace wiring) under `infra/pulumi/gh-runner`.
+  2. Port manifests into strongly-typed Pulumi resources:
+     - `k8s.core.v1.Namespace` (optional, gated by config flag) or assume existing namespace.
+     - `k8s.core.v1.Secret` referencing `pulumi.config.requireSecret('githubToken')` for runner registration.
+     - `k8s.apps.v1.Deployment` mirroring container image, env vars, resources, tolerations, and labels from `deploy/gh-runner/deployment.yaml`.
+     - Auxiliary `ServiceAccount`, `Role`, `RoleBinding`, and any ConfigMaps currently in `deploy/gh-runner`.
+  3. Expose configurable knobs via Pulumi config:
+     | Config key | Type | Purpose |
+     | --- | --- | --- |
+     | `namespace` | string | Target namespace (default `my-reforge-ai`). |
+     | `runnerImage` | string | Container image for the runner. |
+     | `runnerLabels` | string[] | GitHub runner labels beyond default. |
+     | `githubRepo` | string | Repo slug for registration. |
+     | `githubToken` | secret | Registration token pulled from GitHub. |
+     | `githubUrl` | string (optional) | Override for GH Enterprise URL. |
+  4. Add `infra/pulumi/gh-runner/README.md` documenting install, config, preview/apply, destroy, plus pointers to `deploy/gh-runner` for existing YAML fallback.
+  5. Update `deploy/gh-runner/README.md` to reference Pulumi flow and note manual prerequisites (Pulumi CLI, kubeconfig, token generation).
+  6. Commit generated stack template `Pulumi.dev.yaml` with placeholder config (no secrets) showing expected structure.
 - Affected paths (target repo): `infra/pulumi/gh-runner/**`, `package.json`, `yarn.lock`, `deploy/gh-runner/**`.
-- Interfaces/IO: Pulumi CLI (`pulumi up/preview/destroy`), Pulumi config files (`Pulumi.<stack>.yaml`), GitHub runner registration token provided via secret Pulumi config, Kubernetes context configured externally.
-- Security/Secrets: Store runner registration token and GitHub repo URL as Pulumi secret config; never commit raw secret values. Document required MCP-provided credentials if any.
+- Interfaces/IO: Pulumi CLI (`pulumi preview|up|destroy`), Pulumi config files (`Pulumi.<stack>.yaml`), GitHub runner registration token provided via secret Pulumi config, Kubernetes context configured externally.
+- Security/Secrets: Store runner registration token and GitHub repo URL as Pulumi secret config; never commit raw secret values. Document required CLI auth (Pulumi login) and GitHub token handling.
+
+# Validation & Rollback
+
+- Validation: Run `yarn install` (ensure `@pulumi/pulumi` and `@pulumi/kubernetes` present), `pulumi config set namespace my-reforge-ai`, `pulumi config set --secret githubToken <token>`, then `pulumi preview` to confirm diff with zero resource replacements versus manifest.
+- Rollback: `pulumi destroy` removes runner resources; fallback to existing YAML manifests if required. Document manual `kubectl delete -f deploy/gh-runner/` as emergency rollback.
 
 # Acceptance Criteria
 
