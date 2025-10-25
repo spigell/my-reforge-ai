@@ -37,9 +37,11 @@ Conventions:
 
 - Perform all repository writes (adds/commits/pushes) via the **git CLI** over HTTPS using MCP-provided credentials.
 - You may read repository state either via the git CLI (`git fetch`, `git show`, etc.) or GitHub APIs, but **any push MUST use git CLI**.
+- Use the configured GitHub MCP server for PR comments, reviews, status updates, and fetching the latest discussion; do **not** invoke local tools like `gh`.
 - **Do NOT create any branches.** Assume `{{task.branch}}` already exists.
 - request reviewers, assign via the GitHub MCP tool.
 - Order of operations in each turn (idempotent, no force-push):
+  0. Fetch the latest PR comments via the GitHub MCP server to ensure you react to new feedback before making changes.
   1. `git fetch origin` and **checkout the existing** `{{task.branch}}`.
   2. Fast-forward update the working branch (e.g., `git merge --ff-only origin/{{task.branch}}`).
   3. Modify files (planning doc).

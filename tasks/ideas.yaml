@@ -16,3 +16,23 @@ ideas:
     # Optional: The directory within the target repository where executor artifacts (e.g., generated code, logs) will be stored.
     # This path is relative to the root of the target repository.
     task_dir: 'tasks/feature-1' # Example: current directory
+  - repo: spigell/my-reforge-ai
+    branch: 'my-reforge-ai/pulumi-infra-runners'
+    agents: ['codex', 'gemini-2.5-flash']
+    kind: feature
+    idea: 'Add Pulumi infrastructure to provision GitHub runners'
+    stage: planning
+    planning_pr_id: ''
+    review_required: true
+    timeout_ms: 600000
+    task_dir: 'tasks/feature-pulumi-infra'
+  - repo: spigell/my-reforge-ai
+    branch: 'my-reforge-ai/drop-gh-token-support'
+    agents: ['codex', 'gemini-2.5-flash']
+    kind: feature
+    idea: 'Drop GH_TOKEN support across runners and tooling'
+    stage: planning
+    planning_pr_id: ''
+    review_required: true
+    timeout_ms: 600000
+    task_dir: 'tasks/feature-drop-gh-token'

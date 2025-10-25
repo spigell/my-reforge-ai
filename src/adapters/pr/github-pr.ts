@@ -3,15 +3,23 @@ import type {
   PullRequestStatusPort,
 } from '../../core/ports/pull-request-port.js';
 import { Octokit } from '@octokit/rest';
+import { resolveGithubToken } from '../../libs/github-token.js';
+
+type GithubPrServiceOptions = {
+  token?: string;
+};
 
 export class GithubPrService
   implements PullRequestPort, PullRequestStatusPort
 {
   private octokit: Octokit;
 
-  constructor() {
-    // We should take the token in the only one place. @spigell.
-    const githubToken = process.env.GH_TOKEN;
+  constructor(options: GithubPrServiceOptions = {}) {
+    const githubToken =
+      options.token ??
+      resolveGithubToken({
+        required: true,
+      });
     if (!githubToken) {
       throw new Error('GITHUB_TOKEN environment variable is not set.');
     }
