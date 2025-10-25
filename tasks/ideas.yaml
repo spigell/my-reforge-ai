@@ -29,7 +29,7 @@ ideas:
   - repo: spigell/my-reforge-ai
     branch: 'my-reforge-ai/drop-gh-token-support'
     agents: ['codex', 'gemini-2.5-flash']
-    kind: feature
+    kind: refactor
     idea: 'Drop GH_TOKEN support across runners and tooling'
     stage: planning
     planning_pr_id: ''

@@ -31,7 +31,7 @@ jobs:
       - name: Match agent to task
         id: match_agent
         run: |
-          node ./dist/bin/task-agent-matcher.js take-from-pr --output-file task.json
+          node ./dist/bin/task-agent-matcher.js take-from-pr --pr-number ${{ github.event.pull_request.number }} --output-file task.json
           TASK_JSON=$(cat task.json | jq -c '.')
           AGENT=$(echo $TASK_JSON | jq -r '.selectedAgent')
           echo "task_json=$TASK_JSON" >> $GITHUB_OUTPUT
