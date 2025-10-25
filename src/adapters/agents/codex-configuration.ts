@@ -109,7 +109,18 @@ const loadTomlConfig = async (configPath: string) => {
 };
 
 export const loadCodexConfiguration = async (): Promise<CodexConfiguration> => {
+  const disabled =
+    process.env.CODEX_ENABLE_CONFIG !== '1' &&
+    process.env.CODEX_ENABLE_CONFIG !== 'true';
+
+  if (disabled) {
+    return {};
+  }
+
   const configPath = DEFAULT_CONFIG_PATH();
+  if (!process.env.CODEX_HOME) {
+    process.env.CODEX_HOME = path.dirname(configPath);
+  }
   const config = await loadTomlConfig(configPath);
   const profileConfig = extractActiveProfile(config);
 

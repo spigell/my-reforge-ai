@@ -19,8 +19,14 @@ type GeneralTask = {
   task_dir: string;
 };
 
+export type TaskStage =
+  | 'planning'
+  | 'ready-for-implementing'
+  | 'implementing'
+  | 'completed';
+
 export type Task = GeneralTask & {
-  stage: 'planning' | 'ready-for-implementing' | 'implementing';
+  stage: TaskStage;
   idea?: string;
 };
 

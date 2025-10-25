@@ -1,7 +1,12 @@
-import type { PullRequestPort } from '../../core/ports/pull-request-port.js';
+import type {
+  PullRequestPort,
+  PullRequestStatusPort,
+} from '../../core/ports/pull-request-port.js';
 import { Octokit } from '@octokit/rest';
 
-export class GithubPrService implements PullRequestPort {
+export class GithubPrService
+  implements PullRequestPort, PullRequestStatusPort
+{
   private octokit: Octokit;
 
   constructor() {
@@ -41,6 +46,32 @@ export class GithubPrService implements PullRequestPort {
       url: newPr.data.html_url,
       created: true,
       baseBranch: newPr.data.base.ref,
+    };
+  }
+
+  async getPullRequestStatus({
+    owner,
+    repo,
+    prNumber,
+  }: Parameters<PullRequestStatusPort['getPullRequestStatus']>[0]) {
+    const pr = await this.octokit.rest.pulls.get({
+      owner,
+      repo,
+      pull_number: prNumber,
+    });
+
+    const merged =
+      typeof pr.data.merged === 'boolean'
+        ? pr.data.merged
+        : pr.data.merged_at !== null;
+
+    const state: 'open' | 'closed' = pr.data.state === 'open' ? 'open' : 'closed';
+
+    return {
+      merged,
+      state,
+      url: pr.data.html_url,
+      title: pr.data.title,
     };
   }
 }

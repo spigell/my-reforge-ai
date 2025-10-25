@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, test } from 'node:test';
-import { tmpdir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import { loadCodexConfiguration } from '../adapters/agents/codex-configuration.js';
 
 const createTempDir = () =>
@@ -10,10 +10,13 @@ const createTempDir = () =>
 
 describe('loadCodexConfiguration', () => {
   let originalCodexHome: string | undefined;
+  let originalEnableConfig: string | undefined;
   let tempDir: string;
 
   beforeEach(() => {
     originalCodexHome = process.env.CODEX_HOME;
+    originalEnableConfig = process.env.CODEX_ENABLE_CONFIG;
+    process.env.CODEX_ENABLE_CONFIG = '1';
     tempDir = createTempDir();
     process.env.CODEX_HOME = tempDir;
   });
@@ -24,12 +27,31 @@ describe('loadCodexConfiguration', () => {
     } else {
       process.env.CODEX_HOME = originalCodexHome;
     }
+    if (originalEnableConfig === undefined) {
+      delete process.env.CODEX_ENABLE_CONFIG;
+    } else {
+      process.env.CODEX_ENABLE_CONFIG = originalEnableConfig;
+    }
     fs.rmSync(tempDir, { recursive: true, force: true });
   });
 
   test('returns empty configuration when config file is absent', async () => {
     const config = await loadCodexConfiguration();
     assert.deepStrictEqual(config, {});
+  });
+
+  test('returns empty configuration when config loading disabled', async () => {
+    process.env.CODEX_ENABLE_CONFIG = '0';
+    const config = await loadCodexConfiguration();
+    assert.deepStrictEqual(config, {});
+  });
+
+  test('sets CODEX_HOME when not provided', async () => {
+    delete process.env.CODEX_HOME;
+    const expectedCodexHome = path.resolve(homedir(), '.codex');
+    const config = await loadCodexConfiguration();
+    assert.deepStrictEqual(config, {});
+    assert.equal(process.env.CODEX_HOME, expectedCodexHome);
   });
 
   test('loads sandbox mode and MCP servers from config', async () => {
