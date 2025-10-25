@@ -51,6 +51,9 @@ jobs:
       - name: Build
         run: yarn build
 
+      - name: Configure git workbench identity
+        run: setup-git-workbench --name "ai bot" --email spigelly+gh-bot@gmail.com --editor vim
+
       - name: Plan the task
         run: |
           echo '${{ needs.match-task.outputs.task_json }}' > task.json
