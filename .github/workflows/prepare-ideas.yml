@@ -4,7 +4,7 @@ on:
 
 jobs:
   match-task:
-    runs-on: ubuntu-24.04
+    runs-on: gpt-5-codex
     outputs:
       task_json: '${{ steps.match_agent.outputs.task_json }}'
       agent: '${{ steps.match_agent.outputs.agent }}'
@@ -44,7 +44,7 @@ jobs:
     steps:
       - name: Checkout my-reforge-ai repository
         uses: actions/checkout@v3
-        
+
       - name: Install deps
         run: yarn install --frozen-lockfile
 
