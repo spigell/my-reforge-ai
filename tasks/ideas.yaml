@@ -18,7 +18,7 @@ ideas:
     task_dir: 'tasks/feature-1' # Example: current directory
   - repo: spigell/my-reforge-ai
     branch: 'my-reforge-ai/pulumi-infra-runners'
-    agents: ['codex', 'gemini-2.5-flash']
+    agents: ['gpt-5-codex', 'gemini-2.5-flash']
     kind: feature
     idea: 'Add Pulumi infrastructure to provision GitHub runners'
     stage: planning
@@ -28,7 +28,7 @@ ideas:
     task_dir: 'tasks/feature-pulumi-infra'
   - repo: spigell/my-reforge-ai
     branch: 'my-reforge-ai/drop-gh-token-support'
-    agents: ['codex', 'gemini-2.5-flash']
+    agents: ['gpt-5-codex', 'gemini-2.5-flash']
     kind: refactor
     idea: 'Drop GH_TOKEN support across runners and tooling'
     stage: planning
