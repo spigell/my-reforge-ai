@@ -124,6 +124,8 @@ class StubCodex<
   }
 }
 
+const noConfig = async () => ({});
+
 describe('CodexAgent', () => {
   test('runs Codex via the SDK and returns aggregated logs', async () => {
     const events: ThreadEvent[] = [
@@ -148,7 +150,10 @@ describe('CodexAgent', () => {
     ];
     const thread = new StubThread(events);
     const codex = new StubCodex(thread);
-    const agent = new CodexAgent(() => codex as unknown as CodexClient);
+    const agent = new CodexAgent(
+      () => codex as unknown as CodexClient,
+      noConfig,
+    );
     const abortController = new AbortController();
     const resultPromise = agent.run(
       {
@@ -164,6 +169,7 @@ describe('CodexAgent', () => {
     assert.deepStrictEqual(thread.prompts, ['test prompt']);
     assert.equal(codex.startOptions?.workingDirectory, '/tmp');
     assert.equal(codex.startOptions?.model, 'oai-codex');
+    assert.equal(codex.startOptions?.sandboxMode, 'danger-full-access');
     assert.equal(result.status, 'success');
     assert.match(result.logs, /\[item.completed:agent_message]/);
     assert.match(result.logs, /\[turn.completed]/);
@@ -172,7 +178,10 @@ describe('CodexAgent', () => {
   test('aborts run when signal is triggered and stops consuming events', async () => {
     const thread = new HangingThread();
     const codex = new StubCodex(thread);
-    const agent = new CodexAgent(() => codex as unknown as CodexClient);
+    const agent = new CodexAgent(
+      () => codex as unknown as CodexClient,
+      noConfig,
+    );
     const abortController = new AbortController();
     const resultPromise = agent.run(
       {
@@ -189,5 +198,32 @@ describe('CodexAgent', () => {
 
     assert.strictEqual(result.status, 'timeout');
     assert.strictEqual(thread.returnCalled, true);
+  });
+
+  test('uses sandbox mode from configuration when available', async () => {
+    const events: ThreadEvent[] = [
+      { type: 'thread.started', thread_id: 'xyz' },
+      { type: 'turn.started' },
+      { type: 'turn.completed', usage: { input_tokens: 0, cached_input_tokens: 0, output_tokens: 0 } },
+    ];
+    const thread = new StubThread(events);
+    const codex = new StubCodex(thread);
+    const configLoader = async () => ({
+      sandbox_mode: 'workspace-write' as const,
+    });
+    const agent = new CodexAgent(
+      () => codex as unknown as CodexClient,
+      configLoader,
+    );
+    const abortController = new AbortController();
+    await agent.run(
+      {
+        targetWorkspace: '/tmp',
+        prompt: 'config prompt',
+      },
+      abortController.signal,
+    );
+
+    assert.equal(codex.startOptions?.sandboxMode, 'workspace-write');
   });
 });

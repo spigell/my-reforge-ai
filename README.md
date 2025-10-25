@@ -79,6 +79,7 @@ ideas: # Array of task definitions
     agents: # Required. Array of preferred AI agents for this task.
       - string # Valid values are defined in src/types/agent.ts (e.g., 'gpt-5-codex', 'gemini-2.5-flash').
     kind: string # Required. The type of task (e.g., 'feature', 'bugfix').
+    priority: string # Optional. 'high' | 'medium' | 'low'. Defaults to 'medium'.
     idea: string # Required. A concise description of the task's objective.
     stage: string # Required. The current stage of the task. Must be 'planning' or 'implementing'.
     planning_pr_id: string # Optional. If a planning PR is already created, its ID.
@@ -102,7 +103,8 @@ User/Cron
            │
            ├─▶ Check UsageManager for Tokens
            ├─▶ Select & Normalize Agent (from ideas.yaml)
-           ├─▶ Enforce Review Lock
+           ├─▶ Rank Tasks by Priority (high ▶ medium ▶ low)
+           ├─▶ Enforce Review Lock (skip duplicate review-required kinds)
            ├─▶ Identify Task (pick from ideas.yaml or take-from-pr)
            └─▶ Output task_json & agent
                │

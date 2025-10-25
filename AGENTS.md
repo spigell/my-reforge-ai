@@ -69,6 +69,7 @@ tasks:
     # Availabe agents list. can be codex, gemini-2.5-flash. The task-agent-matcher chooses executor.
     agents: ['codex', 'gemini-2.5-flash']
     kind: feature
+    priority: high # Allowed values: high, medium, low. Defaults to medium.
     idea: 'Make an archtecture for the project'
     # description is a full description for the task, e.g. prompts. It should be created in planning stage.
     description-file: ''
@@ -95,8 +96,11 @@ tasks:
 - **Token Availability**: Before selecting any task, it checks with the `UsageManager` to ensure there are sufficient tokens available for the day. If not, it exits, preventing tasks from being picked when the budget is exhausted.
 - Scans the **tasks repo** for `task.yaml` files.
 - Selects an executor based on the `agents` field in the task. Agent IDs are normalized against the static enum in `src/types/task.ts`, so aliases like `codex` resolve to the canonical `openai-codex`. Unknown agents are ignored in favour of the default.
+- Ranks queued tasks by `priority`, favouring `high` over `medium` over `low` and keeping FIFO order within a priority tier.
 - Applies **review lock** per repo:
   - If a review is in progress for `repo`, skip other `review_required: true` tasks for that `repo`.
+- Drops any `review_required: true` task whose `kind` already has an active review-required task in the tasks repository to avoid duplicate reviews for the same work type.
+- Uses guard clauses for error scenarios (e.g., empty queue or filtered results) so that the happy path stays left-aligned.
 
 - Yields tasks in FIFO (or filename) order.
 - **GitHub Workflow Integration**: When used in a GitHub workflow, the Task Agent Matcher job will:

@@ -31,15 +31,15 @@ jobs:
       - name: Match agent to task
         id: match_agent
         run: |
-          ./dist/bin/task-agent-matcher.js take-from-pr --output-file task.json
+          node ./dist/bin/task-agent-matcher.js take-from-pr --output-file task.json
           TASK_JSON=$(cat task.json | jq -c '.')
           AGENT=$(echo $TASK_JSON | jq -r '.selectedAgent')
           echo "task_json=$TASK_JSON" >> $GITHUB_OUTPUT
           echo "agent=$AGENT" >> $GITHUB_OUTPUT
 
   plan-task:
-    needs: match-task-agent
-    runs-on: ${{ needs.match-task-agent.outputs.agent }}
+    needs: match-task
+    runs-on: ${{ needs.match-task.outputs.agent }}
     permissions:
       contents: write
       pull-requests: write
@@ -52,5 +52,5 @@ jobs:
 
       - name: Plan the task
         run: |
-          echo '${{ needs.match-task-agent.outputs.task_json }}' > task.json
-          ./dist/bin/task-planner.js update --task-file task.json
+          echo '${{ needs.match-task.outputs.task_json }}' > task.json
+          node ./dist/bin/task-planner.js update --task-file task.json

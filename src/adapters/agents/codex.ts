@@ -1,11 +1,13 @@
-import { Codex, type ThreadEvent } from '@openai/codex-sdk';
+import { Codex, type SandboxMode, type ThreadEvent } from '@openai/codex-sdk';
 import type {
   Agent,
   AgentRunOptions,
   AgentRunResult,
 } from '../../core/ports/agent-port.js';
+import type { CodexConfiguration } from './codex-configuration.js';
+import { loadCodexConfiguration } from './codex-configuration.js';
 
-const DEFAULT_SANDBOX_MODE = 'danger-full-access' as const;
+const DEFAULT_SANDBOX_MODE: SandboxMode = 'danger-full-access';
 
 const jsonStringify = (value: unknown): string => {
   try {
@@ -36,9 +38,14 @@ const formatEvent = (event: ThreadEvent): string => {
 
 export class CodexAgent implements Agent {
   private readonly createCodex: () => Codex;
+  private readonly loadConfiguration: () => Promise<CodexConfiguration>;
 
-  constructor(createCodex: () => Codex = () => new Codex()) {
+  constructor(
+    createCodex: () => Codex = () => new Codex(),
+    loadConfiguration: () => Promise<CodexConfiguration> = loadCodexConfiguration,
+  ) {
     this.createCodex = createCodex;
+    this.loadConfiguration = loadConfiguration;
   }
 
   async run(
@@ -48,9 +55,34 @@ export class CodexAgent implements Agent {
     signal.throwIfAborted();
 
     const codex = this.createCodex();
+    let sandboxMode = DEFAULT_SANDBOX_MODE;
+    try {
+      const configuration = await this.loadConfiguration();
+      sandboxMode = configuration.sandbox_mode ?? DEFAULT_SANDBOX_MODE;
+      const mcpServers = configuration.mcp_servers;
+      console.log(
+        '[CodexAgent] starting thread with configuration:',
+        JSON.stringify({
+          sandboxMode,
+          mcpServers: mcpServers
+            ? Object.fromEntries(
+                Object.entries(mcpServers).map(([id, server]) => [
+                  id,
+                  { url: server.url },
+                ]),
+              )
+            : undefined,
+        }),
+      );
+    } catch (error) {
+      console.warn(
+        '[CodexAgent] Falling back to default configuration; loading failed.',
+        error,
+      );
+    }
     const thread = codex.startThread({
       model: options.model,
-      sandboxMode: DEFAULT_SANDBOX_MODE,
+      sandboxMode,
       workingDirectory: options.targetWorkspace,
     });
 

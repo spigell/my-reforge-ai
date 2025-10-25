@@ -1,10 +1,13 @@
 import { AgentId } from './agent.js';
 
+export type TaskPriority = 'high' | 'medium' | 'low';
+
 type GeneralTask = {
   repo: string;
   branch: string;
   agents: AgentId[];
   kind: string;
+  priority?: TaskPriority;
   additionalRepos?: Array<{
     repo: string;
     branch?: string;
@@ -17,7 +20,7 @@ type GeneralTask = {
 };
 
 export type Task = GeneralTask & {
-  stage: 'planning' | 'implementing';
+  stage: 'planning' | 'ready-for-implementing' | 'implementing';
   idea?: string;
 };
 

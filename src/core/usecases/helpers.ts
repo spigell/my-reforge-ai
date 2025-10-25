@@ -86,9 +86,18 @@ export const validateAndNormalizeTask = (entry: Task | Idea): Task => {
 
   const stageValue = candidate.stage;
   const stage: Task['stage'] =
-    stageValue === 'planning' || stageValue === 'implementing'
+    stageValue === 'planning' ||
+    stageValue === 'implementing' ||
+    stageValue === 'ready-for-implementing'
       ? stageValue
       : 'planning';
+  const priorityValue = candidate.priority;
+  const priority =
+    priorityValue === 'high' ||
+    priorityValue === 'medium' ||
+    priorityValue === 'low'
+      ? priorityValue
+      : 'medium';
 
   const task: Task = {
     repo: typeof candidate.repo === 'string' ? candidate.repo : '',
@@ -102,6 +111,7 @@ export const validateAndNormalizeTask = (entry: Task | Idea): Task => {
       typeof candidate.planning_pr_id === 'string'
         ? candidate.planning_pr_id
         : undefined,
+    priority,
     review_required:
       typeof candidate.review_required === 'boolean'
         ? candidate.review_required

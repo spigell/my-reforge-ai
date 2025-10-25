@@ -44,6 +44,7 @@
     "dotenv-safe": "^9.1.0",
     "octokit": "^5.0.4",
     "simple-git": "^3.28.0",
+    "toml": "^3.0.0",
     "winston": "^3.18.3"
   }
 }
