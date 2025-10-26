@@ -6,7 +6,7 @@ on:
 
 jobs:
   match-task:
-    runs-on: ubuntu-24.04
+    runs-on: gpt-5-codex
     outputs:
       task_json: '${{ steps.match_agent.outputs.task_json }}'
       agent: '${{ steps.match_agent.outputs.agent }}'
