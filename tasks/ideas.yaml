@@ -7,8 +7,6 @@ ideas:
     idea: 'Make an archtecture for the project'
     # stage can be 'planning' or 'implementing'
     stage: planning
-    # if PR is already created then link should be here
-    planning_pr_id: ''
     review_required: true
     # Optional: The maximum time in milliseconds the task is allowed to run.
     # If not specified, a default timeout will be applied by the executor.
@@ -22,7 +20,6 @@ ideas:
     kind: feature
     idea: 'Add Pulumi infrastructure to provision GitHub runners'
     stage: planning
-    planning_pr_id: ''
     review_required: true
     timeout_ms: 600000
     task_dir: 'tasks/feature-pulumi-infra'
@@ -32,7 +29,6 @@ ideas:
     kind: refactor
     idea: 'Drop GH_TOKEN support across runners and tooling'
     stage: planning
-    planning_pr_id: ''
     review_required: true
     timeout_ms: 600000
     task_dir: 'tasks/feature-drop-gh-token'

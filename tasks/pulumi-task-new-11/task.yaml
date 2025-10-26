@@ -1,5 +1,6 @@
 repo: spigell/my-reforge-ai
 timeout_ms: 500000
+agents: ['gpt-5-codex']
 task_dir: tasks/pulumi-task-new-11
 branch: feat/pulumi-task-new-11
 kind: feature

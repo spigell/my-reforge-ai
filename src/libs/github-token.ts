@@ -1,6 +1,7 @@
 const GITHUB_TOKEN_ENV = 'GITHUB_TOKEN';
 
-let cachedToken: string | undefined | null = null;
+let cachedToken: string | undefined;
+let cacheInitialized = false;
 
 type ResolveOptions = {
   required?: boolean;
@@ -15,8 +16,8 @@ export const resolveGithubToken = (
 ): string | undefined => {
   const { required = true } = options;
 
-  if (cachedToken !== null) {
-    return cachedToken ?? undefined;
+  if (cacheInitialized) {
+    return cachedToken;
   }
 
   const token = process.env[GITHUB_TOKEN_ENV]?.trim();
@@ -32,10 +33,10 @@ export const resolveGithubToken = (
       throw new Error('GITHUB_TOKEN environment variable is not set.');
     }
 
-    cachedToken = null;
     return undefined;
   }
 
+  cacheInitialized = true;
   cachedToken = token;
   return token;
 };
@@ -44,8 +45,8 @@ export const resolveGithubToken = (
  * Resets the cached token. Intended for use in tests.
  */
 export const resetGithubTokenCache = () => {
-  cachedToken = null;
+  cachedToken = undefined;
+  cacheInitialized = false;
 };
 
 export const githubTokenEnvName = GITHUB_TOKEN_ENV;
-
