@@ -168,7 +168,7 @@
 # Risks & Mitigations
 
 - Risk: Divergence from existing manifests causes runtime drift → Mitigation: Diff against `deploy/gh-runner/deployment.yaml` and validate via `pulumi preview` for ConfigMap + both deployments.
-- Risk: Handling sensitive tokens in config → Mitigation: Use Pulumi secret config entries, encrypt state in GCS, and document rotation steps.
+- Risk: Handling sensitive tokens in config → Mitigation: Use Pulumi secret config entries, keep state in an encrypted backend (Pulumi Cloud or Talos S3 bucket), and document rotation steps.
 - Risk: Misconfigured PVC references block pods in Pending → Mitigation: Surface PVC names as config defaults, validate them, and document prerequisites in README.
 - Risk: Missing Pulumi dependencies or build scripts → Mitigation: Update `package.json` and run `yarn install` to ensure reproducible setup.
 
