@@ -33,8 +33,6 @@ export const resolveGithubToken = (
       throw new Error('GITHUB_TOKEN environment variable is not set.');
     }
 
-    cacheInitialized = true;
-    cachedToken = undefined;
     return undefined;
   }
 
