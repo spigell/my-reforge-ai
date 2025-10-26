@@ -11,6 +11,8 @@ data:
     network_access = true
     model_verbosity = "low"
     approval_policy = "never"
+    [mcp_servers.github-mcp]
+    url = "http://mcp-github:8080/mcp/"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -38,7 +40,7 @@ spec:
         fsGroup: 1001
       containers:
         - name: runner
-          image: ghcr.io/spigell/codex-github-runner:2.329.0-549871
+          image: ghcr.io/spigell/codex-github-runner:2.329.0-7e2153
           imagePullPolicy: Always
           env:
             - name: GITHUB_URL
@@ -75,9 +77,6 @@ spec:
               mountPath: /home/runner/.codex
             - name: work
               mountPath: /actions-runner/_work
-            - name: github-pat
-              mountPath: /etc/github
-              readOnly: true
             - name: codex-config-volume
               mountPath: /home/runner/.codex/config.toml
               subPath: config.toml
@@ -94,9 +93,6 @@ spec:
             claimName: codex-home
         - name: work
           emptyDir: {}
-        - name: github-pat
-          secret:
-            secretName: github-mcp-credentials
         - name: codex-config-volume
           configMap:
             name: codex-config-gh-runner
@@ -127,7 +123,7 @@ spec:
         fsGroup: 1001
       containers:
         - name: runner
-          image: ghcr.io/spigell/google-gemini-github-runner:2.329.0-129101
+          image: ghcr.io/spigell/google-gemini-github-runner:2.329.0-42158b
           imagePullPolicy: Always
           env:
             - name: GITHUB_URL
@@ -146,7 +142,7 @@ spec:
                   name: github-mcp-credentials
                   key: github-pat
             - name: RUNNER_LABELS
-              value: gemini-2.5-flash
+              value: gemini-2.5-flash,gemini-2.5-pro
             - name: RUNNER_EPHEMERAL
               value: '1'
             - name: RUNNER_REPLACE
@@ -160,11 +156,10 @@ spec:
             capabilities:
               drop: ['ALL']
           volumeMounts:
+            - mountPath: /home/runner/.gemini
+              name: gemini-home
             - name: work
               mountPath: /actions-runner/_work
-            - name: github-pat
-              mountPath: /etc/github
-              readOnly: true
           resources:
             requests:
               cpu: '0.5'
@@ -175,6 +170,6 @@ spec:
       volumes:
         - name: work
           emptyDir: {}
-        - name: github-pat
-          secret:
-            secretName: github-mcp-credentials
+        - name: gemini-home
+          persistentVolumeClaim:
+            claimName: gemini-home

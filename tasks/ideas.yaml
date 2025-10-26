@@ -7,8 +7,6 @@ ideas:
     idea: 'Make an archtecture for the project'
     # stage can be 'planning' or 'implementing'
     stage: planning
-    # if PR is already created then link should be here
-    planning_pr_id: ''
     review_required: true
     # Optional: The maximum time in milliseconds the task is allowed to run.
     # If not specified, a default timeout will be applied by the executor.
@@ -16,3 +14,21 @@ ideas:
     # Optional: The directory within the target repository where executor artifacts (e.g., generated code, logs) will be stored.
     # This path is relative to the root of the target repository.
     task_dir: 'tasks/feature-1' # Example: current directory
+  - repo: spigell/my-reforge-ai
+    branch: 'my-reforge-ai/pulumi-infra-runners'
+    agents: ['gpt-5-codex', 'gemini-2.5-flash']
+    kind: feature
+    idea: 'Add Pulumi infrastructure to provision GitHub runners'
+    stage: planning
+    review_required: true
+    timeout_ms: 600000
+    task_dir: 'tasks/feature-pulumi-infra'
+  - repo: spigell/my-reforge-ai
+    branch: 'my-reforge-ai/drop-gh-token-support'
+    agents: ['gpt-5-codex', 'gemini-2.5-flash']
+    kind: refactor
+    idea: 'Drop GH_TOKEN support across runners and tooling'
+    stage: planning
+    review_required: true
+    timeout_ms: 600000
+    task_dir: 'tasks/feature-drop-gh-token'

@@ -15,3 +15,16 @@ export interface PullRequestPort {
     baseBranch: string;
   }>;
 }
+
+export interface PullRequestStatusPort {
+  getPullRequestStatus(params: {
+    owner: string;
+    repo: string;
+    prNumber: number;
+  }): Promise<{
+    merged: boolean;
+    state: 'open' | 'closed';
+    url: string;
+    title: string;
+  }>;
+}

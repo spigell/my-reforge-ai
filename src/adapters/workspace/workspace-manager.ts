@@ -3,8 +3,23 @@ import path from 'node:path';
 import simpleGit, { SimpleGit } from 'simple-git';
 import type { WorkspacePort } from '../../core/ports/workspace-port.js';
 import type { Task } from '../../types/task.js';
+import { resolveGithubToken } from '../../libs/github-token.js';
+
+type WorkspaceManagerOptions = {
+  githubToken?: string;
+};
 
 export class WorkspaceManager implements WorkspacePort {
+  constructor(options: WorkspaceManagerOptions = {}) {
+    this.githubToken =
+      options.githubToken ??
+      resolveGithubToken({
+        required: false,
+      });
+  }
+
+  private readonly githubToken: string | undefined;
+
   async prepare({
     repo,
     branch,
@@ -31,9 +46,9 @@ export class WorkspaceManager implements WorkspacePort {
       directoryName?: string,
     ): Promise<string> => {
       let repoUrl = `https://github.com/${repoSlug}.git`;
-      if (process.env.GH_TOKEN) {
-        console.log('Using GH_TOKEN for authentication in repo URL.');
-        repoUrl = `https://x-access-token:${process.env.GH_TOKEN}@github.com/${repoSlug}.git`;
+      if (this.githubToken) {
+        console.log('Using GITHUB_TOKEN for authentication in repo URL.');
+        repoUrl = `https://x-access-token:${this.githubToken}@github.com/${repoSlug}.git`;
       }
 
       const targetDirectoryName = directoryName ?? repoSlug;

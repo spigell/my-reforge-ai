@@ -13,14 +13,20 @@ type GeneralTask = {
     branch?: string;
     directoryName?: string;
   }>;
-  planning_pr_id?: string;
   review_required?: boolean;
   timeout_ms?: number;
   task_dir: string;
 };
 
+export type TaskStage =
+  | 'planning'
+  | 'ready-for-implementing'
+  | 'implementing'
+  | 'completed';
+
 export type Task = GeneralTask & {
-  stage: 'planning' | 'ready-for-implementing' | 'implementing';
+  stage: TaskStage;
+  planning_pr_id?: string;
   idea?: string;
 };
 

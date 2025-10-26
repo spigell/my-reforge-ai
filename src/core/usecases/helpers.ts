@@ -1,4 +1,9 @@
-import type { MatchedTask, Task, Idea } from '../../types/task.js';
+import type {
+  MatchedTask,
+  Task,
+  Idea,
+  TaskStage,
+} from '../../types/task.js';
 import type { LoggerPort } from '../ports/logger-port.js';
 import { dump as dumpYaml } from 'js-yaml';
 import fs from 'node:fs';
@@ -85,10 +90,11 @@ export const validateAndNormalizeTask = (entry: Task | Idea): Task => {
   const candidate = { ...entry } as Record<string, unknown>;
 
   const stageValue = candidate.stage;
-  const stage: Task['stage'] =
+  const stage: TaskStage =
     stageValue === 'planning' ||
     stageValue === 'implementing' ||
-    stageValue === 'ready-for-implementing'
+    stageValue === 'ready-for-implementing' ||
+    stageValue === 'completed'
       ? stageValue
       : 'planning';
   const priorityValue = candidate.priority;
@@ -108,7 +114,7 @@ export const validateAndNormalizeTask = (entry: Task | Idea): Task => {
     stage,
     idea: typeof candidate.idea === 'string' ? candidate.idea : undefined,
     planning_pr_id:
-      typeof candidate.planning_pr_id === 'string'
+      'planning_pr_id' in entry && typeof candidate.planning_pr_id === 'string'
         ? candidate.planning_pr_id
         : undefined,
     priority,

@@ -33,7 +33,8 @@
   "bin": {
     "my-reforge-ai-agent-matcher": "./dist/bin/task-agent-matcher.js",
     "my-reforge-ai-planner": "./dist/task-planner/cli.js",
-    "my-reforge-ai-implementor": "./dist/task-implementor/cli.js"
+    "my-reforge-ai-implementor": "./dist/task-implementor/cli.js",
+    "my-reforge-ai-house-keeper": "./dist/bin/task-house-keeper.js"
   },
   "dependencies": {
     "@octokit/rest": "^22.0.0",

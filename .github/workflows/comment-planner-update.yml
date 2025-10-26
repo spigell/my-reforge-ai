@@ -6,13 +6,15 @@ on:
 
 jobs:
   match-task:
-    runs-on: ubuntu-24.04
+    runs-on: gpt-5-codex
     outputs:
       task_json: '${{ steps.match_agent.outputs.task_json }}'
       agent: '${{ steps.match_agent.outputs.agent }}'
     steps:
       - name: Checkout my-reforge-ai repository
         uses: actions/checkout@v3
+        with:
+          branch: 'main'
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -31,7 +33,7 @@ jobs:
       - name: Match agent to task
         id: match_agent
         run: |
-          node ./dist/bin/task-agent-matcher.js take-from-pr --output-file task.json
+          node ./dist/bin/task-agent-matcher.js take-from-pr --pr-number ${{ github.event.pull_request.number }} --output-file task.json
           TASK_JSON=$(cat task.json | jq -c '.')
           AGENT=$(echo $TASK_JSON | jq -r '.selectedAgent')
           echo "task_json=$TASK_JSON" >> $GITHUB_OUTPUT
@@ -46,9 +48,15 @@ jobs:
     steps:
       - name: Checkout my-reforge-ai repository
         uses: actions/checkout@v3
+        
+      - name: Install deps
+        run: yarn install --frozen-lockfile
 
       - name: Build
         run: yarn build
+
+      - name: Configure git workbench identity
+        run: setup-git-workbench --name "ai bot" --email spigelly+gh-bot@gmail.com --editor vim
 
       - name: Plan the task
         run: |
