@@ -15,7 +15,7 @@ spec:
         - -c
         - /project/deploy/workbench/user-bootstrap.sh codex
         # - sleep 3600
-      image: ghcr.io/spigell/codex-workbench:v0.47.0-4b760b
+      image: ghcr.io/spigell/codex-workbench:v0.50.0-7e2153
       name: codex-workbench
       env:
         - name: HOME
@@ -50,7 +50,7 @@ spec:
         - -c
         - /project/deploy/workbench/user-bootstrap.sh gemini
         # - sleep 3600
-      image: ghcr.io/spigell/google-gemini-workbench:0.9.0-d854d3
+      image: ghcr.io/spigell/google-gemini-workbench:0.10.0-42158b 
       name: gemini-workbench
       resources:
         limits:
