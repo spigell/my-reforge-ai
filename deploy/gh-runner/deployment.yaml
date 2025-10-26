@@ -160,8 +160,6 @@ spec:
               name: gemini-home
             - name: work
               mountPath: /actions-runner/_work
-            - name: gemini-home
-              mountPath: /home/runner/.gemini
           resources:
             requests:
               cpu: '0.5'
@@ -170,9 +168,6 @@ spec:
               cpu: '2'
               memory: 4Gi
       volumes:
-        - name: gemini-home
-          persistentVolumeClaim:
-            claimName: gemini-home
         - name: work
           emptyDir: {}
         - name: gemini-home
