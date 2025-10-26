@@ -114,7 +114,7 @@ export const validateAndNormalizeTask = (entry: Task | Idea): Task => {
     stage,
     idea: typeof candidate.idea === 'string' ? candidate.idea : undefined,
     planning_pr_id:
-      typeof candidate.planning_pr_id === 'string'
+      'planning_pr_id' in entry && typeof candidate.planning_pr_id === 'string'
         ? candidate.planning_pr_id
         : undefined,
     priority,

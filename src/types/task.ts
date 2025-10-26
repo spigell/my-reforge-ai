@@ -13,7 +13,6 @@ type GeneralTask = {
     branch?: string;
     directoryName?: string;
   }>;
-  planning_pr_id?: string;
   review_required?: boolean;
   timeout_ms?: number;
   task_dir: string;
@@ -27,6 +26,7 @@ export type TaskStage =
 
 export type Task = GeneralTask & {
   stage: TaskStage;
+  planning_pr_id?: string;
   idea?: string;
 };
 

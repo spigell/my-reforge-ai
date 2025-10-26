@@ -75,9 +75,6 @@ spec:
               mountPath: /home/runner/.codex
             - name: work
               mountPath: /actions-runner/_work
-            - name: github-pat
-              mountPath: /etc/github
-              readOnly: true
             - name: codex-config-volume
               mountPath: /home/runner/.codex/config.toml
               subPath: config.toml
@@ -94,9 +91,6 @@ spec:
             claimName: codex-home
         - name: work
           emptyDir: {}
-        - name: github-pat
-          secret:
-            secretName: github-mcp-credentials
         - name: codex-config-volume
           configMap:
             name: codex-config-gh-runner
@@ -160,11 +154,10 @@ spec:
             capabilities:
               drop: ['ALL']
           volumeMounts:
+            - mountPath: /home/runner/.gemini
+              name: gemini-home
             - name: work
               mountPath: /actions-runner/_work
-            - name: github-pat
-              mountPath: /etc/github
-              readOnly: true
           resources:
             requests:
               cpu: '0.5'
@@ -173,8 +166,8 @@ spec:
               cpu: '2'
               memory: 4Gi
       volumes:
+        - name: gemini-home
+          persistentVolumeClaim:
+            claimName: gemini-home
         - name: work
           emptyDir: {}
-        - name: github-pat
-          secret:
-            secretName: github-mcp-credentials
