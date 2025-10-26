@@ -36,7 +36,7 @@ Conventions:
 #####################################################################
 
 - Perform all repository writes (adds/commits/pushes) via the **git CLI** over HTTPS using MCP-provided credentials.
-- You may read repository state either via the git CLI (`git fetch`, `git show`, etc.) or GitHub APIs, but **any push MUST use git CLI**.
+- You may read repository state either via the git CLI (`git fetch`, `git show`, etc.) or GitHub MCP Server calls (github-mcp tools), but **any push MUST use git CLI**. Never use github api with MCP-provided credentials.
 - Use the configured GitHub MCP server for PR comments, reviews, status updates, and fetching the latest discussion; do **not** invoke local tools like `gh`.
 - **Do NOT create any branches.** Assume `{{task.branch}}` already exists.
 - request reviewers, assign via the GitHub MCP tool.

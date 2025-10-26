@@ -90,7 +90,7 @@ spec:
       volumes:
         - name: codex-home
           persistentVolumeClaim:
-            claimName: codex-home
+            claimName: codex-gh-runner-home
         - name: work
           emptyDir: {}
         - name: codex-config-volume

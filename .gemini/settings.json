@@ -12,7 +12,7 @@
     "excludedEnvVars": ["DEBUG", "DEBUG_MODE", "NODE_ENV"]
   },
   "mcpServers": {
-    "mcp-github": {
+    "github-mcp": {
       "httpUrl": "http://mcp-github.my-reforge-ai.svc.cluster.local:8080/mcp/"
     }
   },
