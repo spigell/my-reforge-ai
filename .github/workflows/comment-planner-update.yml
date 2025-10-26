@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout my-reforge-ai repository
         uses: actions/checkout@v3
+        with:
+          branch: 'main'
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
