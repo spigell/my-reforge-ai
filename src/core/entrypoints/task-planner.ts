@@ -7,6 +7,7 @@ import type { MatchedTask } from '../../types/task.js';
 
 export type PlannerMainOptions = UseCaseRunOptions & {
   services?: Partial<Services>;
+  tasksRepoPath?: string;
 };
 
 const ALLOWED_COMMANDS = ['init', 'update'];
@@ -58,6 +59,7 @@ export async function main(
   const result = await planTask(command, matchedTask, services, {
     ...runOptions,
     onData,
+    tasksRepoPath: options.tasksRepoPath,
   });
   if (result.status !== 'success') {
     logger.error(`Planner run was not successful. Status: ${result.status}`);

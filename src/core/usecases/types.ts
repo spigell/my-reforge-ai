@@ -17,4 +17,5 @@ export type UseCaseRunOptions = {
   timeoutMs?: number;
   signal?: AbortSignal;
   onData?: (chunk: string) => void;
+  tasksRepoPath?: string;
 };
