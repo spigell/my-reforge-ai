@@ -49,7 +49,8 @@ export async function planTask(
   const allAdditionalRepos = [
     {
       repo: `${owner}/${repoName}`,
-      branch: 'main',
+      // We will create a branch here. @spigell
+      branch: task.branch,
       rootDir: options.tasksRepoPath
     },
     ...(task.additionalRepos || []),
@@ -76,8 +77,6 @@ export async function planTask(
   );
 
   if (command === 'init') {
-    await git.ensureBranchAndSync({ cwd: tasksRepoWorkspace, branch: task.branch });
-
     logger.info(`Git: Committing empty commit in ${tasksRepoWorkspace}`);
     const emptyCommitCreated = await git.commitEmpty({
       cwd: tasksRepoWorkspace,
