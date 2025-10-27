@@ -47,12 +47,12 @@ export async function planTask(
   }
 
   const allAdditionalRepos = [
-    ...(task.additionalRepos || []),
     {
       repo: `${owner}/${repoName}`,
       branch: 'main',
       rootDir: options.tasksRepoPath
-    }
+    },
+    ...(task.additionalRepos || []),
   ];
 
   const preparedPaths = await workspace.prepare({
@@ -68,21 +68,7 @@ export async function planTask(
   }
 
   const mainWorkspacePath = preparedPaths[0];
-  let tasksRepoWorkspace = '';
-
-  // Find the tasks repository workspace path
-  for (const p of preparedPaths) {
-    if (p.includes(options.tasksRepoPath)) {
-      tasksRepoWorkspace = p;
-      break;
-    }
-  }
-
-  if (!tasksRepoWorkspace) {
-    throw new Error(
-      `Tasks repository path ${options.tasksRepoPath} not found in prepared workspaces.`,
-    );
-  }
+  const tasksRepoWorkspace = preparedPaths[1];
 
   // Filter out the tasksRepoWorkspace from additionalWorkspaces for the agent's perspective
   const additionalWorkspaces = preparedPaths.filter(
