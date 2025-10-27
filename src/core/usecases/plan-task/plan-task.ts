@@ -62,6 +62,7 @@ export async function planTask(
     rootDir: workspaceRoot,
   });
 
+  // It should rewritten in prepare() @spigell
   if (preparedPaths.length === 0) {
     throw new Error('Workspace preparation returned no paths.');
   }
@@ -152,19 +153,19 @@ ${task.idea}`,
     });
 
     logger.info(
-      `Git: Ensuring and syncing branch ${task.branch} in ${mainWorkspacePath}`,
+      `Git: Ensuring and syncing branch ${task.branch} in ${tasksRepoWorkspace}`,
     );
     await git.ensureBranchAndSync({
-      cwd: mainWorkspacePath,
+      cwd: tasksRepoWorkspace,
       branch: task.branch,
     });
     logger.info(
-      `Git: Merging branch 'main' into ${task.branch} in ${mainWorkspacePath}`,
+      `Git: Merging branch 'main' into ${task.branch} in ${tasksRepoWorkspace}`,
     );
-    await git.mergeBranch({ cwd: mainWorkspacePath, from: 'main' });
-    logger.info(`Git: Pushing branch ${task.branch} from ${mainWorkspacePath}`);
+    await git.mergeBranch({ cwd: tasksRepoWorkspace, from: 'main' });
+    logger.info(`Git: Pushing branch ${task.branch} from ${tasksRepoWorkspace}`);
     await git.push({
-      cwd: mainWorkspacePath,
+      cwd: tasksRepoWorkspace,
       branch: task.branch,
     });
   }
