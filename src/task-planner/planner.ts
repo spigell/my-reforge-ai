@@ -12,6 +12,7 @@ export type PlannerOptions = {
   agentId: AgentId;
   mainWorkspacePath: string;
   additionalWorkspaces: string[];
+  tasksRepositoryWorkspace: string;
   timeoutMs: number;
   signal: AbortSignal;
   onData?: (chunk: string) => void;
@@ -26,6 +27,7 @@ export async function runPlanner({
   agentId,
   mainWorkspacePath,
   additionalWorkspaces,
+  tasksRepositoryWorkspace,
   timeoutMs,
   signal,
   onData,
@@ -35,7 +37,7 @@ export async function runPlanner({
 
   const templateContent = fs.readFileSync(templatePath, 'utf8');
   const template = handlebars.compile(templateContent, { noEscape: true });
-  const context = { command, task };
+  const context = { command, task, tasksRepositoryWorkspace }; // Updated context
   const renderedPrompt = template(context);
 
   console.log(renderedPrompt);
@@ -50,6 +52,7 @@ export async function runPlanner({
   }
 
   const promptFileName = 'planning-prompt.md';
+  // Prompt written to mainWorkspacePath
   const promptFilePath = path.join(mainWorkspacePath, promptFileName);
   fs.writeFileSync(promptFilePath, renderedPrompt, 'utf8');
   console.log(`Planning prompt written to: ${promptFilePath}`);
@@ -59,8 +62,8 @@ export async function runPlanner({
 
   const result = await agent.run(
     {
-      targetWorkspace: mainWorkspacePath,
-      additionalWorkspaces,
+      targetWorkspace: mainWorkspacePath, // Agent works in mainWorkspacePath
+      additionalWorkspaces: [...additionalWorkspaces, tasksRepositoryWorkspace], // Pass tasksRepositoryWorkspace as additional
       prompt: agentPrompt,
       timeoutMs,
       model: agentId,
@@ -69,13 +72,7 @@ export async function runPlanner({
     signal,
   );
 
-  if (result.status === 'success') {
-    syncPlanDocument({
-      task,
-      mainWorkspacePath,
-      additionalWorkspaces,
-    });
-  }
+  // Removed syncPlanDocument call as it's no longer needed
 
   return result;
 }
@@ -83,68 +80,4 @@ export async function runPlanner({
 const getPlanningTemplatePath = () => {
   // Assumes the script is run from the project root
   return path.resolve('src', 'task-planner', 'planning-promt-tmpl.md');
-};
-
-type SyncPlanDocumentOptions = {
-  task: Task;
-  mainWorkspacePath: string;
-  additionalWorkspaces: string[];
-};
-
-const syncPlanDocument = ({
-  task,
-  mainWorkspacePath,
-  additionalWorkspaces,
-}: SyncPlanDocumentOptions) => {
-  if (!task.task_dir) {
-    throw new Error('Task task_dir must be defined to sync plan document.');
-  }
-
-  if (additionalWorkspaces.length === 0) {
-    return;
-  }
-
-  const relativePlanPath = path.join(task.task_dir, 'plan.md');
-  const candidateSourcePaths = [
-    path.join(mainWorkspacePath, relativePlanPath),
-    ...additionalWorkspaces
-      .slice(0, -1)
-      .map((workspacePath) => path.join(workspacePath, relativePlanPath)),
-  ];
-
-  const tasksRepoWorkspace = additionalWorkspaces.at(-1);
-  if (!tasksRepoWorkspace || !fs.existsSync(tasksRepoWorkspace)) {
-    return;
-  }
-
-  const destinationPlanPath = path.join(
-    tasksRepoWorkspace,
-    relativePlanPath,
-  );
-
-  const sourcePlanPath = candidateSourcePaths.find((planPath) =>
-    fs.existsSync(planPath),
-  );
-
-  if (!sourcePlanPath) {
-    if (fs.existsSync(destinationPlanPath)) {
-      return;
-    }
-
-    throw new Error(
-      `Plan document ${relativePlanPath} was not found in any workspace.`,
-    );
-  }
-
-  if (
-    path.resolve(sourcePlanPath) === path.resolve(destinationPlanPath)
-  ) {
-    return;
-  }
-
-  fs.mkdirSync(path.dirname(destinationPlanPath), { recursive: true });
-  fs.copyFileSync(sourcePlanPath, destinationPlanPath);
-  console.log(
-    `Synchronized plan document to tasks repository at ${destinationPlanPath}`,
-  );
 };

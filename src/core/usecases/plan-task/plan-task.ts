@@ -66,10 +66,6 @@ export async function planTask(
 
   const [mainWorkspacePath, ...additionalWorkspaces] = preparedPaths;
 
-  if (options.tasksRepoPath) {
-    additionalWorkspaces.push(options.tasksRepoPath);
-  }
-
   if (command === 'init') {
     logger.info(`Git: Committing empty commit in ${mainWorkspacePath}`);
     const emptyCommitCreated = await git.commitEmpty({
@@ -151,6 +147,12 @@ ${task.idea}`,
       branch: task.branch,
     });
   }
+  if (!options.tasksRepoPath) {
+    throw new Error(
+      'tasksRepoPath must be provided to sync planning documents into the tasks repository.',
+    );
+  }
+
   const agent = agents.getAgent(selectedAgent);
   const timeoutMs = deriveTimeout(task, options.timeoutMs);
 
@@ -169,6 +171,7 @@ ${task.idea}`,
       agentId: selectedAgent,
       mainWorkspacePath,
       additionalWorkspaces,
+      tasksRepositoryWorkspace: options.tasksRepoPath,
       timeoutMs,
       signal,
       onData: options.onData,

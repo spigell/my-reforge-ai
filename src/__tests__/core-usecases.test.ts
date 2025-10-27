@@ -48,11 +48,14 @@ const createLoggerStub = () => {
 describe('core usecases', () => {
   let tmpDir: string;
   let mainWorkspace: string;
+  let tasksRepoPath: string;
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'usecase-tests-'));
     mainWorkspace = path.join(tmpDir, 'main');
     fs.mkdirSync(mainWorkspace, { recursive: true });
+    tasksRepoPath = path.join(tmpDir, 'tasks-repo');
+    fs.mkdirSync(tasksRepoPath, { recursive: true });
   });
 
   afterEach(() => {
@@ -65,9 +68,32 @@ describe('core usecases', () => {
     > = [];
     const prCalls: Array<Parameters<Services['pr']['openPullRequest']>[0]> = [];
     const gitCalls: Array<{ method: string; args: unknown }> = [];
-    const agent = createAgentStub();
     const loggerStub = createLoggerStub();
     let commitInvocation = 0;
+
+    const matchedTask: MatchedTask = {
+      selectedAgent: AgentId.GoogleGemini25Flash,
+      task: {
+        repo: 'owner/repo',
+        branch: 'feature/refactor',
+        agents: [AgentId.GoogleGemini25Flash],
+        kind: 'feature',
+        idea: 'Improve structure',
+        stage: 'planning',
+        task_dir: 'tasks/refactor',
+        review_required: true,
+      },
+    };
+
+    const agent = createAgentStub((options) => {
+      const planPath = path.join(
+        options.targetWorkspace,
+        matchedTask.task.task_dir,
+        'plan.md',
+      );
+      fs.mkdirSync(path.dirname(planPath), { recursive: true });
+      fs.writeFileSync(planPath, '# Plan\n- refactor', 'utf8');
+    });
 
     const gitStub: GitService = {
       async ensureBranchAndSync(opts) {
@@ -119,22 +145,9 @@ describe('core usecases', () => {
       git: gitStub,
     };
 
-    const matchedTask: MatchedTask = {
-      selectedAgent: AgentId.GoogleGemini25Flash,
-      task: {
-        repo: 'owner/repo',
-        branch: 'feature/refactor',
-        agents: [AgentId.GoogleGemini25Flash],
-        kind: 'feature',
-        idea: 'Improve structure',
-        stage: 'planning',
-        task_dir: 'tasks/refactor',
-        review_required: true,
-      },
-    };
-
     const result = await planTask('init', matchedTask, services, {
       workspaceRoot: tmpDir,
+      tasksRepoPath,
     });
 
     assert.strictEqual(result.status, 'success');
@@ -192,6 +205,15 @@ ${matchedTask.task.idea}`,
         message.includes('Planner finished'),
       ),
       'expected planner to log completion',
+    );
+    const syncedPlanPath = path.join(
+      tasksRepoPath,
+      matchedTask.task.task_dir,
+      'plan.md',
+    );
+    assert.ok(
+      fs.existsSync(syncedPlanPath),
+      'expected plan.md to be synced into tasks repository workspace',
     );
   });
 

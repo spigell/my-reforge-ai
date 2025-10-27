@@ -10,8 +10,11 @@ import { planTask } from '../core/usecases/plan-task/plan-task.js';
 import type { MatchedTask } from '../types/task.js';
 import { AgentId } from '../types/agent.js';
 
-const createAgentStub = (): Agent => ({
-  async run() {
+const createAgentStub = (taskDir: string): Agent => ({
+  async run(options) {
+    const planPath = path.join(options.targetWorkspace, taskDir, 'plan.md');
+    fs.mkdirSync(path.dirname(planPath), { recursive: true });
+    fs.writeFileSync(planPath, '# Plan\n- stub planner run', 'utf8');
     return {
       status: 'success',
       logs: 'stub planner run',
@@ -29,11 +32,14 @@ const createLoggerStub = () => ({
 describe('planTask use case', () => {
   let tmpDir: string;
   let mainWorkspace: string;
+  let tasksRepoPath: string;
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'plan-task-tests-'));
     mainWorkspace = path.join(tmpDir, 'main');
     fs.mkdirSync(mainWorkspace, { recursive: true });
+    tasksRepoPath = path.join(tmpDir, 'tasks-repo');
+    fs.mkdirSync(tasksRepoPath, { recursive: true });
   });
 
   afterEach(() => {
@@ -65,6 +71,20 @@ describe('planTask use case', () => {
       },
     };
 
+    const matchedTask: MatchedTask = {
+      selectedAgent: AgentId.OpenAICodex,
+      task: {
+        repo: 'owner/repo',
+        branch: 'feature/sample',
+        agents: [AgentId.OpenAICodex],
+        kind: 'feature',
+        idea: 'Draft the new architecture',
+        stage: 'planning',
+        task_dir: 'tasks/sample',
+        review_required: true,
+      },
+    };
+
     const services: Services = {
       workspace: {
         async prepare() {
@@ -73,7 +93,7 @@ describe('planTask use case', () => {
       },
       agents: {
         getAgent() {
-          return createAgentStub();
+          return createAgentStub(matchedTask.task.task_dir);
         },
       },
       pr: {
@@ -92,22 +112,9 @@ describe('planTask use case', () => {
       git: gitStub,
     };
 
-    const matchedTask: MatchedTask = {
-      selectedAgent: AgentId.OpenAICodex,
-      task: {
-        repo: 'owner/repo',
-        branch: 'feature/sample',
-        agents: [AgentId.OpenAICodex],
-        kind: 'feature',
-        idea: 'Draft the new architecture',
-        stage: 'planning',
-        task_dir: 'tasks/sample',
-        review_required: true,
-      },
-    };
-
     const result = await planTask('init', matchedTask, services, {
       workspaceRoot: tmpDir,
+      tasksRepoPath,
     });
 
     assert.strictEqual(result.status, 'success');
@@ -141,47 +148,18 @@ ${matchedTask.task.idea}`,
     assert.match(yamlContents, /stage: planning/);
     assert.match(yamlContents, /planning_pr_id: '?42'?/);
     assert.strictEqual(matchedTask.task.planning_pr_id, '42');
+    const syncedPlanPath = path.join(
+      tasksRepoPath,
+      matchedTask.task.task_dir,
+      'plan.md',
+    );
+    assert.ok(
+      fs.existsSync(syncedPlanPath),
+      'expected plan.md to be synced into tasks repo workspace',
+    );
   });
 
   test('throws when repo or branch are missing', async () => {
-    const services: Services = {
-      workspace: {
-        async prepare() {
-          return [mainWorkspace];
-        },
-      },
-      agents: {
-        getAgent() {
-          return createAgentStub();
-        },
-      },
-      pr: {
-        async openPullRequest() {
-          return {
-            id: 1,
-            number: 1,
-            url: 'http://example.com/pr/1',
-            created: true,
-            baseBranch: 'main',
-          };
-        },
-      },
-      logger: createLoggerStub(),
-      git: {
-        async ensureBranchAndSync() {},
-        async commitEmpty() {
-          return true;
-        },
-        async mergeBranch() {
-          return true;
-        },
-        async commitAll() {
-          return true;
-        },
-        async push() {},
-      },
-    };
-
     const invalidTask = {
       selectedAgent: AgentId.OpenAICodex,
       task: {
@@ -195,13 +173,6 @@ ${matchedTask.task.idea}`,
       },
     } satisfies MatchedTask;
 
-    await assert.rejects(
-      () => planTask('init', invalidTask, services, { workspaceRoot: tmpDir }),
-      /Task repo and branch must be defined/,
-    );
-  });
-
-  test('throws when idea is missing', async () => {
     const services: Services = {
       workspace: {
         async prepare() {
@@ -210,7 +181,7 @@ ${matchedTask.task.idea}`,
       },
       agents: {
         getAgent() {
-          return createAgentStub();
+          return createAgentStub(invalidTask.task.task_dir);
         },
       },
       pr: {
@@ -240,6 +211,17 @@ ${matchedTask.task.idea}`,
       },
     };
 
+    await assert.rejects(
+      () =>
+        planTask('init', invalidTask, services, {
+          workspaceRoot: tmpDir,
+          tasksRepoPath,
+        }),
+      /Task repo and branch must be defined/,
+    );
+  });
+
+  test('throws when idea is missing', async () => {
     const invalidTask: MatchedTask = {
       selectedAgent: AgentId.OpenAICodex,
       task: {
@@ -252,13 +234,6 @@ ${matchedTask.task.idea}`,
       },
     };
 
-    await assert.rejects(
-      () => planTask('init', invalidTask, services, { workspaceRoot: tmpDir }),
-      /Planning stage requires an idea/,
-    );
-  });
-
-  test('requires planning_pr_id when command is update', async () => {
     const services: Services = {
       workspace: {
         async prepare() {
@@ -267,7 +242,7 @@ ${matchedTask.task.idea}`,
       },
       agents: {
         getAgent() {
-          return createAgentStub();
+          return createAgentStub(invalidTask.task.task_dir);
         },
       },
       pr: {
@@ -297,6 +272,17 @@ ${matchedTask.task.idea}`,
       },
     };
 
+    await assert.rejects(
+      () =>
+        planTask('init', invalidTask, services, {
+          workspaceRoot: tmpDir,
+          tasksRepoPath,
+        }),
+      /Planning stage requires an idea/,
+    );
+  });
+
+  test('requires planning_pr_id when command is update', async () => {
     const matchedTask: MatchedTask = {
       selectedAgent: AgentId.OpenAICodex,
       task: {
@@ -310,9 +296,50 @@ ${matchedTask.task.idea}`,
       },
     };
 
+    const services: Services = {
+      workspace: {
+        async prepare() {
+          return [mainWorkspace];
+        },
+      },
+      agents: {
+        getAgent() {
+          return createAgentStub(matchedTask.task.task_dir);
+        },
+      },
+      pr: {
+        async openPullRequest() {
+          return {
+            id: 1,
+            number: 1,
+            url: 'http://example.com/pr/1',
+            created: true,
+            baseBranch: 'main',
+          };
+        },
+      },
+      logger: createLoggerStub(),
+      git: {
+        async ensureBranchAndSync() {},
+        async commitEmpty() {
+          return true;
+        },
+        async mergeBranch() {
+          return true;
+        },
+        async commitAll() {
+          return true;
+        },
+        async push() {},
+      },
+    };
+
     await assert.rejects(
       () =>
-        planTask('update', matchedTask, services, { workspaceRoot: tmpDir }),
+        planTask('update', matchedTask, services, {
+          workspaceRoot: tmpDir,
+          tasksRepoPath,
+        }),
       /requires a planning_pr_id/,
     );
   });
@@ -341,6 +368,19 @@ ${matchedTask.task.idea}`,
       },
     };
 
+    const matchedTask: MatchedTask = {
+      selectedAgent: AgentId.OpenAICodex,
+      task: {
+        repo: 'owner/repo',
+        branch: 'feature/sample',
+        agents: [AgentId.OpenAICodex],
+        kind: 'feature',
+        stage: 'planning',
+        task_dir: 'tasks/sample',
+        planning_pr_id: '99',
+      },
+    };
+
     const services: Services = {
       workspace: {
         async prepare() {
@@ -349,7 +389,7 @@ ${matchedTask.task.idea}`,
       },
       agents: {
         getAgent() {
-          return createAgentStub();
+          return createAgentStub(matchedTask.task.task_dir);
         },
       },
       pr: {
@@ -367,21 +407,9 @@ ${matchedTask.task.idea}`,
       git: gitStub,
     };
 
-    const matchedTask: MatchedTask = {
-      selectedAgent: AgentId.OpenAICodex,
-      task: {
-        repo: 'owner/repo',
-        branch: 'feature/sample',
-        agents: [AgentId.OpenAICodex],
-        kind: 'feature',
-        stage: 'planning',
-        task_dir: 'tasks/sample',
-        planning_pr_id: '99',
-      },
-    };
-
     const result = await planTask('update', matchedTask, services, {
       workspaceRoot: tmpDir,
+      tasksRepoPath,
     });
 
     assert.strictEqual(result.status, 'success');
@@ -406,26 +434,6 @@ ${matchedTask.task.idea}`,
       async push() {},
     };
 
-    const services: Services = {
-      workspace: {
-        async prepare() {
-          return [mainWorkspace];
-        },
-      },
-      agents: {
-        getAgent() {
-          return createAgentStub();
-        },
-      },
-      pr: {
-        async openPullRequest() {
-          throw new Error('should not reach PR creation when commit fails');
-        },
-      },
-      logger: createLoggerStub(),
-      git: gitStub,
-    };
-
     const matchedTask: MatchedTask = {
       selectedAgent: AgentId.OpenAICodex,
       task: {
@@ -439,8 +447,32 @@ ${matchedTask.task.idea}`,
       },
     };
 
+    const services: Services = {
+      workspace: {
+        async prepare() {
+          return [mainWorkspace];
+        },
+      },
+      agents: {
+        getAgent() {
+          return createAgentStub(matchedTask.task.task_dir);
+        },
+      },
+      pr: {
+        async openPullRequest() {
+          throw new Error('should not reach PR creation when commit fails');
+        },
+      },
+      logger: createLoggerStub(),
+      git: gitStub,
+    };
+
     await assert.rejects(
-      () => planTask('init', matchedTask, services, { workspaceRoot: tmpDir }),
+      () =>
+        planTask('init', matchedTask, services, {
+          workspaceRoot: tmpDir,
+          tasksRepoPath,
+        }),
       /Failed to create bootstrap empty commit/,
     );
   });

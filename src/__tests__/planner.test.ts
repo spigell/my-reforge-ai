@@ -11,11 +11,14 @@ import type { Task } from '../types/task.js';
 describe('Task Planner', () => {
   let tempDir: string;
   let workspacePath: string;
+  let tasksRepoPath: string;
 
   beforeEach(() => {
     tempDir = fs.mkdtempSync(path.join(tmpdir(), 'task-planner-tests-'));
     workspacePath = path.join(tempDir, 'workspace');
     fs.mkdirSync(workspacePath, { recursive: true });
+    tasksRepoPath = path.join(tempDir, 'tasks-repo');
+    fs.mkdirSync(tasksRepoPath, { recursive: true });
   });
 
   afterEach(() => {
@@ -24,16 +27,6 @@ describe('Task Planner', () => {
 
   test('renders planning prompt and runs agent with plan file instruction', async () => {
     let capturedPrompt: string | undefined;
-    const agentStub: Agent = {
-      async run(options) {
-        capturedPrompt = options.prompt;
-        return {
-          status: 'success',
-          logs: 'done',
-        };
-      },
-    };
-
     const task: Task = {
       repo: 'owner/repo',
       branch: 'plan',
@@ -44,6 +37,19 @@ describe('Task Planner', () => {
       task_dir: 'tasks/plan-only',
     };
 
+    const agentStub: Agent = {
+      async run(options) {
+        capturedPrompt = options.prompt;
+        const planPath = path.join(workspacePath, task.task_dir, 'plan.md');
+        fs.mkdirSync(path.dirname(planPath), { recursive: true });
+        fs.writeFileSync(planPath, '# Plan\n- item 1', 'utf8');
+        return {
+          status: 'success',
+          logs: 'done',
+        };
+      },
+    };
+
     const result = await runPlanner({
       command: 'init',
       task,
@@ -51,6 +57,7 @@ describe('Task Planner', () => {
       agentId: AgentId.GoogleGemini25Flash,
       mainWorkspacePath: workspacePath,
       additionalWorkspaces: [],
+      tasksRepositoryWorkspace: tasksRepoPath,
       timeoutMs: 120000,
       signal: new AbortController().signal,
     });
@@ -72,15 +79,6 @@ describe('Task Planner', () => {
   });
 
   test('still runs when idea is missing (validated earlier in pipeline)', async () => {
-    const agentStub: Agent = {
-      async run() {
-        return {
-          status: 'success',
-          logs: 'no-op',
-        };
-      },
-    };
-
     const task = {
       repo: 'owner/repo',
       branch: 'plan',
@@ -90,6 +88,18 @@ describe('Task Planner', () => {
       task_dir: 'tasks/plan-only',
     } satisfies Task;
 
+    const agentStub: Agent = {
+      async run() {
+        const planPath = path.join(workspacePath, task.task_dir, 'plan.md');
+        fs.mkdirSync(path.dirname(planPath), { recursive: true });
+        fs.writeFileSync(planPath, '# Plan\n- default', 'utf8');
+        return {
+          status: 'success',
+          logs: 'no-op',
+        };
+      },
+    };
+
     const result = await runPlanner({
       command: 'init',
       task,
@@ -97,6 +107,7 @@ describe('Task Planner', () => {
       agentId: AgentId.GoogleGemini25Flash,
       mainWorkspacePath: workspacePath,
       additionalWorkspaces: [],
+      tasksRepositoryWorkspace: tasksRepoPath,
       timeoutMs: 120000,
       signal: new AbortController().signal,
     });
@@ -107,15 +118,6 @@ describe('Task Planner', () => {
   });
 
   test('includes update-specific instructions when command is update', async () => {
-    const agentStub: Agent = {
-      async run() {
-        return {
-          status: 'success',
-          logs: 'done',
-        };
-      },
-    };
-
     const task: Task = {
       repo: 'owner/repo',
       branch: 'plan',
@@ -128,6 +130,18 @@ describe('Task Planner', () => {
       review_required: true,
     };
 
+    const agentStub: Agent = {
+      async run() {
+        const planPath = path.join(workspacePath, task.task_dir, 'plan.md');
+        fs.mkdirSync(path.dirname(planPath), { recursive: true });
+        fs.writeFileSync(planPath, '# Plan\n- update', 'utf8');
+        return {
+          status: 'success',
+          logs: 'done',
+        };
+      },
+    };
+
     const result = await runPlanner({
       command: 'update',
       task,
@@ -135,6 +149,7 @@ describe('Task Planner', () => {
       agentId: AgentId.GoogleGemini25Flash,
       mainWorkspacePath: workspacePath,
       additionalWorkspaces: [],
+      tasksRepositoryWorkspace: tasksRepoPath,
       timeoutMs: 120000,
       signal: new AbortController().signal,
     });
@@ -147,9 +162,7 @@ describe('Task Planner', () => {
   });
 
   test('syncs generated plan into provided tasks repository workspace', async () => {
-    const tasksRepoWorkspace = path.join(tempDir, 'tasks-repo');
     const additionalWorkspace = path.join(tempDir, 'additional');
-    fs.mkdirSync(tasksRepoWorkspace, { recursive: true });
     fs.mkdirSync(additionalWorkspace, { recursive: true });
 
     const task: Task = {
@@ -182,7 +195,8 @@ describe('Task Planner', () => {
       agent: agentStub,
       agentId: AgentId.GoogleGemini25Flash,
       mainWorkspacePath: workspacePath,
-      additionalWorkspaces: [additionalWorkspace, tasksRepoWorkspace],
+      additionalWorkspaces: [additionalWorkspace],
+      tasksRepositoryWorkspace: tasksRepoPath,
       timeoutMs: 120000,
       signal: new AbortController().signal,
     });
@@ -190,7 +204,7 @@ describe('Task Planner', () => {
     assert.strictEqual(result.status, 'success');
 
     const syncedPlanPath = path.join(
-      tasksRepoWorkspace,
+      tasksRepoPath,
       'tasks/planning-sync/plan.md',
     );
     assert.ok(
