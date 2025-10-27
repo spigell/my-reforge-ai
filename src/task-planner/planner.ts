@@ -37,7 +37,7 @@ export async function runPlanner({
 
   const templateContent = fs.readFileSync(templatePath, 'utf8');
   const template = handlebars.compile(templateContent, { noEscape: true });
-  const context = { command, task, tasksRepositoryWorkspace }; // Updated context
+  const context = { command, task, tasksRepositoryWorkspace };
   const renderedPrompt = template(context);
 
   console.log(renderedPrompt);
@@ -52,7 +52,6 @@ export async function runPlanner({
   }
 
   const promptFileName = 'planning-prompt.md';
-  // Prompt written to mainWorkspacePath
   const promptFilePath = path.join(mainWorkspacePath, promptFileName);
   fs.writeFileSync(promptFilePath, renderedPrompt, 'utf8');
   console.log(`Planning prompt written to: ${promptFilePath}`);
@@ -60,10 +59,15 @@ export async function runPlanner({
   const agentPrompt =
     'Read the prompt file ./planning-prompt.md in this workspace and execute.';
 
-  const result = await agent.run(
+  const agentAdditionalWorkspaces = [
+    ...additionalWorkspaces,
+    tasksRepositoryWorkspace,
+  ];
+
+  return agent.run(
     {
-      targetWorkspace: mainWorkspacePath, // Agent works in mainWorkspacePath
-      additionalWorkspaces: [...additionalWorkspaces, tasksRepositoryWorkspace], // Pass tasksRepositoryWorkspace as additional
+      targetWorkspace: mainWorkspacePath,
+      additionalWorkspaces: agentAdditionalWorkspaces,
       prompt: agentPrompt,
       timeoutMs,
       model: agentId,
@@ -71,10 +75,6 @@ export async function runPlanner({
     },
     signal,
   );
-
-  // Removed syncPlanDocument call as it's no longer needed
-
-  return result;
 }
 
 const getPlanningTemplatePath = () => {

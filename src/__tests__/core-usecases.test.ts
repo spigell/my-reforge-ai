@@ -86,8 +86,13 @@ describe('core usecases', () => {
     };
 
     const agent = createAgentStub((options) => {
+      const agentWorkspaces = options.additionalWorkspaces ?? [];
+      assert.ok(
+        agentWorkspaces.includes(tasksRepoPath),
+        'expected tasks repository workspace to be provided',
+      );
       const planPath = path.join(
-        options.targetWorkspace,
+        tasksRepoPath,
         matchedTask.task.task_dir,
         'plan.md',
       );
@@ -213,7 +218,7 @@ ${matchedTask.task.idea}`,
     );
     assert.ok(
       fs.existsSync(syncedPlanPath),
-      'expected plan.md to be synced into tasks repository workspace',
+      'expected plan.md to be written into tasks repository workspace by agent',
     );
   });
 

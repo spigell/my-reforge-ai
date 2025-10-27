@@ -10,9 +10,14 @@ import { planTask } from '../core/usecases/plan-task/plan-task.js';
 import type { MatchedTask } from '../types/task.js';
 import { AgentId } from '../types/agent.js';
 
-const createAgentStub = (taskDir: string): Agent => ({
+const createAgentStub = (taskDir: string, tasksRepoPath: string): Agent => ({
   async run(options) {
-    const planPath = path.join(options.targetWorkspace, taskDir, 'plan.md');
+    const agentWorkspaces = options.additionalWorkspaces ?? [];
+    assert.ok(
+      agentWorkspaces.includes(tasksRepoPath),
+      'expected tasks repository workspace to be provided to agent',
+    );
+    const planPath = path.join(tasksRepoPath, taskDir, 'plan.md');
     fs.mkdirSync(path.dirname(planPath), { recursive: true });
     fs.writeFileSync(planPath, '# Plan\n- stub planner run', 'utf8');
     return {
@@ -93,7 +98,7 @@ describe('planTask use case', () => {
       },
       agents: {
         getAgent() {
-          return createAgentStub(matchedTask.task.task_dir);
+          return createAgentStub(matchedTask.task.task_dir, tasksRepoPath);
         },
       },
       pr: {
@@ -155,7 +160,7 @@ ${matchedTask.task.idea}`,
     );
     assert.ok(
       fs.existsSync(syncedPlanPath),
-      'expected plan.md to be synced into tasks repo workspace',
+      'expected plan.md to be written into tasks repo workspace by agent',
     );
   });
 
@@ -181,7 +186,7 @@ ${matchedTask.task.idea}`,
       },
       agents: {
         getAgent() {
-          return createAgentStub(invalidTask.task.task_dir);
+          return createAgentStub(invalidTask.task.task_dir, tasksRepoPath);
         },
       },
       pr: {
@@ -242,7 +247,7 @@ ${matchedTask.task.idea}`,
       },
       agents: {
         getAgent() {
-          return createAgentStub(invalidTask.task.task_dir);
+          return createAgentStub(invalidTask.task.task_dir, tasksRepoPath);
         },
       },
       pr: {
@@ -304,7 +309,7 @@ ${matchedTask.task.idea}`,
       },
       agents: {
         getAgent() {
-          return createAgentStub(matchedTask.task.task_dir);
+          return createAgentStub(matchedTask.task.task_dir, tasksRepoPath);
         },
       },
       pr: {
@@ -389,7 +394,7 @@ ${matchedTask.task.idea}`,
       },
       agents: {
         getAgent() {
-          return createAgentStub(matchedTask.task.task_dir);
+          return createAgentStub(matchedTask.task.task_dir, tasksRepoPath);
         },
       },
       pr: {
@@ -455,7 +460,7 @@ ${matchedTask.task.idea}`,
       },
       agents: {
         getAgent() {
-          return createAgentStub(matchedTask.task.task_dir);
+          return createAgentStub(matchedTask.task.task_dir, tasksRepoPath);
         },
       },
       pr: {

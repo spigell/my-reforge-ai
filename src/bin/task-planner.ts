@@ -11,6 +11,7 @@ export async function main() {
       },
       'tasks-repo-path': {
         type: 'string',
+        default: 'remove it'
       },
     },
   });

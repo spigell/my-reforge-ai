@@ -36,7 +36,7 @@ export async function planTask(
   } else {
     if (!task.planning_pr_id) {
       throw new Error(
-        `Command "${command}" requires a planning_pr_id, but it's missing.`, 
+        `Command "${command}" requires a planning_pr_id, but it's missing.`,
       );
     }
   }
@@ -50,6 +50,12 @@ export async function planTask(
   if (!owner || !repoName) {
     throw new Error(
       `Task repo must be in "owner/repo" format. Received "${task.repo}".`,
+    );
+  }
+
+  if (!options.tasksRepoPath) {
+    throw new Error(
+      'tasksRepoPath must be provided so the planning agent can write to the tasks repository.',
     );
   }
 
@@ -67,9 +73,9 @@ export async function planTask(
   const [mainWorkspacePath, ...additionalWorkspaces] = preparedPaths;
 
   if (command === 'init') {
-    logger.info(`Git: Committing empty commit in ${mainWorkspacePath}`);
+    logger.info(`Git: Committing empty commit in ${options.tasksRepoPath}`);
     const emptyCommitCreated = await git.commitEmpty({
-      cwd: mainWorkspacePath,
+      cwd: options.tasksRepoPath,
       message: 'Test commit',
     });
 
@@ -77,19 +83,20 @@ export async function planTask(
       throw new Error('Failed to create bootstrap empty commit.');
     }
     logger.info(
-      `Git: Pushing branch ${task.branch} to upstream from ${mainWorkspacePath}`,
+      `Git: Pushing branch ${task.branch} to upstream from ${options.tasksRepoPath}`,
     );
     await git.push({
-      cwd: mainWorkspacePath,
+      cwd: options.tasksRepoPath,
       branch: task.branch,
       setUpstream: true,
     });
 
+    // TODO: The owner/repo should be for the tasks repository, not the target repo.
     const prResult = await openPlanningPr(
       {
         owner,
         repo: repoName,
-        workspacePath: mainWorkspacePath,
+        workspacePath: options.tasksRepoPath,
         taskDir: task.task_dir,
         taskObject: { ...task, idea: task.idea as string },
         featureBranch: task.branch,
@@ -102,14 +109,14 @@ ${task.idea}`,
     );
 
     logger.info(
-      `Git: Ensuring and syncing branch 'main' in ${mainWorkspacePath}`,
+      `Git: Ensuring and syncing branch 'main' in ${options.tasksRepoPath}`,
     );
-    await git.ensureBranchAndSync({ cwd: mainWorkspacePath, branch: 'main' });
+    await git.ensureBranchAndSync({ cwd: options.tasksRepoPath, branch: 'main' });
 
     task.planning_pr_id = prResult.number.toString();
     task.stage = 'planning';
 
-    const absoluteTaskDir = path.join(mainWorkspacePath, task.task_dir);
+    const absoluteTaskDir = path.join(options.tasksRepoPath, task.task_dir);
     const yamlPath = path.join(absoluteTaskDir, 'task.yaml');
 
     fs.mkdirSync(absoluteTaskDir, { recursive: true });
@@ -117,19 +124,19 @@ ${task.idea}`,
     writeYamlFile(yamlPath, task);
 
     logger.info(
-      `Git: Committing all changes in ${mainWorkspacePath} with message: "chore(task): add ${task.task_dir}/task.yaml"`,
+      `Git: Commiting all changes in ${options.tasksRepoPath} with message: "chore(task): add ${task.task_dir}/task.yaml"`,
     );
     await git.commitAll({
-      cwd: mainWorkspacePath,
+      cwd: options.tasksRepoPath,
       message: `chore(task): add ${task.task_dir}/task.yaml`,
     });
 
-    logger.info(`Git: Pushing branch 'main' from ${mainWorkspacePath}`);
+    logger.info(`Git: Pushing branch 'main' from ${options.tasksRepoPath}`);
     await git.push({
-      cwd: mainWorkspacePath,
+      cwd: options.tasksRepoPath,
       branch: 'main',
     });
-
+    
     logger.info(
       `Git: Ensuring and syncing branch ${task.branch} in ${mainWorkspacePath}`,
     );
@@ -147,11 +154,13 @@ ${task.idea}`,
       branch: task.branch,
     });
   }
+
   if (!options.tasksRepoPath) {
     throw new Error(
-      'tasksRepoPath must be provided to sync planning documents into the tasks repository.',
+      'tasksRepoPath must be provided so the planning agent can write to the tasks repository.',
     );
   }
+
 
   const agent = agents.getAgent(selectedAgent);
   const timeoutMs = deriveTimeout(task, options.timeoutMs);

@@ -40,7 +40,11 @@ describe('Task Planner', () => {
     const agentStub: Agent = {
       async run(options) {
         capturedPrompt = options.prompt;
-        const planPath = path.join(workspacePath, task.task_dir, 'plan.md');
+        assert.ok(
+          options.additionalWorkspaces?.includes(tasksRepoPath),
+          'expected tasks repo workspace to be provided',
+        );
+        const planPath = path.join(tasksRepoPath, task.task_dir, 'plan.md');
         fs.mkdirSync(path.dirname(planPath), { recursive: true });
         fs.writeFileSync(planPath, '# Plan\n- item 1', 'utf8');
         return {
@@ -89,8 +93,12 @@ describe('Task Planner', () => {
     } satisfies Task;
 
     const agentStub: Agent = {
-      async run() {
-        const planPath = path.join(workspacePath, task.task_dir, 'plan.md');
+      async run(options) {
+        assert.ok(
+          options.additionalWorkspaces?.includes(tasksRepoPath),
+          'expected tasks repo workspace to be provided',
+        );
+        const planPath = path.join(tasksRepoPath, task.task_dir, 'plan.md');
         fs.mkdirSync(path.dirname(planPath), { recursive: true });
         fs.writeFileSync(planPath, '# Plan\n- default', 'utf8');
         return {
@@ -131,8 +139,12 @@ describe('Task Planner', () => {
     };
 
     const agentStub: Agent = {
-      async run() {
-        const planPath = path.join(workspacePath, task.task_dir, 'plan.md');
+      async run(options) {
+        assert.ok(
+          options.additionalWorkspaces?.includes(tasksRepoPath),
+          'expected tasks repo workspace to be provided',
+        );
+        const planPath = path.join(tasksRepoPath, task.task_dir, 'plan.md');
         fs.mkdirSync(path.dirname(planPath), { recursive: true });
         fs.writeFileSync(planPath, '# Plan\n- update', 'utf8');
         return {
@@ -161,7 +173,7 @@ describe('Task Planner', () => {
     assert.match(promptContents, /PLAN UPDATE \(update command\)/);
   });
 
-  test('syncs generated plan into provided tasks repository workspace', async () => {
+  test('provides tasks repository workspace to agent for plan output', async () => {
     const additionalWorkspace = path.join(tempDir, 'additional');
     fs.mkdirSync(additionalWorkspace, { recursive: true });
 
@@ -178,8 +190,12 @@ describe('Task Planner', () => {
     const planBody = '# Plan\n- step 1';
 
     const agentStub: Agent = {
-      async run() {
-        const planPath = path.join(workspacePath, task.task_dir, 'plan.md');
+      async run(options) {
+        assert.ok(
+          options.additionalWorkspaces?.includes(tasksRepoPath),
+          'expected tasks repo workspace to be provided',
+        );
+        const planPath = path.join(tasksRepoPath, task.task_dir, 'plan.md');
         fs.mkdirSync(path.dirname(planPath), { recursive: true });
         fs.writeFileSync(planPath, planBody, 'utf8');
         return {
@@ -209,7 +225,7 @@ describe('Task Planner', () => {
     );
     assert.ok(
       fs.existsSync(syncedPlanPath),
-      'expected plan.md to be copied into tasks repo workspace',
+      'expected plan.md to be written into tasks repo workspace by agent',
     );
     const syncedPlan = fs.readFileSync(syncedPlanPath, 'utf8');
     assert.strictEqual(syncedPlan, planBody);
