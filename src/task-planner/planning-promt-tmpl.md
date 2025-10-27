@@ -34,10 +34,11 @@ Conventions:
 
 #####################################################################
 
+- Your workspace is pre-configured with the `{{task.branch}}` branch already checked out and up-to-date.
 - Perform all repository writes (adds/commits/pushes) via the **git CLI** over HTTPS. It is already configured. Are not allowed to change origin or add a new remote.
-- You may read repository state either via the git CLI (`git fetch`, `git show`, etc.) or GitHub MCP Server calls (github-mcp tools), but **any push MUST use git CLI**. Never use the GitHub API with MCP-provided credentials.
+- You may read repository state via the git CLI (`git show`, etc.) or GitHub MCP Server calls (github-mcp tools), but **any push MUST use git CLI**. Never use the GitHub API with MCP-provided credentials.
 - Use the configured GitHub MCP server for PR comments, reviews, status updates, and fetching the latest discussion; do **not** invoke local tools like `gh`.
-- **Do NOT create any branches.** Assume `{{task.branch}}` already exists.
+- **Do NOT create, checkout, or merge any branches.** Assume `{{task.branch}}` is ready.
 - Request reviewers and assign them via the GitHub MCP tool.
 - Order of operations in each turn (idempotent, no force-push):
   0. Fetch the latest PR comments via the GitHub MCP server to ensure you react to new feedback before making changes.
@@ -133,7 +134,7 @@ You are in the update stage. Address the feedback from the reviewer.
 - Be crisp. Use bullets over prose.
 - Call out exactly what changed since the last turn under **“∆ Changes since last turn”**.
 - Never leak or request credentials. Use MCP-scoped credentials only.
-- Idempotent: checkout commit -> push -> comment on PR -> request review.
+- Your workflow is simple: modify files, commit, push, and comment.
 - **No force pushes.** Prefer additive commits; squash can be proposed at merge time.
 
 #####################################################################
@@ -162,8 +163,11 @@ Post **one** PR comment in Markdown that includes:
 
 # NOW ACT
 
+#####################################################################
+
 Again:
-- Use the **git CLI** over HTTPS to: fetch, checkout existing `{{task.branch}}`, update/create files, commit, and push.
+- Use the **git CLI** over HTTPS to: update/create files, commit, and push to `{{task.branch}}`.
+- The branch is already checked out and up-to-date for you.
 - Using MCP:
   - To request (or renew) review from **@spigell**.
   - Then post the Markdown PR comment as specified above.
