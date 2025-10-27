@@ -7,6 +7,9 @@ import * as yaml from 'js-yaml';
 import { main as matcherMain } from '../core/entrypoints/task-agent-matcher.js';
 import { MatchedTask } from '../types/task.js';
 import { UsageServiceAdapter } from '../adapters/usage/usage-service.js';
+import { ConsoleLogger } from '../adapters/logger/logger.js'; // Import ConsoleLogger
+
+const logger = new ConsoleLogger(); // Instantiate logger
 
 describe('Task Agent Matcher Main', () => {
   let tempDir: string;
@@ -56,6 +59,7 @@ describe('Task Agent Matcher Main', () => {
     await matcherMain('pick', { outputFile, ideasFilePath: taskFile });
 
     const payload = readOutputFile(outputFile);
+    logger.debug(JSON.stringify(payload, null, 2)); // Changed to logger.debug
     assert.strictEqual(payload.task.idea, 'my idea');
   });
 

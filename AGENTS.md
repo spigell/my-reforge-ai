@@ -46,10 +46,12 @@ Every functional change should introduce or update tests. Compile first, then ru
 - Overriding `process.exit` to throw a custom error, allowing you to verify termination logic without halting the test runner.
 - Ensuring complete cleanup of files and stubs in an `afterEach` block.
   This approach leads to more reliable tests that better reflect the script's end-to-end behavior.
+**Note on Agent Testing:** Do not add new tests for agents. Existing tests are sufficient.
 
 ## Commit & Pull Request Guidelines
 
 Write commits as concise, imperative sentences (`Add fetch usage cache`). Group related changes together and keep noise out of the diff. Pull requests must include a summary, linked issue (if applicable), testing notes, and confirmation that deployment artifacts in `deploy/` remain valid or describe the needed follow-up. Ensure the PR addresses only a single feature or fix and contains accompanying tests.
+**Note:** As an AI agent, I will not commit any changes directly. All changes will be presented to the user for review and commit.
 
 # MVP Design Spec
 
@@ -149,7 +151,7 @@ tasks:
     - **Responsibility**: The planner or implementor prepares the prompt and invokes the concrete agent implementation; the agent returns only a status/result payload.
     - **Agent interface**: `run(options, signal) → Promise<{ status: "success" | "timeout" | "error", logs: string, diagnostics?: Record<string, unknown> }> `
     - **Options (minimum)**: `{ targetWorkspace, additionalWorkspaces, model?, timeoutMs, prompt, runMetadata }`. Agents must honor the provided `AbortSignal`.
-    - **OpenAI Codex agent**: Spawns `codex cli --non-interactive` inside the primary workspace. Prompt is piped via `stdin`; all `stdout`/`stderr` are collected into the returned logs. On abort, kill the process and return `status: "timeout"`.
+    - **OpenAI Codex agent**: Spawns `codex cli --non-interactive` inside the primary workspace. Prompt is piped via `stdin`; all `stdout`/`stderr` are collected into the returned logs. On abort, kill the process and return `status: "timeout"`."
     - **Gemini Pro / Flash**: Spawns the Gemini CLI (`gemini --model <name>`) with identical piping/timeout semantics.
     - **Hard timeout**: Executor wraps each run with `AbortController` using `task.timeout_ms` (default 5 minutes). On expiry it aborts the subprocess and surfaces a timeout result.
     - **Error handling**: Non-timeout failures resolve with `status: "error"` and captured diagnostics. Agents never touch git.

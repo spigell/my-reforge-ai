@@ -12,6 +12,7 @@ export type PlannerOptions = {
   agentId: AgentId;
   mainWorkspacePath: string;
   additionalWorkspaces: string[];
+  tasksRepositoryWorkspace: string;
   timeoutMs: number;
   signal: AbortSignal;
   onData?: (chunk: string) => void;
@@ -26,6 +27,7 @@ export async function runPlanner({
   agentId,
   mainWorkspacePath,
   additionalWorkspaces,
+  tasksRepositoryWorkspace,
   timeoutMs,
   signal,
   onData,
@@ -35,7 +37,7 @@ export async function runPlanner({
 
   const templateContent = fs.readFileSync(templatePath, 'utf8');
   const template = handlebars.compile(templateContent, { noEscape: true });
-  const context = { command, task };
+  const context = { command, task, tasksRepositoryWorkspace };
   const renderedPrompt = template(context);
 
   console.log(renderedPrompt);
@@ -57,10 +59,15 @@ export async function runPlanner({
   const agentPrompt =
     'Read the prompt file ./planning-prompt.md in this workspace and execute.';
 
+  const agentAdditionalWorkspaces = [
+    ...additionalWorkspaces,
+    tasksRepositoryWorkspace,
+  ];
+
   return agent.run(
     {
       targetWorkspace: mainWorkspacePath,
-      additionalWorkspaces,
+      additionalWorkspaces: agentAdditionalWorkspaces,
       prompt: agentPrompt,
       timeoutMs,
       model: agentId,

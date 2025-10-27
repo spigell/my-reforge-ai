@@ -2,20 +2,19 @@ import { runPlanner } from '../../../task-planner/planner.js';
 import type { MatchedTask } from '../../../types/task.js';
 import type { Services, UseCaseRunOptions } from '../types.js';
 import fs from 'node:fs';
-import {
-  deriveTimeout,
-  resolveWorkspaceRoot,
-  setupAbortHandling,
-  writeYamlFile,
-} from '../helpers.js';
-import { openPlanningPr } from './open-pr.js';
 import path from 'node:path';
+import { deriveTimeout, resolveWorkspaceRoot, setupAbortHandling, writeYamlFile } from '../helpers.js';
+import { openPlanningPr } from './open-pr.js';
+
+export type PlanTaskOptions = UseCaseRunOptions & {
+  tasksRepoPath?: string;
+};
 
 export async function planTask(
   command: string,
   matchedTask: MatchedTask,
   services: Services,
-  options: UseCaseRunOptions = {},
+  options: PlanTaskOptions = {},
 ) {
   const { task, selectedAgent } = matchedTask;
   const { workspace, agents, pr, logger, git } = services;
@@ -38,45 +37,75 @@ export async function planTask(
   }
 
   const workspaceRoot = resolveWorkspaceRoot(options.workspaceRoot);
-  logger.info(
-    `Preparing workspace for planning: ${task.repo}@${task.branch} (root: ${workspaceRoot})`,
-  );
 
-  const [owner, repoName] = task.repo.split('/');
-  if (!owner || !repoName) {
+  const [owner, repoName] = ['spigell', 'my-reforge-ai']
+
+  if (!options.tasksRepoPath) {
     throw new Error(
-      `Task repo must be in "owner/repo" format. Received "${task.repo}".`,
+      'tasksRepoPath must be provided so the planning agent can write to the tasks repository.',
     );
   }
+
+  const allAdditionalRepos = [
+    ...(task.additionalRepos || []),
+    {
+      repo: `${owner}/${repoName}`,
+      branch: 'main',
+      rootDir: options.tasksRepoPath
+    }
+  ];
 
   const preparedPaths = await workspace.prepare({
     repo: task.repo,
     branch: task.branch,
-    additionalRepos: task.additionalRepos,
+    additionalRepos: allAdditionalRepos,
     rootDir: workspaceRoot,
   });
 
+  // It should rewritten in prepare() @spigell
   if (preparedPaths.length === 0) {
     throw new Error('Workspace preparation returned no paths.');
   }
 
-  const [mainWorkspacePath, ...additionalWorkspaces] = preparedPaths;
+  const mainWorkspacePath = preparedPaths[0];
+  let tasksRepoWorkspace = '';
+
+  // Find the tasks repository workspace path
+  for (const p of preparedPaths) {
+    if (p.includes(options.tasksRepoPath)) {
+      tasksRepoWorkspace = p;
+      break;
+    }
+  }
+
+  if (!tasksRepoWorkspace) {
+    throw new Error(
+      `Tasks repository path ${options.tasksRepoPath} not found in prepared workspaces.`,
+    );
+  }
+
+  // Filter out the tasksRepoWorkspace from additionalWorkspaces for the agent's perspective
+  const additionalWorkspaces = preparedPaths.filter(
+    (p) => p !== mainWorkspacePath && p !== tasksRepoWorkspace,
+  );
 
   if (command === 'init') {
-    logger.info(`Git: Committing empty commit in ${mainWorkspacePath}`);
+    await git.ensureBranchAndSync({ cwd: tasksRepoWorkspace, branch: task.branch });
+
+    logger.info(`Git: Committing empty commit in ${tasksRepoWorkspace}`);
     const emptyCommitCreated = await git.commitEmpty({
-      cwd: mainWorkspacePath,
-      message: 'Test commit',
+      cwd: tasksRepoWorkspace,
+      message: 'Empty commit',
     });
 
     if (!emptyCommitCreated) {
       throw new Error('Failed to create bootstrap empty commit.');
     }
     logger.info(
-      `Git: Pushing branch ${task.branch} to upstream from ${mainWorkspacePath}`,
+      `Git: Pushing branch ${task.branch} to upstream from ${tasksRepoWorkspace}`,
     );
     await git.push({
-      cwd: mainWorkspacePath,
+      cwd: tasksRepoWorkspace,
       branch: task.branch,
       setUpstream: true,
     });
@@ -85,27 +114,26 @@ export async function planTask(
       {
         owner,
         repo: repoName,
-        workspacePath: mainWorkspacePath,
-        taskDir: task.task_dir,
-        taskObject: { ...task, idea: task.idea as string },
+        workspacePath: tasksRepoWorkspace,
+        prTitle: 'Auto created PR',
         featureBranch: task.branch,
-        baseBranch: undefined,
+        baseBranch: 'main',
         prBody: `Auto-created planning PR for task with idea: 
 ${task.idea}`,
-        draft: true,
+        draft: false,
       },
       { pr, logger },
     );
 
     logger.info(
-      `Git: Ensuring and syncing branch 'main' in ${mainWorkspacePath}`,
+      `Git: Ensuring and syncing branch 'main' in ${tasksRepoWorkspace}`,
     );
-    await git.ensureBranchAndSync({ cwd: mainWorkspacePath, branch: 'main' });
+    await git.ensureBranchAndSync({ cwd: tasksRepoWorkspace, branch: 'main' });
 
     task.planning_pr_id = prResult.number.toString();
     task.stage = 'planning';
 
-    const absoluteTaskDir = path.join(mainWorkspacePath, task.task_dir);
+    const absoluteTaskDir = path.join(tasksRepoWorkspace, task.task_dir);
     const yamlPath = path.join(absoluteTaskDir, 'task.yaml');
 
     fs.mkdirSync(absoluteTaskDir, { recursive: true });
@@ -113,36 +141,37 @@ ${task.idea}`,
     writeYamlFile(yamlPath, task);
 
     logger.info(
-      `Git: Committing all changes in ${mainWorkspacePath} with message: "chore(task): add ${task.task_dir}/task.yaml"`,
+      `Git: Commiting all changes in ${tasksRepoWorkspace} with message: "chore(task): add ${task.task_dir}/task.yaml"`,
     );
     await git.commitAll({
-      cwd: mainWorkspacePath,
+      cwd: tasksRepoWorkspace,
       message: `chore(task): add ${task.task_dir}/task.yaml`,
     });
 
-    logger.info(`Git: Pushing branch 'main' from ${mainWorkspacePath}`);
+    logger.info(`Git: Pushing branch 'main' from ${tasksRepoWorkspace}`);
     await git.push({
-      cwd: mainWorkspacePath,
+      cwd: tasksRepoWorkspace,
       branch: 'main',
     });
 
     logger.info(
-      `Git: Ensuring and syncing branch ${task.branch} in ${mainWorkspacePath}`,
+      `Git: Ensuring and syncing branch ${task.branch} in ${tasksRepoWorkspace}`,
     );
     await git.ensureBranchAndSync({
-      cwd: mainWorkspacePath,
+      cwd: tasksRepoWorkspace,
       branch: task.branch,
     });
     logger.info(
-      `Git: Merging branch 'main' into ${task.branch} in ${mainWorkspacePath}`,
+      `Git: Merging branch 'main' into ${task.branch} in ${tasksRepoWorkspace}`,
     );
-    await git.mergeBranch({ cwd: mainWorkspacePath, from: 'main' });
-    logger.info(`Git: Pushing branch ${task.branch} from ${mainWorkspacePath}`);
+    await git.mergeBranch({ cwd: tasksRepoWorkspace, from: 'main' });
+    logger.info(`Git: Pushing branch ${task.branch} from ${tasksRepoWorkspace}`);
     await git.push({
-      cwd: mainWorkspacePath,
+      cwd: tasksRepoWorkspace,
       branch: task.branch,
     });
   }
+
   const agent = agents.getAgent(selectedAgent);
   const timeoutMs = deriveTimeout(task, options.timeoutMs);
 
@@ -161,6 +190,7 @@ ${task.idea}`,
       agentId: selectedAgent,
       mainWorkspacePath,
       additionalWorkspaces,
+      tasksRepositoryWorkspace: tasksRepoWorkspace,
       timeoutMs,
       signal,
       onData: options.onData,

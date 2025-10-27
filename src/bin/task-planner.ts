@@ -9,21 +9,28 @@ export async function main() {
         type: 'string',
         default: 'tasks/test-task.json',
       },
+      'tasks-repo-path': {
+        type: 'string',
+        default: 'remove it'
+      },
     },
   });
 
   const command = positionals[0];
   if (command !== 'init' && command !== 'update') {
     console.error(
-      'Usage: task-planner <init|update> [--task-file <path/to/task.json>]',
+      'Usage: task-planner <init|update> [--task-file <path/to/task.json>] [--tasks-repo-path <path/to/tasks/repo>]',
     );
     process.exit(1);
   }
 
   const taskDataFilePath = values['task-file'] as string;
+  const tasksRepoPath = values['tasks-repo-path'] as string;
 
   try {
-    const result = await plannerMain(command, taskDataFilePath);
+    const result = await plannerMain(command, taskDataFilePath, {
+      tasksRepoPath,
+    });
     console.log(`Planner finished with status: ${result.status}`);
     console.log('Planner logs:', result.logs);
     if (result.diagnostics) {
