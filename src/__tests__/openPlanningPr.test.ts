@@ -35,15 +35,6 @@ describe('openPlanningPr', () => {
         owner: 'owner',
         repo: 'repo',
         workspacePath: '/tmp/workspace',
-        taskDir: 'tasks/sample',
-        taskObject: {
-          repo: 'owner/repo',
-          branch: 'main',
-          agents: [AgentId.GoogleGemini25Flash],
-          kind: 'feature',
-          idea: 'My test idea',
-          task_dir: 'tasks/sample',
-        },
         featureBranch: 'feature/sample',
         baseBranch: 'main',
         prTitle: 'planning: sample',
@@ -84,17 +75,9 @@ describe('openPlanningPr', () => {
     await openPlanningPr(
       {
         owner: 'owner',
+        prTitle: 'Test',
         repo: 'repo',
         workspacePath: '/tmp/workspace',
-        taskDir: 'tasks/sample',
-        taskObject: {
-          repo: 'owner/repo',
-          branch: 'main',
-          agents: [AgentId.GoogleGemini25Flash],
-          kind: 'feature',
-          idea: 'My test idea',
-          task_dir: 'tasks/sample',
-        },
         featureBranch: 'feature/sample',
       },
       {
