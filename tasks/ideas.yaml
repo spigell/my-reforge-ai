@@ -34,7 +34,7 @@ ideas:
     task_dir: 'tasks/feature-drop-gh-token'
   - repo: spigell/hh-responder
     branch: 'my-reforge-ai/feature/update-workbench'
-    agents: ['gemini-2.5-pro']
+    agents: ['gemini-2.5-flash']
     kind: feature
     idea: 'Update workbench to use sync-hub'
     review_required: true
