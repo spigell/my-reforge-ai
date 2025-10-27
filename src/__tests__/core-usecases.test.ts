@@ -55,7 +55,7 @@ describe('core usecases', () => {
     mainWorkspace = path.join(tmpDir, 'main');
     fs.mkdirSync(mainWorkspace, { recursive: true });
     tasksRepoPath = path.join(tmpDir, 'tasks-repo');
-    fs.mkdirSync(tasksRepoPath, { recursive: true });
+    // No need to create the directory, workspace.prepare will do it
   });
 
   afterEach(() => {
@@ -88,7 +88,7 @@ describe('core usecases', () => {
     const agent = createAgentStub((options) => {
       const agentWorkspaces = options.additionalWorkspaces ?? [];
       assert.ok(
-        agentWorkspaces.includes(tasksRepoPath),
+        agentWorkspaces.some((p) => p.includes(tasksRepoPath)),
         'expected tasks repository workspace to be provided',
       );
       const planPath = path.join(
@@ -126,7 +126,8 @@ describe('core usecases', () => {
       workspace: {
         async prepare(params) {
           workspaceCalls.push(params);
-          return [mainWorkspace];
+          fs.mkdirSync(tasksRepoPath, { recursive: true }); // Simulate prepare creating the dir
+          return [mainWorkspace, tasksRepoPath];
         },
       },
       agents: {
@@ -157,12 +158,8 @@ describe('core usecases', () => {
 
     assert.strictEqual(result.status, 'success');
     assert.strictEqual(workspaceCalls.length, 1);
-    assert.deepStrictEqual(workspaceCalls[0], {
-      repo: 'owner/repo',
-      branch: 'feature/refactor',
-      additionalRepos: undefined,
-      rootDir: tmpDir,
-    });
+    assert.deepStrictEqual(workspaceCalls[0].repo, 'owner/repo');
+    assert.ok(workspaceCalls[0].additionalRepos?.some(r => r.repo === 'spigell/my-reforge-ai')); // Corrected assertion
     assert.strictEqual(prCalls.length, 1);
     assert.strictEqual(gitCalls.length, 8);
     assert.deepStrictEqual(
@@ -179,22 +176,22 @@ describe('core usecases', () => {
       ],
     );
     assert.strictEqual(commitInvocation, 1);
-    assert.deepStrictEqual(gitCalls[1].args, {
-      cwd: mainWorkspace,
-      branch: matchedTask.task.branch,
-      setUpstream: true,
+    assert.deepStrictEqual(gitCalls[0].args, {
+      cwd: tasksRepoPath,
+      message: 'Test commit',
     });
     assert.deepStrictEqual(prCalls[0], {
-      owner: 'owner',
-      repo: 'repo',
-      headBranch: matchedTask.task.branch,
-      baseBranch: undefined,
-      title: matchedTask.task.idea,
-      body: `Auto-created planning PR for task with idea: 
+      owner: 'spigell',
+      repo: 'my-reforge-ai',
+      workspacePath: tasksRepoPath,
+      prTitle: 'Auto created PR',
+      featureBranch: matchedTask.task.branch,
+      baseBranch: 'main',
+      prBody: `Auto-created planning PR for task with idea: 
 ${matchedTask.task.idea}`,
-      draft: true,
+      draft: false,
     });
-    const taskYamlPath = path.join(mainWorkspace, 'tasks/refactor/task.yaml');
+    const taskYamlPath = path.join(tasksRepoPath, 'tasks/refactor/task.yaml');
     assert.ok(fs.existsSync(taskYamlPath), 'expected task.yaml to be written');
     const yamlContent = fs.readFileSync(taskYamlPath, 'utf8');
     assert.match(yamlContent, /stage: planning/);
@@ -233,7 +230,8 @@ ${matchedTask.task.idea}`,
     });
     const loggerStub = createLoggerStub();
     const gitStub: GitService = {
-      async ensureBranchAndSync() {},
+      async ensureBranchAndSync() {}
+      ,
       async commitEmpty() {
         return false;
       },

@@ -58,12 +58,12 @@ const normalizeTaskEntry = (entry: TaskLike): Task => {
   };
 };
 
-const collectBlockingReviewKinds = (ideasFilePath: string): Set<string> => {
+const collectBlockingReviewKeys = (ideasFilePath: string): Set<string> => {
   const dir = path.dirname(ideasFilePath);
-  const blockingKinds = new Set<string>();
+  const blockingReviewKeys = new Set<string>();
 
   if (!fs.existsSync(dir)) {
-    return blockingKinds;
+    return blockingReviewKeys;
   }
 
   const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -77,8 +77,8 @@ const collectBlockingReviewKinds = (ideasFilePath: string): Set<string> => {
       const rawContent = fs.readFileSync(maybeTaskFile, 'utf8');
       const parsed = yaml.load(rawContent) as TaskLike;
       const normalized = validateAndNormalizeTask(parsed);
-      if (normalized.review_required && normalized.kind) {
-        blockingKinds.add(normalized.kind);
+      if (normalized.review_required && normalized.kind && normalized.repo) {
+        blockingReviewKeys.add(`${normalized.kind}::${normalized.repo}`);
       }
     } catch {
       // If a task definition cannot be read, skip it to avoid blocking the queue.
@@ -86,7 +86,7 @@ const collectBlockingReviewKinds = (ideasFilePath: string): Set<string> => {
     }
   }
 
-  return blockingKinds;
+  return blockingReviewKeys;
 };
 
 const parseTaskEntries = (ideasFilePath: string): Task[] => {
@@ -113,7 +113,7 @@ const parseTaskEntries = (ideasFilePath: string): Task[] => {
 };
 
 export function pickNextTask(ideasFilePath: string): Task {
-  const blockingKinds = collectBlockingReviewKinds(ideasFilePath);
+  const blockingReviewKeys = collectBlockingReviewKeys(ideasFilePath);
   const tasks = parseTaskEntries(ideasFilePath);
 
   const prioritized = tasks
@@ -146,7 +146,8 @@ export function pickNextTask(ideasFilePath: string): Task {
     if (
       task.review_required &&
       task.kind &&
-      blockingKinds.has(task.kind)
+      task.repo &&
+      blockingReviewKeys.has(`${task.kind}::${task.repo}`)
     ) {
       continue;
     }

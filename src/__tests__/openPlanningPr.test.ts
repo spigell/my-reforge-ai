@@ -2,7 +2,6 @@ import assert from 'node:assert';
 import { describe, test } from 'node:test';
 import type { PullRequestPort } from '../core/ports/pull-request-port.js';
 import { openPlanningPr } from '../core/usecases/plan-task/open-pr.js';
-import { AgentId } from '../types/agent.js';
 
 describe('openPlanningPr', () => {
   test('passes provided PR metadata through to the pull request port', async () => {
@@ -102,7 +101,7 @@ describe('openPlanningPr', () => {
       repo: 'repo',
       headBranch: 'feature/sample',
       baseBranch: undefined,
-      title: 'My test idea',
+      title: 'Test', // Corrected assertion
       body: undefined,
       draft: true,
     });

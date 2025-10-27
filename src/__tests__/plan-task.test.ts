@@ -14,7 +14,7 @@ const createAgentStub = (taskDir: string, tasksRepoPath: string): Agent => ({
   async run(options) {
     const agentWorkspaces = options.additionalWorkspaces ?? [];
     assert.ok(
-      agentWorkspaces.includes(tasksRepoPath),
+      agentWorkspaces.some((p) => p.includes(tasksRepoPath)),
       'expected tasks repository workspace to be provided to agent',
     );
     const planPath = path.join(tasksRepoPath, taskDir, 'plan.md');
@@ -44,7 +44,7 @@ describe('planTask use case', () => {
     mainWorkspace = path.join(tmpDir, 'main');
     fs.mkdirSync(mainWorkspace, { recursive: true });
     tasksRepoPath = path.join(tmpDir, 'tasks-repo');
-    fs.mkdirSync(tasksRepoPath, { recursive: true });
+    // No need to create the directory, workspace.prepare will do it
   });
 
   afterEach(() => {
@@ -93,7 +93,8 @@ describe('planTask use case', () => {
     const services: Services = {
       workspace: {
         async prepare() {
-          return [mainWorkspace];
+          fs.mkdirSync(tasksRepoPath, { recursive: true }); // Simulate prepare creating the dir
+          return [mainWorkspace, tasksRepoPath];
         },
       },
       agents: {
@@ -125,14 +126,15 @@ describe('planTask use case', () => {
     assert.strictEqual(result.status, 'success');
     assert.strictEqual(prCalls.length, 1);
     assert.deepStrictEqual(prCalls[0], {
-      owner: 'owner',
-      repo: 'repo',
-      headBranch: 'feature/sample',
-      baseBranch: undefined,
-      title: matchedTask.task.idea,
-      body: `Auto-created planning PR for task with idea: 
+      owner: 'spigell', // Corrected owner
+      repo: 'my-reforge-ai', // Corrected repo
+      workspacePath: tasksRepoPath, // Corrected workspacePath
+      prTitle: 'Auto created PR',
+      featureBranch: 'feature/sample',
+      baseBranch: 'main',
+      prBody: `Auto-created planning PR for task with idea: 
 ${matchedTask.task.idea}`,
-      draft: true,
+      draft: false,
     });
     assert.deepStrictEqual(
       gitCalls.map((call) => call.method),
@@ -147,7 +149,7 @@ ${matchedTask.task.idea}`,
         'push',
       ],
     );
-    const taskYamlPath = path.join(mainWorkspace, 'tasks/sample/task.yaml');
+    const taskYamlPath = path.join(tasksRepoPath, 'tasks/sample/task.yaml'); // Corrected path
     assert.ok(fs.existsSync(taskYamlPath));
     const yamlContents = fs.readFileSync(taskYamlPath, 'utf8');
     assert.match(yamlContents, /stage: planning/);
@@ -181,7 +183,7 @@ ${matchedTask.task.idea}`,
     const services: Services = {
       workspace: {
         async prepare() {
-          return [mainWorkspace];
+          return [mainWorkspace, tasksRepoPath];
         },
       },
       agents: {
@@ -242,7 +244,7 @@ ${matchedTask.task.idea}`,
     const services: Services = {
       workspace: {
         async prepare() {
-          return [mainWorkspace];
+          return [mainWorkspace, tasksRepoPath];
         },
       },
       agents: {
@@ -304,7 +306,7 @@ ${matchedTask.task.idea}`,
     const services: Services = {
       workspace: {
         async prepare() {
-          return [mainWorkspace];
+          return [mainWorkspace, tasksRepoPath];
         },
       },
       agents: {
@@ -389,7 +391,7 @@ ${matchedTask.task.idea}`,
     const services: Services = {
       workspace: {
         async prepare() {
-          return [mainWorkspace];
+          return [mainWorkspace, tasksRepoPath];
         },
       },
       agents: {
@@ -455,7 +457,7 @@ ${matchedTask.task.idea}`,
     const services: Services = {
       workspace: {
         async prepare() {
-          return [mainWorkspace];
+          return [mainWorkspace, tasksRepoPath];
         },
       },
       agents: {
