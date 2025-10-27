@@ -11,11 +11,15 @@ import {
 import { openPlanningPr } from './open-pr.js';
 import path from 'node:path';
 
+export type PlanTaskOptions = UseCaseRunOptions & {
+  tasksRepoPath?: string;
+};
+
 export async function planTask(
   command: string,
   matchedTask: MatchedTask,
   services: Services,
-  options: UseCaseRunOptions = {},
+  options: PlanTaskOptions = {},
 ) {
   const { task, selectedAgent } = matchedTask;
   const { workspace, agents, pr, logger, git } = services;
@@ -32,7 +36,7 @@ export async function planTask(
   } else {
     if (!task.planning_pr_id) {
       throw new Error(
-        `Command "${command}" requires a planning_pr_id, but it's missing.`,
+        `Command "${command}" requires a planning_pr_id, but it's missing.`, 
       );
     }
   }
@@ -61,6 +65,10 @@ export async function planTask(
   }
 
   const [mainWorkspacePath, ...additionalWorkspaces] = preparedPaths;
+
+  if (options.tasksRepoPath) {
+    additionalWorkspaces.push(options.tasksRepoPath);
+  }
 
   if (command === 'init') {
     logger.info(`Git: Committing empty commit in ${mainWorkspacePath}`);
