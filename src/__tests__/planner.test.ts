@@ -145,4 +145,59 @@ describe('Task Planner', () => {
     assert.match(promptContents, /Command: update/);
     assert.match(promptContents, /PLAN UPDATE \(update command\)/);
   });
+
+  test('syncs generated plan into provided tasks repository workspace', async () => {
+    const tasksRepoWorkspace = path.join(tempDir, 'tasks-repo');
+    const additionalWorkspace = path.join(tempDir, 'additional');
+    fs.mkdirSync(tasksRepoWorkspace, { recursive: true });
+    fs.mkdirSync(additionalWorkspace, { recursive: true });
+
+    const task: Task = {
+      repo: 'owner/repo',
+      branch: 'plan',
+      agents: [AgentId.GoogleGemini25Flash],
+      kind: 'planning',
+      idea: 'Sync plan document',
+      stage: 'planning',
+      task_dir: 'tasks/planning-sync',
+    };
+
+    const planBody = '# Plan\n- step 1';
+
+    const agentStub: Agent = {
+      async run() {
+        const planPath = path.join(workspacePath, task.task_dir, 'plan.md');
+        fs.mkdirSync(path.dirname(planPath), { recursive: true });
+        fs.writeFileSync(planPath, planBody, 'utf8');
+        return {
+          status: 'success',
+          logs: 'plan created',
+        };
+      },
+    };
+
+    const result = await runPlanner({
+      command: 'init',
+      task,
+      agent: agentStub,
+      agentId: AgentId.GoogleGemini25Flash,
+      mainWorkspacePath: workspacePath,
+      additionalWorkspaces: [additionalWorkspace, tasksRepoWorkspace],
+      timeoutMs: 120000,
+      signal: new AbortController().signal,
+    });
+
+    assert.strictEqual(result.status, 'success');
+
+    const syncedPlanPath = path.join(
+      tasksRepoWorkspace,
+      'tasks/planning-sync/plan.md',
+    );
+    assert.ok(
+      fs.existsSync(syncedPlanPath),
+      'expected plan.md to be copied into tasks repo workspace',
+    );
+    const syncedPlan = fs.readFileSync(syncedPlanPath, 'utf8');
+    assert.strictEqual(syncedPlan, planBody);
+  });
 });

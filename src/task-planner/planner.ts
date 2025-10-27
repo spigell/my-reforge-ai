@@ -57,7 +57,7 @@ export async function runPlanner({
   const agentPrompt =
     'Read the prompt file ./planning-prompt.md in this workspace and execute.';
 
-  return agent.run(
+  const result = await agent.run(
     {
       targetWorkspace: mainWorkspacePath,
       additionalWorkspaces,
@@ -68,9 +68,83 @@ export async function runPlanner({
     },
     signal,
   );
+
+  if (result.status === 'success') {
+    syncPlanDocument({
+      task,
+      mainWorkspacePath,
+      additionalWorkspaces,
+    });
+  }
+
+  return result;
 }
 
 const getPlanningTemplatePath = () => {
   // Assumes the script is run from the project root
   return path.resolve('src', 'task-planner', 'planning-promt-tmpl.md');
+};
+
+type SyncPlanDocumentOptions = {
+  task: Task;
+  mainWorkspacePath: string;
+  additionalWorkspaces: string[];
+};
+
+const syncPlanDocument = ({
+  task,
+  mainWorkspacePath,
+  additionalWorkspaces,
+}: SyncPlanDocumentOptions) => {
+  if (!task.task_dir) {
+    throw new Error('Task task_dir must be defined to sync plan document.');
+  }
+
+  if (additionalWorkspaces.length === 0) {
+    return;
+  }
+
+  const relativePlanPath = path.join(task.task_dir, 'plan.md');
+  const candidateSourcePaths = [
+    path.join(mainWorkspacePath, relativePlanPath),
+    ...additionalWorkspaces
+      .slice(0, -1)
+      .map((workspacePath) => path.join(workspacePath, relativePlanPath)),
+  ];
+
+  const tasksRepoWorkspace = additionalWorkspaces.at(-1);
+  if (!tasksRepoWorkspace || !fs.existsSync(tasksRepoWorkspace)) {
+    return;
+  }
+
+  const destinationPlanPath = path.join(
+    tasksRepoWorkspace,
+    relativePlanPath,
+  );
+
+  const sourcePlanPath = candidateSourcePaths.find((planPath) =>
+    fs.existsSync(planPath),
+  );
+
+  if (!sourcePlanPath) {
+    if (fs.existsSync(destinationPlanPath)) {
+      return;
+    }
+
+    throw new Error(
+      `Plan document ${relativePlanPath} was not found in any workspace.`,
+    );
+  }
+
+  if (
+    path.resolve(sourcePlanPath) === path.resolve(destinationPlanPath)
+  ) {
+    return;
+  }
+
+  fs.mkdirSync(path.dirname(destinationPlanPath), { recursive: true });
+  fs.copyFileSync(sourcePlanPath, destinationPlanPath);
+  console.log(
+    `Synchronized plan document to tasks repository at ${destinationPlanPath}`,
+  );
 };
