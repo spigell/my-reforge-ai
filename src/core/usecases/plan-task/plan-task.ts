@@ -90,10 +90,12 @@ export async function planTask(
   );
 
   if (command === 'init') {
+    await git.ensureBranchAndSync({ cwd: tasksRepoWorkspace, branch: task.branch });
+
     logger.info(`Git: Committing empty commit in ${tasksRepoWorkspace}`);
     const emptyCommitCreated = await git.commitEmpty({
       cwd: tasksRepoWorkspace,
-      message: 'Test commit',
+      message: 'Empty commit',
     });
 
     if (!emptyCommitCreated) {
