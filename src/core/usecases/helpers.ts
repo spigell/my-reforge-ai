@@ -2,11 +2,12 @@ import type { MatchedTask, Task, Idea, TaskStage } from '../../types/task.js';
 import type { LoggerPort } from '../ports/logger-port.js';
 import { dump as dumpYaml } from 'js-yaml';
 import fs from 'node:fs';
+import path from 'node:path'; // Import path module
 
 export const DEFAULT_WORKSPACE_ROOT = './workspace';
 
 export const resolveWorkspaceRoot = (workspaceRoot?: string) =>
-  workspaceRoot ?? process.env.WORKSPACE_ROOT ?? DEFAULT_WORKSPACE_ROOT;
+  path.resolve(workspaceRoot ?? DEFAULT_WORKSPACE_ROOT);
 
 export const deriveTimeout = (
   task: MatchedTask['task'],

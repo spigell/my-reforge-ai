@@ -58,8 +58,9 @@ export async function runPlanner({
     'Read the prompt file ./planning-prompt.md in this workspace and execute.';
 
   const agentAdditionalWorkspaces = [
+    // It already added as additional workspaces
     ...additionalWorkspaces,
-    tasksRepositoryWorkspace,
+    //tasksRepositoryWorkspace,
   ];
 
   return agent.run(

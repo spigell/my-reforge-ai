@@ -69,8 +69,7 @@ export async function planTask(
   }
 
   const mainWorkspacePath = preparedPaths[0];
-  // The tasks repository is now assumed to be at the project root under 'tasks/'
-  const tasksRepoWorkspace = path.join(workspaceRoot, 'tasks');
+  const tasksRepoWorkspace = preparedPaths[1];
 
   // Filter out the tasksRepoWorkspace from additionalWorkspaces for the agent's perspective
   const additionalWorkspaces = preparedPaths.filter(
@@ -87,7 +86,7 @@ export async function planTask(
     externalSignal: options.signal,
   });
 
-  let result
+  let result;
   try {
     result = await runPlanner({
       command,
@@ -103,7 +102,6 @@ export async function planTask(
     });
 
     logger.info(`Planner finished with status: ${result.status}`);
-
   } finally {
     dispose();
   }
@@ -193,6 +191,5 @@ ${task.idea}`,
     });
   }
 
-  return result
-
+  return result;
 }

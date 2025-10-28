@@ -92,7 +92,7 @@ export class WorkspaceManager implements WorkspacePort {
     const mainRepoPath = await prepareSingleRepo(
       mainRepoSlug,
       mainBranch,
-      workspaceRoot,
+      'project',
     );
     preparedPaths.push(mainRepoPath);
 

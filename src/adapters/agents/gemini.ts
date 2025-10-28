@@ -28,6 +28,13 @@ export class GeminiAgent implements Agent {
         '--debug',
         '--yolo',
       ];
+
+      if (options.additionalWorkspaces) {
+        for (const workspace of options.additionalWorkspaces) {
+          args.push('--include-directories', workspace);
+        }
+      }
+
       console.log(
         '[GeminiAgent] invoking gemini CLI with args:',
         JSON.stringify(args),
