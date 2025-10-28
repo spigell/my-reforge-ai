@@ -77,16 +77,44 @@ export async function planTask(
     (p) => p !== mainWorkspacePath,
   );
 
-  if (command === 'init') {
-    logger.info(`Git: Committing empty commit in ${tasksRepoWorkspace}`);
-    const emptyCommitCreated = await git.commitEmpty({
-      cwd: tasksRepoWorkspace,
-      message: 'Empty commit',
+  const agent = agents.getAgent(selectedAgent);
+  const timeoutMs = deriveTimeout(task, options.timeoutMs);
+
+  const { signal, dispose } = setupAbortHandling({
+    logger,
+    label: 'Planner',
+    timeoutMs,
+    externalSignal: options.signal,
+  });
+
+  let result
+  try {
+    result = await runPlanner({
+      command,
+      task,
+      agent,
+      agentId: selectedAgent,
+      mainWorkspacePath,
+      additionalWorkspaces,
+      tasksRepositoryWorkspace: tasksRepoWorkspace,
+      timeoutMs,
+      signal,
+      onData: options.onData,
     });
 
-    if (!emptyCommitCreated) {
-      throw new Error('Failed to create bootstrap empty commit.');
-    }
+    logger.info(`Planner finished with status: ${result.status}`);
+
+  } finally {
+    dispose();
+  }
+
+  if (command === 'init') {
+    logger.info(`Git: Committing plan.md commit in ${tasksRepoWorkspace}`);
+    await git.commitAll({
+      cwd: tasksRepoWorkspace,
+      message: 'chore(planner): add plan.md',
+    });
+
     logger.info(
       `Git: Pushing branch ${task.branch} to upstream from ${tasksRepoWorkspace}`,
     );
@@ -127,11 +155,11 @@ ${task.idea}`,
     writeYamlFile(yamlPath, task);
 
     logger.info(
-      `Git: Commiting all changes in ${tasksRepoWorkspace} with message: "chore(task): add ${task.task_dir}/task.yaml"`,
+      `Git: Commiting all changes in ${tasksRepoWorkspace} with message: "chore(planner): add ${task.task_dir}/task.yaml"`,
     );
     await git.commitAll({
       cwd: tasksRepoWorkspace,
-      message: `chore(task): add ${task.task_dir}/task.yaml`,
+      message: `chore(planner): add ${task.task_dir}/task.yaml`,
     });
 
     logger.info(`Git: Pushing branch 'main' from ${tasksRepoWorkspace}`);
@@ -160,34 +188,6 @@ ${task.idea}`,
     });
   }
 
-  const agent = agents.getAgent(selectedAgent);
-  const timeoutMs = deriveTimeout(task, options.timeoutMs);
+  return result
 
-  const { signal, dispose } = setupAbortHandling({
-    logger,
-    label: 'Planner',
-    timeoutMs,
-    externalSignal: options.signal,
-  });
-
-  try {
-    const result = await runPlanner({
-      command,
-      task,
-      agent,
-      agentId: selectedAgent,
-      mainWorkspacePath,
-      additionalWorkspaces,
-      tasksRepositoryWorkspace: tasksRepoWorkspace,
-      timeoutMs,
-      signal,
-      onData: options.onData,
-    });
-
-    logger.info(`Planner finished with status: ${result.status}`);
-
-    return result;
-  } finally {
-    dispose();
-  }
 }

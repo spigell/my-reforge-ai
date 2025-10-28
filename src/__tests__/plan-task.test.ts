@@ -137,7 +137,7 @@ ${matchedTask.task.idea}`,
     assert.deepStrictEqual(
       gitCalls.map((call) => call.method),
       [
-        'commitEmpty',
+        'commitAll',
         'push',
         'ensureBranchAndSync',
         'commitAll',
@@ -419,63 +419,6 @@ ${matchedTask.task.idea}`,
     assert.ok(
       gitCalls.every((call) => call.method !== 'commitEmpty'),
       'commitEmpty should not be called during update runs',
-    );
-  });
-
-  test('throws when empty commit cannot be created during init', async () => {
-    const gitStub: GitService = {
-      async ensureBranchAndSync() {},
-      async commitEmpty() {
-        return false;
-      },
-      async mergeBranch() {
-        return true;
-      },
-      async commitAll() {
-        return true;
-      },
-      async push() {},
-    };
-
-    const matchedTask: MatchedTask = {
-      selectedAgent: AgentId.OpenAICodex,
-      task: {
-        repo: 'owner/repo',
-        branch: 'feature/sample',
-        agents: [AgentId.OpenAICodex],
-        kind: 'feature',
-        idea: 'Initial plan',
-        stage: 'planning',
-        task_dir: 'tasks/sample',
-      },
-    };
-
-    const services: Services = {
-      workspace: {
-        async prepare() {
-          return [mainWorkspace];
-        },
-      },
-      agents: {
-        getAgent() {
-          return createAgentStub(matchedTask.task.task_dir, tmpDir);
-        },
-      },
-      pr: {
-        async openPullRequest() {
-          throw new Error('should not reach PR creation when commit fails');
-        },
-      },
-      logger: createLoggerStub(),
-      git: gitStub,
-    };
-
-    await assert.rejects(
-      () =>
-        planTask('init', matchedTask, services, {
-          workspaceRoot: tmpDir,
-        }),
-      /Failed to create bootstrap empty commit/,
     );
   });
 });

@@ -11,7 +11,7 @@ Modularize the planning prompt template to support reusable sections and conditi
 
 ## Suggested Steps
 
-1. Split `planning-promt-tmpl.md` into partials under `src/task-planner/templates/`.
+1. Split the planner prompt into command-specific templates under `src/task-planner/templates/`.
 2. Implement a template loader that composes partials based on task stage and flags.
 3. Add unit tests ensuring both `init` and `update` prompts render expected content.
 4. Document extension guidelines for adding new sections or agent-specific instructions.
