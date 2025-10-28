@@ -6,37 +6,40 @@
 
 # Goal & Non-Goals
 
-- Goal: To update the workbench deployment configuration to utilize `sync-hub` for improved synchronization and resource management.
-- Non-Goals: Refactoring existing application logic, changing core application features, or modifying other deployment environments.
+- Goal: Integrate sync-hub into the workbench environment to streamline development and deployment processes for the `hh-responder` project.
+- Non-Goals:
+    - Re-architecting the core `hh-responder` application logic.
+    - Migrating existing data or configurations not directly related to workbench synchronization.
+    - Implementing new features within `hh-responder` itself.
 
 # Deliverables
 
-- [ ] Updated `deploy/develop/base/kustomization.yml` in `spigell/hh-responder`
-- [ ] Updated `deploy/develop/base/workbench.yaml` in `spigell/hh-responder`
-- [ ] Updated `deploy/develop/overrides/kustomization.yml` in `spigell/hh-responder`
-- [ ] Updated `deploy/develop/overrides/patch-nfs-and-user.yaml` in `spigell/hh-responder`
-- [ ] Updated `deploy/develop/overrides/pvc.yaml` in `spigell/hh-responder`
-- [ ] Updated `deploy/develop/overrides/user-bootstrap.sh` in `spigell/hh-responder`
-- [ ] Updated `deploy/develop/overrides/codex/codex-config.toml` in `spigell/hh-responder`
-- [ ] Verification steps for `sync-hub` integration.
+- [ ] Updated `deploy/develop/base/kustomization.yml` to include sync-hub configurations.
+- [ ] Updated `deploy/develop/overrides/codex/codex-config.toml` to reflect sync-hub integration.
+- [ ] Updated `deploy/develop/overrides/user-bootstrap.sh` to initialize sync-hub.
+- [ ] Verification steps for sync-hub functionality in the workbench.
 
 # Approach
 
-- Summary: Modify the existing Kubernetes deployment files in the `deploy/develop` directory to integrate `sync-hub`. This will involve updating `kustomization.yml` files to include `sync-hub` related resources, and potentially modifying `workbench.yaml` and other override files to reflect the new synchronization mechanism.
-- Affected paths (target repo): `deploy/develop/base/kustomization.yml`, `deploy/develop/base/workbench.yaml`, `deploy/develop/overrides/kustomization.yml`, `deploy/develop/overrides/patch-nfs-and-user.yaml`, `deploy/develop/overrides/pvc.yaml`, `deploy/develop/overrides/user-bootstrap.sh`, `deploy/develop/overrides/codex/codex-config.toml`
-- Interfaces/IO: Kubernetes configuration files.
-- Security/Secrets: No new secrets or security concerns are anticipated. Existing secrets management should remain unchanged.
+- Summary: Modify the existing Kubernetes deployment configurations and bootstrap scripts within the `deploy/develop` directory to incorporate sync-hub. This will involve adding sync-hub related resources to `kustomization.yml`, updating `codex-config.toml` for agent permissions, and modifying `user-bootstrap.sh` to ensure sync-hub is properly set up and started.
+- Affected paths (target repo):
+    - `deploy/develop/base/kustomization.yml`
+    - `deploy/develop/overrides/codex/codex-config.toml`
+    - `deploy/develop/overrides/user-bootstrap.sh`
+- Interfaces/IO: Kubernetes configurations, shell scripts, Codex agent permissions.
+- Security/Secrets: No new secrets will be introduced or exposed. Existing MCP-provided service credentials will be utilized.
 
 # Acceptance Criteria
 
-- [ ] The workbench deploys successfully with `sync-hub` enabled.
-- [ ] `sync-hub` correctly synchronizes files as expected.
-- [ ] No regressions are introduced in the workbench functionality.
+- [ ] The workbench environment starts successfully with sync-hub integrated.
+- [ ] `hh-responder` can be built and run within the sync-hub enabled workbench.
+- [ ] Changes made in the workbench are correctly synchronized by sync-hub.
+- [ ] No regressions are introduced to existing workbench functionalities.
 
 # Risks & Mitigations
 
-- Risk: `sync-hub` integration causes deployment failures or unexpected behavior. → Mitigation: Thorough testing in a development environment and rollback plan.
-- Risk: Compatibility issues with existing workbench components. → Mitigation: Review `sync-hub` documentation and test incrementally.
+- Risk: Sync-hub integration causes conflicts with existing workbench configurations. → Mitigation: Thorough testing in a development environment and careful review of configuration changes.
+- Risk: Performance degradation due to sync-hub overhead. → Mitigation: Monitor resource usage and performance metrics after integration.
 
 # Rollout & Review
 
