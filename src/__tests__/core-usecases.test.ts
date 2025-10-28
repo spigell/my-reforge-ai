@@ -178,16 +178,15 @@ describe('core usecases', () => {
     assert.strictEqual(commitInvocation, 1);
     assert.deepStrictEqual(gitCalls[0].args, {
       cwd: tasksRepoPath,
-      message: 'Test commit',
+      message: 'Empty commit',
     });
     assert.deepStrictEqual(prCalls[0], {
       owner: 'spigell',
       repo: 'my-reforge-ai',
-      workspacePath: tasksRepoPath,
-      prTitle: 'Auto created PR',
-      featureBranch: matchedTask.task.branch,
+      title: 'Auto created PR',
+      headBranch: matchedTask.task.branch,
       baseBranch: 'main',
-      prBody: `Auto-created planning PR for task with idea: 
+      body: `Auto-created planning PR for task with idea: 
 ${matchedTask.task.idea}`,
       draft: false,
     });

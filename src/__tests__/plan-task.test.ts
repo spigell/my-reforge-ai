@@ -128,11 +128,10 @@ describe('planTask use case', () => {
     assert.deepStrictEqual(prCalls[0], {
       owner: 'spigell', // Corrected owner
       repo: 'my-reforge-ai', // Corrected repo
-      workspacePath: tasksRepoPath, // Corrected workspacePath
-      prTitle: 'Auto created PR',
-      featureBranch: 'feature/sample',
+      title: 'Auto created PR',
+      headBranch: 'feature/sample',
       baseBranch: 'main',
-      prBody: `Auto-created planning PR for task with idea: 
+      body: `Auto-created planning PR for task with idea: 
 ${matchedTask.task.idea}`,
       draft: false,
     });

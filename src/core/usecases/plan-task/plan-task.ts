@@ -51,7 +51,7 @@ export async function planTask(
       repo: `${owner}/${repoName}`,
       // We will create a branch here. @spigell
       branch: task.branch,
-      rootDir: options.tasksRepoPath
+      directoryName: options.tasksRepoPath
     },
     ...(task.additionalRepos || []),
   ];

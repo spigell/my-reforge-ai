@@ -172,4 +172,4 @@ spec:
           emptyDir: {}
         - name: gemini-home
           persistentVolumeClaim:
-            claimName: gemini-home
+            claimName: gemini-gh-runner-home
