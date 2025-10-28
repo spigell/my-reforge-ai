@@ -29,6 +29,27 @@
 - Interfaces/IO: The `sync-hub` container will need credentials to access the sync source. These will be provided as a Kubernetes secret.
 - Security/Secrets: A new Kubernetes secret will be required to store the `sync-hub` credentials.
 
+## `sync-hub-bootstrap.sh` content
+
+```bash
+#!/bin/bash
+set -euo pipefail
+
+echo "Starting sync-hub bootstrap"
+
+# This script will be responsible for:
+# 1. Reading credentials from a secret.
+# 2. Configuring the sync-hub client.
+# 3. Starting the initial sync.
+# 4. Monitoring the sync process.
+
+# Placeholder for actual implementation
+while true; do
+  echo "Syncing..."
+  sleep 60
+done
+```
+
 # Acceptance Criteria
 
 - [ ] The `hh-responder-workbench` pod starts successfully.
