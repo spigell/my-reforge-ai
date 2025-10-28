@@ -157,7 +157,7 @@ describe('core usecases', () => {
     assert.deepStrictEqual(
       gitCalls.map((call) => call.method),
       [
-        'commitEmpty',
+        'commitAll',
         'push',
         'ensureBranchAndSync',
         'commitAll',
@@ -167,10 +167,14 @@ describe('core usecases', () => {
         'push',
       ],
     );
-    assert.strictEqual(commitInvocation, 1);
+    assert.strictEqual(commitInvocation, 2);
     assert.deepStrictEqual(gitCalls[0].args, {
       cwd: path.join(tmpDir, 'tasks'),
-      message: 'Empty commit',
+      message: 'chore(planner): add plan.md',
+    });
+    assert.deepStrictEqual(gitCalls[3].args, {
+      cwd: path.join(tmpDir, 'tasks'),
+      message: 'chore(planner): add tasks/refactor/task.yaml',
     });
     assert.deepStrictEqual(prCalls[0], {
       owner: 'spigell',

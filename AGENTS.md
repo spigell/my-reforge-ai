@@ -126,7 +126,7 @@ tasks:
 ### 3) AI Agent Planner
 
 - Implements the planning flow in `src/task-planner/planner.ts`.
-- Hydrates `planning-promt-tmpl.md`, writes `planning-prompt.md` into the active workspace, and runs the selected agent with instructions to execute the generated plan file.
+- Hydrates the command-specific template (`planning-init-promt-tmpl.md` or `planning-update-promt-tmpl.md`) under `src/task-planner/templates/`, writes `planning-prompt.md` into the active workspace, and runs the selected agent with instructions to execute the generated plan file.
 - Requires an `idea` field; attempts to plan without one fail fast.
 
 ### 4) AI Agent Implementor

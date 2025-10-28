@@ -18,8 +18,6 @@ export type PlannerOptions = {
   onData?: (chunk: string) => void;
 };
 
-handlebars.registerHelper('eq', (a, b) => a === b);
-
 export async function runPlanner({
   command,
   task,
@@ -32,7 +30,7 @@ export async function runPlanner({
   signal,
   onData,
 }: PlannerOptions) {
-  const templatePath = getPlanningTemplatePath();
+  const templatePath = getPlanningTemplatePath(command);
   console.log(`Using planning template: ${templatePath}`);
 
   const templateContent = fs.readFileSync(templatePath, 'utf8');
@@ -77,7 +75,27 @@ export async function runPlanner({
   );
 }
 
-const getPlanningTemplatePath = () => {
-  // Assumes the script is run from the project root
-  return path.resolve('src', 'task-planner', 'planning-promt-tmpl.md');
+const getPlanningTemplatePath = (command: string) => {
+  const templateMap: Record<string, string> = {
+    init: path.resolve(
+      'src',
+      'task-planner',
+      'templates',
+      'planning-init-promt-tmpl.md',
+    ),
+    update: path.resolve(
+      'src',
+      'task-planner',
+      'templates',
+      'planning-update-promt-tmpl.md',
+    ),
+  };
+
+  const templatePath = templateMap[command];
+
+  if (!templatePath) {
+    throw new Error(`Unsupported planner command: ${command}`);
+  }
+
+  return templatePath;
 };
