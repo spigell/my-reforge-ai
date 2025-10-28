@@ -9,4 +9,4 @@ idea: Update workbench to use sync-hub
 priority: medium
 review_required: true
 timeout_ms: 600000
-planning_pr_id: '25'
+planning_pr_id: '26'
