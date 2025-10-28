@@ -157,10 +157,15 @@ ${task.idea}`,
     logger.info(
       `Git: Commiting all changes in ${tasksRepoWorkspace} with message: "chore(planner): add ${task.task_dir}/task.yaml"`,
     );
-    await git.commitAll({
+
+    const committed = await git.commitAll({
       cwd: tasksRepoWorkspace,
       message: `chore(planner): add ${task.task_dir}/task.yaml`,
     });
+
+    if (!committed) {
+      throw new Error('Failed to create plan.md commit');
+    }
 
     logger.info(`Git: Pushing branch 'main' from ${tasksRepoWorkspace}`);
     await git.push({
