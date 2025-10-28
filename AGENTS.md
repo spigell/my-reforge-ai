@@ -46,7 +46,7 @@ Every functional change should introduce or update tests. Compile first, then ru
 - Overriding `process.exit` to throw a custom error, allowing you to verify termination logic without halting the test runner.
 - Ensuring complete cleanup of files and stubs in an `afterEach` block.
   This approach leads to more reliable tests that better reflect the script's end-to-end behavior.
-**Note on Agent Testing:** Do not add new tests for agents. Existing tests are sufficient.
+  **Note on Agent Testing:** Do not add new tests for agents. Existing tests are sufficient.
 
 ## Commit & Pull Request Guidelines
 

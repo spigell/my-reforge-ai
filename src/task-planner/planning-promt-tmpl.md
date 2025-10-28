@@ -43,8 +43,7 @@ Conventions:
 - Use the configured GitHub MCP server for PR comments, reviews, status updates, and fetching the latest discussion; do **not** invoke local tools like `gh`.
 - **Do NOT create, checkout, or merge any branches.** Assume `{{task.branch}}` is ready.
 - Request reviewers and assign them via the GitHub MCP tool.
-- Order of operations in each turn (idempotent, no force-push):
-  0. Fetch the latest PR comments via the GitHub MCP server to ensure you react to new feedback before making changes.
+- Order of operations in each turn (idempotent, no force-push): 0. Fetch the latest PR comments via the GitHub MCP server to ensure you react to new feedback before making changes.
   1. Modify files (planning doc) in the tasks repository at `{{tasksRepositoryWorkspace}}`.
   2. Commit with the convention above in the tasks repository at `{{tasksRepositoryWorkspace}}`.
   3. `git push origin {{task.branch}}` in the tasks repository at `{{tasksRepositoryWorkspace}}`.
@@ -169,6 +168,7 @@ Post **one** PR comment in Markdown that includes:
 #####################################################################
 
 Again:
+
 - Use the **git CLI** over HTTPS to: update/create files, commit, and push to `{{task.branch}}`.
 - The branch is already checked out and up-to-date for you.
 - Using MCP:

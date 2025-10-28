@@ -10,14 +10,17 @@ import { planTask } from '../core/usecases/plan-task/plan-task.js';
 import type { MatchedTask } from '../types/task.js';
 import { AgentId } from '../types/agent.js';
 
-const createAgentStub = (taskDir: string, tasksRepoPath: string): Agent => ({
+const createAgentStub = (taskDir: string, workspaceRoot: string): Agent => ({
   async run(options) {
-    const agentWorkspaces = options.additionalWorkspaces ?? [];
-    assert.ok(
-      agentWorkspaces.some((p) => p.includes(tasksRepoPath)),
-      'expected tasks repository workspace to be provided to agent',
-    );
-    const planPath = path.join(tasksRepoPath, taskDir, 'plan.md');
+    const tasksRepoWorkspace = path.join(workspaceRoot, 'tasks');
+    // The tasksRepoWorkspace is no longer passed as an additionalWorkspace to the agent
+    // as it's now assumed to be part of the main workspace structure.
+    // const agentWorkspaces = options.additionalWorkspaces ?? [];
+    // assert.ok(
+    //   agentWorkspaces.some((p) => p.includes(tasksRepoWorkspace)),
+    //   'expected tasks repository workspace to be provided to agent',
+    // );
+    const planPath = path.join(tasksRepoWorkspace, taskDir, 'plan.md');
     fs.mkdirSync(path.dirname(planPath), { recursive: true });
     fs.writeFileSync(planPath, '# Plan\n- stub planner run', 'utf8');
     return {
@@ -37,14 +40,11 @@ const createLoggerStub = () => ({
 describe('planTask use case', () => {
   let tmpDir: string;
   let mainWorkspace: string;
-  let tasksRepoPath: string;
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'plan-task-tests-'));
     mainWorkspace = path.join(tmpDir, 'main');
     fs.mkdirSync(mainWorkspace, { recursive: true });
-    tasksRepoPath = path.join(tmpDir, 'tasks-repo');
-    // No need to create the directory, workspace.prepare will do it
   });
 
   afterEach(() => {
@@ -93,13 +93,13 @@ describe('planTask use case', () => {
     const services: Services = {
       workspace: {
         async prepare() {
-          fs.mkdirSync(tasksRepoPath, { recursive: true }); // Simulate prepare creating the dir
-          return [mainWorkspace, tasksRepoPath];
+          fs.mkdirSync(path.join(tmpDir, 'tasks'), { recursive: true }); // Simulate prepare creating the tasks dir
+          return [mainWorkspace];
         },
       },
       agents: {
         getAgent() {
-          return createAgentStub(matchedTask.task.task_dir, tasksRepoPath);
+          return createAgentStub(matchedTask.task.task_dir, tmpDir);
         },
       },
       pr: {
@@ -120,7 +120,6 @@ describe('planTask use case', () => {
 
     const result = await planTask('init', matchedTask, services, {
       workspaceRoot: tmpDir,
-      tasksRepoPath,
     });
 
     assert.strictEqual(result.status, 'success');
@@ -148,14 +147,16 @@ ${matchedTask.task.idea}`,
         'push',
       ],
     );
-    const taskYamlPath = path.join(tasksRepoPath, 'tasks/sample/task.yaml'); // Corrected path
+    assert.strictEqual(result.status, 'success');
+    const taskYamlPath = path.join(tmpDir, 'tasks', 'tasks/sample/task.yaml'); // Corrected path
     assert.ok(fs.existsSync(taskYamlPath));
     const yamlContents = fs.readFileSync(taskYamlPath, 'utf8');
     assert.match(yamlContents, /stage: planning/);
     assert.match(yamlContents, /planning_pr_id: '?42'?/);
     assert.strictEqual(matchedTask.task.planning_pr_id, '42');
     const syncedPlanPath = path.join(
-      tasksRepoPath,
+      tmpDir,
+      'tasks',
       matchedTask.task.task_dir,
       'plan.md',
     );
@@ -182,12 +183,12 @@ ${matchedTask.task.idea}`,
     const services: Services = {
       workspace: {
         async prepare() {
-          return [mainWorkspace, tasksRepoPath];
+          return [mainWorkspace];
         },
       },
       agents: {
         getAgent() {
-          return createAgentStub(invalidTask.task.task_dir, tasksRepoPath);
+          return createAgentStub(invalidTask.task.task_dir, tmpDir);
         },
       },
       pr: {
@@ -221,7 +222,6 @@ ${matchedTask.task.idea}`,
       () =>
         planTask('init', invalidTask, services, {
           workspaceRoot: tmpDir,
-          tasksRepoPath,
         }),
       /Task repo and branch must be defined/,
     );
@@ -243,12 +243,12 @@ ${matchedTask.task.idea}`,
     const services: Services = {
       workspace: {
         async prepare() {
-          return [mainWorkspace, tasksRepoPath];
+          return [mainWorkspace];
         },
       },
       agents: {
         getAgent() {
-          return createAgentStub(invalidTask.task.task_dir, tasksRepoPath);
+          return createAgentStub(invalidTask.task.task_dir, tmpDir);
         },
       },
       pr: {
@@ -282,7 +282,6 @@ ${matchedTask.task.idea}`,
       () =>
         planTask('init', invalidTask, services, {
           workspaceRoot: tmpDir,
-          tasksRepoPath,
         }),
       /Planning stage requires an idea/,
     );
@@ -305,12 +304,12 @@ ${matchedTask.task.idea}`,
     const services: Services = {
       workspace: {
         async prepare() {
-          return [mainWorkspace, tasksRepoPath];
+          return [mainWorkspace];
         },
       },
       agents: {
         getAgent() {
-          return createAgentStub(matchedTask.task.task_dir, tasksRepoPath);
+          return createAgentStub(matchedTask.task.task_dir, tmpDir);
         },
       },
       pr: {
@@ -344,7 +343,6 @@ ${matchedTask.task.idea}`,
       () =>
         planTask('update', matchedTask, services, {
           workspaceRoot: tmpDir,
-          tasksRepoPath,
         }),
       /requires a planning_pr_id/,
     );
@@ -390,12 +388,12 @@ ${matchedTask.task.idea}`,
     const services: Services = {
       workspace: {
         async prepare() {
-          return [mainWorkspace, tasksRepoPath];
+          return [mainWorkspace];
         },
       },
       agents: {
         getAgent() {
-          return createAgentStub(matchedTask.task.task_dir, tasksRepoPath);
+          return createAgentStub(matchedTask.task.task_dir, tmpDir);
         },
       },
       pr: {
@@ -415,7 +413,6 @@ ${matchedTask.task.idea}`,
 
     const result = await planTask('update', matchedTask, services, {
       workspaceRoot: tmpDir,
-      tasksRepoPath,
     });
 
     assert.strictEqual(result.status, 'success');
@@ -456,12 +453,12 @@ ${matchedTask.task.idea}`,
     const services: Services = {
       workspace: {
         async prepare() {
-          return [mainWorkspace, tasksRepoPath];
+          return [mainWorkspace];
         },
       },
       agents: {
         getAgent() {
-          return createAgentStub(matchedTask.task.task_dir, tasksRepoPath);
+          return createAgentStub(matchedTask.task.task_dir, tmpDir);
         },
       },
       pr: {
@@ -477,7 +474,6 @@ ${matchedTask.task.idea}`,
       () =>
         planTask('init', matchedTask, services, {
           workspaceRoot: tmpDir,
-          tasksRepoPath,
         }),
       /Failed to create bootstrap empty commit/,
     );

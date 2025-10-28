@@ -20,7 +20,9 @@ export class WorkspaceManager implements WorkspacePort {
 
   private readonly githubToken: string | undefined;
 
-  async prepare(options: Parameters<WorkspacePort['prepare']>[0]): Promise<string[]> {
+  async prepare(
+    options: Parameters<WorkspacePort['prepare']>[0],
+  ): Promise<string[]> {
     const resolvedRoot = path.resolve(options.rootDir);
     fs.mkdirSync(resolvedRoot, { recursive: true });
     return this.prepareWorkspaces(
@@ -87,7 +89,11 @@ export class WorkspaceManager implements WorkspacePort {
       }
     };
 
-    const mainRepoPath = await prepareSingleRepo(mainRepoSlug, mainBranch, workspaceRoot);
+    const mainRepoPath = await prepareSingleRepo(
+      mainRepoSlug,
+      mainBranch,
+      workspaceRoot,
+    );
     preparedPaths.push(mainRepoPath);
 
     if (additionalRepos) {

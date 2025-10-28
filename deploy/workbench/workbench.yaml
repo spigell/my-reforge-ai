@@ -50,7 +50,7 @@ spec:
         - -c
         - /project/deploy/workbench/user-bootstrap.sh gemini
         # - sleep 3600
-      image: ghcr.io/spigell/google-gemini-workbench:0.10.0-42158b 
+      image: ghcr.io/spigell/google-gemini-workbench:0.10.0-42158b
       name: gemini-workbench
       resources:
         limits:
