@@ -1,9 +1,4 @@
-import type {
-  MatchedTask,
-  Task,
-  Idea,
-  TaskStage,
-} from '../../types/task.js';
+import type { MatchedTask, Task, Idea, TaskStage } from '../../types/task.js';
 import type { LoggerPort } from '../ports/logger-port.js';
 import { dump as dumpYaml } from 'js-yaml';
 import fs from 'node:fs';

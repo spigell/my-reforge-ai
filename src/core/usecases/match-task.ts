@@ -1,12 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'js-yaml';
-import {
-  MatchedTask,
-  Task,
-  Idea,
-  TaskPriority,
-} from '../../types/task.js';
+import { MatchedTask, Task, Idea, TaskPriority } from '../../types/task.js';
 import { DEFAULT_AGENT, normalizeAgentList } from '../../types/agent.js';
 import { LoggerPort } from '../ports/logger-port.js';
 import { UsageServicePort } from '../ports/usage-service-port.js';
@@ -38,9 +33,7 @@ function convertToTask(idea: Idea): Task {
 const normalizeTaskEntry = (entry: TaskLike): Task => {
   const normalized = validateAndNormalizeTask(entry);
   const task =
-    'stage' in entry
-      ? ({ ...entry } as Task)
-      : convertToTask(entry as Idea);
+    'stage' in entry ? ({ ...entry } as Task) : convertToTask(entry as Idea);
 
   return {
     ...task,

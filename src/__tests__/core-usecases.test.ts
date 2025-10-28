@@ -48,14 +48,11 @@ const createLoggerStub = () => {
 describe('core usecases', () => {
   let tmpDir: string;
   let mainWorkspace: string;
-  let tasksRepoPath: string;
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'usecase-tests-'));
     mainWorkspace = path.join(tmpDir, 'main');
     fs.mkdirSync(mainWorkspace, { recursive: true });
-    tasksRepoPath = path.join(tmpDir, 'tasks-repo');
-    // No need to create the directory, workspace.prepare will do it
   });
 
   afterEach(() => {
@@ -86,13 +83,9 @@ describe('core usecases', () => {
     };
 
     const agent = createAgentStub((options) => {
-      const agentWorkspaces = options.additionalWorkspaces ?? [];
-      assert.ok(
-        agentWorkspaces.some((p) => p.includes(tasksRepoPath)),
-        'expected tasks repository workspace to be provided',
-      );
+      const tasksRepoWorkspace = path.join(tmpDir, 'tasks');
       const planPath = path.join(
-        tasksRepoPath,
+        tasksRepoWorkspace,
         matchedTask.task.task_dir,
         'plan.md',
       );
@@ -126,8 +119,8 @@ describe('core usecases', () => {
       workspace: {
         async prepare(params) {
           workspaceCalls.push(params);
-          fs.mkdirSync(tasksRepoPath, { recursive: true }); // Simulate prepare creating the dir
-          return [mainWorkspace, tasksRepoPath];
+          fs.mkdirSync(path.join(tmpDir, 'tasks'), { recursive: true }); // Simulate prepare creating the tasks dir
+          return [mainWorkspace];
         },
       },
       agents: {
@@ -153,19 +146,18 @@ describe('core usecases', () => {
 
     const result = await planTask('init', matchedTask, services, {
       workspaceRoot: tmpDir,
-      tasksRepoPath,
     });
 
     assert.strictEqual(result.status, 'success');
     assert.strictEqual(workspaceCalls.length, 1);
     assert.deepStrictEqual(workspaceCalls[0].repo, 'owner/repo');
-    assert.ok(workspaceCalls[0].additionalRepos?.some(r => r.repo === 'spigell/my-reforge-ai')); // Corrected assertion
+    // Removed the assertion about additionalRepos
     assert.strictEqual(prCalls.length, 1);
     assert.strictEqual(gitCalls.length, 8);
     assert.deepStrictEqual(
       gitCalls.map((call) => call.method),
       [
-        'commitEmpty',
+        'commitAll',
         'push',
         'ensureBranchAndSync',
         'commitAll',
@@ -175,23 +167,26 @@ describe('core usecases', () => {
         'push',
       ],
     );
-    assert.strictEqual(commitInvocation, 1);
+    assert.strictEqual(commitInvocation, 2);
     assert.deepStrictEqual(gitCalls[0].args, {
-      cwd: tasksRepoPath,
-      message: 'Test commit',
+      cwd: path.join(tmpDir, 'tasks'),
+      message: 'chore(planner): add plan.md',
+    });
+    assert.deepStrictEqual(gitCalls[3].args, {
+      cwd: path.join(tmpDir, 'tasks'),
+      message: 'chore(planner): add tasks/refactor/task.yaml',
     });
     assert.deepStrictEqual(prCalls[0], {
       owner: 'spigell',
       repo: 'my-reforge-ai',
-      workspacePath: tasksRepoPath,
-      prTitle: 'Auto created PR',
-      featureBranch: matchedTask.task.branch,
+      title: 'Auto created PR',
+      headBranch: matchedTask.task.branch,
       baseBranch: 'main',
-      prBody: `Auto-created planning PR for task with idea: 
+      body: `Auto-created planning PR for task with idea: 
 ${matchedTask.task.idea}`,
       draft: false,
     });
-    const taskYamlPath = path.join(tasksRepoPath, 'tasks/refactor/task.yaml');
+    const taskYamlPath = path.join(tmpDir, 'tasks', 'tasks/refactor/task.yaml');
     assert.ok(fs.existsSync(taskYamlPath), 'expected task.yaml to be written');
     const yamlContent = fs.readFileSync(taskYamlPath, 'utf8');
     assert.match(yamlContent, /stage: planning/);
@@ -209,7 +204,8 @@ ${matchedTask.task.idea}`,
       'expected planner to log completion',
     );
     const syncedPlanPath = path.join(
-      tasksRepoPath,
+      tmpDir,
+      'tasks',
       matchedTask.task.task_dir,
       'plan.md',
     );
@@ -230,8 +226,7 @@ ${matchedTask.task.idea}`,
     });
     const loggerStub = createLoggerStub();
     const gitStub: GitService = {
-      async ensureBranchAndSync() {}
-      ,
+      async ensureBranchAndSync() {},
       async commitEmpty() {
         return false;
       },

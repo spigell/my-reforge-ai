@@ -204,7 +204,10 @@ describe('CodexAgent', () => {
     const events: ThreadEvent[] = [
       { type: 'thread.started', thread_id: 'xyz' },
       { type: 'turn.started' },
-      { type: 'turn.completed', usage: { input_tokens: 0, cached_input_tokens: 0, output_tokens: 0 } },
+      {
+        type: 'turn.completed',
+        usage: { input_tokens: 0, cached_input_tokens: 0, output_tokens: 0 },
+      },
     ];
     const thread = new StubThread(events);
     const codex = new StubCodex(thread);

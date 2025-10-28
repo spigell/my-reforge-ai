@@ -44,6 +44,7 @@
     "dotenv": "^16.4.5",
     "dotenv-safe": "^9.1.0",
     "octokit": "^5.0.4",
+    "prettier": "^3.6.2",
     "simple-git": "^3.28.0",
     "toml": "^3.0.0",
     "winston": "^3.18.3"

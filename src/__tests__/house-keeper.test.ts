@@ -41,7 +41,12 @@ class StubPullRequestService implements PullRequestStatusPort {
   constructor(
     private readonly statuses: Record<
       string,
-      { merged: boolean; state: 'open' | 'closed'; url?: string; title?: string }
+      {
+        merged: boolean;
+        state: 'open' | 'closed';
+        url?: string;
+        title?: string;
+      }
     >,
   ) {}
 

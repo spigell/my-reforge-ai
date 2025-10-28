@@ -2,17 +2,19 @@ import { AgentId } from './agent.js';
 
 export type TaskPriority = 'high' | 'medium' | 'low';
 
+export type AdditionalRepo = {
+  repo: string;
+  branch?: string;
+  directoryName?: string;
+};
+
 type GeneralTask = {
   repo: string;
   branch: string;
   agents: AgentId[];
   kind: string;
   priority?: TaskPriority;
-  additionalRepos?: Array<{
-    repo: string;
-    branch?: string;
-    directoryName?: string;
-  }>;
+  additionalRepos?: Array<AdditionalRepo>;
   review_required?: boolean;
   timeout_ms?: number;
   task_dir: string;

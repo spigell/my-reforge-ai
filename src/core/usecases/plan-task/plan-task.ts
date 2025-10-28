@@ -3,11 +3,16 @@ import type { MatchedTask } from '../../../types/task.js';
 import type { Services, UseCaseRunOptions } from '../types.js';
 import fs from 'node:fs';
 import path from 'node:path';
-import { deriveTimeout, resolveWorkspaceRoot, setupAbortHandling, writeYamlFile } from '../helpers.js';
+import {
+  deriveTimeout,
+  resolveWorkspaceRoot,
+  setupAbortHandling,
+  writeYamlFile,
+} from '../helpers.js';
 import { openPlanningPr } from './open-pr.js';
 
 export type PlanTaskOptions = UseCaseRunOptions & {
-  tasksRepoPath?: string;
+  // tasksRepoPath?: string; // Removed
 };
 
 export async function planTask(
@@ -38,21 +43,16 @@ export async function planTask(
 
   const workspaceRoot = resolveWorkspaceRoot(options.workspaceRoot);
 
-  const [owner, repoName] = ['spigell', 'my-reforge-ai']
-
-  if (!options.tasksRepoPath) {
-    throw new Error(
-      'tasksRepoPath must be provided so the planning agent can write to the tasks repository.',
-    );
-  }
+  const [owner, repoName] = ['spigell', 'my-reforge-ai'];
 
   const allAdditionalRepos = [
     {
       repo: `${owner}/${repoName}`,
       // We will create a branch here. @spigell
       branch: task.branch,
-      rootDir: options.tasksRepoPath
+      directoryName: 'tasks',
     },
+
     ...(task.additionalRepos || []),
   ];
 
@@ -69,23 +69,52 @@ export async function planTask(
   }
 
   const mainWorkspacePath = preparedPaths[0];
-  const tasksRepoWorkspace = preparedPaths[1];
+  // The tasks repository is now assumed to be at the project root under 'tasks/'
+  const tasksRepoWorkspace = path.join(workspaceRoot, 'tasks');
 
   // Filter out the tasksRepoWorkspace from additionalWorkspaces for the agent's perspective
   const additionalWorkspaces = preparedPaths.filter(
-    (p) => p !== mainWorkspacePath && p !== tasksRepoWorkspace,
+    (p) => p !== mainWorkspacePath,
   );
 
-  if (command === 'init') {
-    logger.info(`Git: Committing empty commit in ${tasksRepoWorkspace}`);
-    const emptyCommitCreated = await git.commitEmpty({
-      cwd: tasksRepoWorkspace,
-      message: 'Empty commit',
+  const agent = agents.getAgent(selectedAgent);
+  const timeoutMs = deriveTimeout(task, options.timeoutMs);
+
+  const { signal, dispose } = setupAbortHandling({
+    logger,
+    label: 'Planner',
+    timeoutMs,
+    externalSignal: options.signal,
+  });
+
+  let result
+  try {
+    result = await runPlanner({
+      command,
+      task,
+      agent,
+      agentId: selectedAgent,
+      mainWorkspacePath,
+      additionalWorkspaces,
+      tasksRepositoryWorkspace: tasksRepoWorkspace,
+      timeoutMs,
+      signal,
+      onData: options.onData,
     });
 
-    if (!emptyCommitCreated) {
-      throw new Error('Failed to create bootstrap empty commit.');
-    }
+    logger.info(`Planner finished with status: ${result.status}`);
+
+  } finally {
+    dispose();
+  }
+
+  if (command === 'init') {
+    logger.info(`Git: Committing plan.md commit in ${tasksRepoWorkspace}`);
+    await git.commitAll({
+      cwd: tasksRepoWorkspace,
+      message: 'chore(planner): add plan.md',
+    });
+
     logger.info(
       `Git: Pushing branch ${task.branch} to upstream from ${tasksRepoWorkspace}`,
     );
@@ -126,12 +155,17 @@ ${task.idea}`,
     writeYamlFile(yamlPath, task);
 
     logger.info(
-      `Git: Commiting all changes in ${tasksRepoWorkspace} with message: "chore(task): add ${task.task_dir}/task.yaml"`,
+      `Git: Commiting all changes in ${tasksRepoWorkspace} with message: "chore(planner): add ${task.task_dir}/task.yaml"`,
     );
-    await git.commitAll({
+
+    const committed = await git.commitAll({
       cwd: tasksRepoWorkspace,
-      message: `chore(task): add ${task.task_dir}/task.yaml`,
+      message: `chore(planner): add ${task.task_dir}/task.yaml`,
     });
+
+    if (!committed) {
+      throw new Error('Failed to create plan.md commit');
+    }
 
     logger.info(`Git: Pushing branch 'main' from ${tasksRepoWorkspace}`);
     await git.push({
@@ -150,41 +184,15 @@ ${task.idea}`,
       `Git: Merging branch 'main' into ${task.branch} in ${tasksRepoWorkspace}`,
     );
     await git.mergeBranch({ cwd: tasksRepoWorkspace, from: 'main' });
-    logger.info(`Git: Pushing branch ${task.branch} from ${tasksRepoWorkspace}`);
+    logger.info(
+      `Git: Pushing branch ${task.branch} from ${tasksRepoWorkspace}`,
+    );
     await git.push({
       cwd: tasksRepoWorkspace,
       branch: task.branch,
     });
   }
 
-  const agent = agents.getAgent(selectedAgent);
-  const timeoutMs = deriveTimeout(task, options.timeoutMs);
+  return result
 
-  const { signal, dispose } = setupAbortHandling({
-    logger,
-    label: 'Planner',
-    timeoutMs,
-    externalSignal: options.signal,
-  });
-
-  try {
-    const result = await runPlanner({
-      command,
-      task,
-      agent,
-      agentId: selectedAgent,
-      mainWorkspacePath,
-      additionalWorkspaces,
-      tasksRepositoryWorkspace: tasksRepoWorkspace,
-      timeoutMs,
-      signal,
-      onData: options.onData,
-    });
-
-    logger.info(`Planner finished with status: ${result.status}`);
-
-    return result;
-  } finally {
-    dispose();
-  }
 }

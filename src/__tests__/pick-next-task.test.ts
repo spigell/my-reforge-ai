@@ -83,7 +83,7 @@ describe('pickNextTask', () => {
     assert.strictEqual(pickedSecond.repo, 'example/medium-first');
   });
 
-  test('skips review-required tasks when a blocking task of the same kind exists', () => {
+  test('skips review-required tasks when a blocking task of the same kind and repo exists', () => {
     const ideasFile = writeIdeas([
       {
         repo: 'example/review-feature',
@@ -107,7 +107,7 @@ describe('pickNextTask', () => {
 
     const existingTaskDir = path.join(tempDir, 'existing-task');
     writeYaml(path.join(existingTaskDir, 'task.yaml'), {
-      repo: 'example/repo',
+      repo: 'example/review-feature',
       branch: 'feat/existing',
       kind: 'feature',
       review_required: true,

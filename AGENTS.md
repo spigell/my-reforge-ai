@@ -46,7 +46,7 @@ Every functional change should introduce or update tests. Compile first, then ru
 - Overriding `process.exit` to throw a custom error, allowing you to verify termination logic without halting the test runner.
 - Ensuring complete cleanup of files and stubs in an `afterEach` block.
   This approach leads to more reliable tests that better reflect the script's end-to-end behavior.
-**Note on Agent Testing:** Do not add new tests for agents. Existing tests are sufficient.
+  **Note on Agent Testing:** Do not add new tests for agents. Existing tests are sufficient.
 
 ## Commit & Pull Request Guidelines
 
@@ -126,7 +126,7 @@ tasks:
 ### 3) AI Agent Planner
 
 - Implements the planning flow in `src/task-planner/planner.ts`.
-- Hydrates `planning-promt-tmpl.md`, writes `planning-prompt.md` into the active workspace, and runs the selected agent with instructions to execute the generated plan file.
+- Hydrates the command-specific template (`planning-init-promt-tmpl.md` or `planning-update-promt-tmpl.md`) under `src/task-planner/templates/`, writes `planning-prompt.md` into the active workspace, and runs the selected agent with instructions to execute the generated plan file.
 - Requires an `idea` field; attempts to plan without one fail fast.
 
 ### 4) AI Agent Implementor

@@ -9,9 +9,7 @@ type GithubPrServiceOptions = {
   token?: string;
 };
 
-export class GithubPrService
-  implements PullRequestPort, PullRequestStatusPort
-{
+export class GithubPrService implements PullRequestPort, PullRequestStatusPort {
   private octokit: Octokit;
 
   constructor(options: GithubPrServiceOptions = {}) {
@@ -73,7 +71,8 @@ export class GithubPrService
         ? pr.data.merged
         : pr.data.merged_at !== null;
 
-    const state: 'open' | 'closed' = pr.data.state === 'open' ? 'open' : 'closed';
+    const state: 'open' | 'closed' =
+      pr.data.state === 'open' ? 'open' : 'closed';
 
     return {
       merged,

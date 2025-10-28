@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import simpleGit, { SimpleGit } from 'simple-git';
 import type { WorkspacePort } from '../../core/ports/workspace-port.js';
-import type { Task } from '../../types/task.js';
+import type { AdditionalRepo } from '../../types/task.js';
 import { resolveGithubToken } from '../../libs/github-token.js';
 
 type WorkspaceManagerOptions = {
@@ -20,21 +20,23 @@ export class WorkspaceManager implements WorkspacePort {
 
   private readonly githubToken: string | undefined;
 
-  async prepare({
-    repo,
-    branch,
-    additionalRepos,
-    rootDir,
-  }: Parameters<WorkspacePort['prepare']>[0]): Promise<string[]> {
-    const resolvedRoot = path.resolve(rootDir);
+  async prepare(
+    options: Parameters<WorkspacePort['prepare']>[0],
+  ): Promise<string[]> {
+    const resolvedRoot = path.resolve(options.rootDir);
     fs.mkdirSync(resolvedRoot, { recursive: true });
-    return this.prepareWorkspaces(repo, branch, additionalRepos, resolvedRoot);
+    return this.prepareWorkspaces(
+      options.repo,
+      options.branch,
+      options.additionalRepos,
+      resolvedRoot,
+    );
   }
 
   private async prepareWorkspaces(
     mainRepoSlug: string,
     mainBranch: string,
-    additionalRepos: Task['additionalRepos'],
+    additionalRepos: AdditionalRepo[] | undefined,
     workspaceRoot: string,
   ): Promise<string[]> {
     const preparedPaths: string[] = [];
@@ -43,7 +45,7 @@ export class WorkspaceManager implements WorkspacePort {
     const prepareSingleRepo = async (
       repoSlug: string,
       targetBranch: string | undefined,
-      directoryName?: string,
+      directoryName: string | undefined,
     ): Promise<string> => {
       let repoUrl = `https://github.com/${repoSlug}.git`;
       if (this.githubToken) {
@@ -87,7 +89,11 @@ export class WorkspaceManager implements WorkspacePort {
       }
     };
 
-    const mainRepoPath = await prepareSingleRepo(mainRepoSlug, mainBranch);
+    const mainRepoPath = await prepareSingleRepo(
+      mainRepoSlug,
+      mainBranch,
+      workspaceRoot,
+    );
     preparedPaths.push(mainRepoPath);
 
     if (additionalRepos) {

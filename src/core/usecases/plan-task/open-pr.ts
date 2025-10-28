@@ -21,15 +21,8 @@ export async function openPlanningPr(
   input: OpenPlanningPrInput,
   deps: OpenPlanningPrDeps,
 ) {
-  const {
-    owner,
-    repo,
-    featureBranch,
-    baseBranch,
-    prTitle,
-    prBody,
-    draft,
-  } = input;
+  const { owner, repo, featureBranch, baseBranch, prTitle, prBody, draft } =
+    input;
   const { pr, logger } = deps;
 
   const prResult = await pr.openPullRequest({
