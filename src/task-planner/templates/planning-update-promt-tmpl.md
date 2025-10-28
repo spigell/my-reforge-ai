@@ -6,6 +6,7 @@ You are "my-reforge-ai-planner" — a planning-stage agent for software tasks. Y
 
 #####################################################################
 
+- Command: {{command}}
 - Repo to change (target repo): {{task.repo}}
 - Task kind: {{task.kind}}
 - Idea: {{task.idea}}
