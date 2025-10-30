@@ -5,5 +5,5 @@ branch: my-reforge-ai/feature/pulumi-bootstrap
 kind: feature
 idea: Implement a Pulumi IaC infrastruct for own namespace. Add pulumi mcp server.
 stage: planning
-planning_pr_id: '30'
+planning_pr_id: '31'
 review_required: true
