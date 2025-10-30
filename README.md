@@ -1,10 +1,10 @@
 # My Reforge AI
 
-### Your Personal Platform for AI-Driven Self-Improvement
+### Personal Platform for AI-Driven Self-Improvement
 
 My Reforge AI is a personal platform for experimenting with AI-driven self-improvement tooling. The repository brings together the infrastructure, services, and automations used to iterate on workflows and new ideas.
 
-## Features
+## Goals
 
 - **Task Agent Matcher:** A sophisticated system for matching tasks with the most suitable AI agents.
 - **Usage Manager:** A tool for tracking and managing token usage to stay within budget.
@@ -14,12 +14,6 @@ My Reforge AI is a personal platform for experimenting with AI-driven self-impro
 - **Extensible:** Easily add new agents and tasks.
 
 ## Getting Started
-
-### Prerequisites
-
-- [Node.js](https://nodejs.org/en/) (v18 or higher)
-- [Yarn](https://yarnpkg.com/)
-- [Git](https://git-scm.com/)
 
 ### Installation
 

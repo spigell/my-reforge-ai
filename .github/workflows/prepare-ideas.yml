@@ -1,4 +1,4 @@
-name: Prepare Ideas
+name: Prepare Ideas (disabled)
 on:
   workflow_dispatch:
 

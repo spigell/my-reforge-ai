@@ -18,4 +18,5 @@ export type UseCaseRunOptions = {
   signal?: AbortSignal;
   onData?: (chunk: string) => void;
   tasksRepoPath?: string;
+  nonInteractive?: boolean; // Added nonInteractive flag
 };
