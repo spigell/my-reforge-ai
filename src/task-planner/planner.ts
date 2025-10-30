@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import handlebars from 'handlebars';
-import type { Agent } from '../core/ports/agent-port.js';
+import type { Agent, AgentRunResult } from '../core/ports/agent-port.js';
 import { AgentId } from '../types/agent.js';
 import { Task } from '../types/task.js';
 
@@ -16,6 +16,7 @@ export type PlannerOptions = {
   timeoutMs: number;
   signal: AbortSignal;
   onData?: (chunk: string) => void;
+  nonInteractive?: boolean; // Added nonInteractive flag
 };
 
 export async function runPlanner({
@@ -29,6 +30,7 @@ export async function runPlanner({
   timeoutMs,
   signal,
   onData,
+  nonInteractive, // Destructure nonInteractive
 }: PlannerOptions) {
   const templatePath = getPlanningTemplatePath(command);
   console.log(`Using planning template: ${templatePath}`);
@@ -50,12 +52,22 @@ export async function runPlanner({
   }
 
   const promptFileName = 'planning-prompt.md';
-  const promptFilePath = path.join(mainWorkspacePath, promptFileName);
+  let promptFilePath = path.join(mainWorkspacePath, promptFileName);
   fs.writeFileSync(promptFilePath, renderedPrompt, 'utf8');
   console.log(`Planning prompt written to: ${promptFilePath}`);
 
+
   const agentPrompt =
     'Read the prompt file ./planning-prompt.md in this workspace and execute.';
+
+  if (!nonInteractive) {
+    console.log('Workspace is prepared. Continue manual.');
+    console.log('Prompt:', agentPrompt);
+    fs.writeFileSync(path.join(tasksRepositoryWorkspace, task.task_dir, 'plan.md'), '# Plan')
+    const r: AgentRunResult = {status: 'success', logs: ''}
+
+    return r
+  }
 
   const agentAdditionalWorkspaces = [
     // It already added as additional workspaces

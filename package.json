@@ -27,8 +27,8 @@
     "lint": "eslint .",
     "watch": "tsc --build --watch",
     "match-idea": "node ./dist/bin/task-agent-matcher.js pick tasks/ideas.yaml --output-file test-task.json",
-    "plan-test-init": "node ./dist/bin/task-planner.js init --task-file tasks/test-task.json",
-    "plan-test-update": "node ./dist/bin/task-planner.js update --task-file tasks/test-task.json"
+    "plan-test-init": "node ./dist/bin/task-planner.js init --task-file test-task.json",
+    "plan-test-update": "node ./dist/bin/task-planner.js update --task-file test-task.json"
   },
   "bin": {
     "my-reforge-ai-agent-matcher": "./dist/bin/task-agent-matcher.js",
