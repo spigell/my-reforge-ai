@@ -1,0 +1,9 @@
+repo: spigell/my-reforge-ai
+timeout_ms: 500000
+task_dir: tasks/pulumi-bootstrap
+branch: my-reforge-ai/feature/pulumi-bootstrap
+kind: feature
+idea: Implement a Pulumi IaC infrastruct for own namespace. Add pulumi mcp server.
+stage: planning
+planning_pr_id: '30'
+review_required: true
