@@ -35,3 +35,4 @@ workspace/*
 .stfolder
 test-task.json
 task.json
+planning-prompt.md
