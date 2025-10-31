@@ -15,18 +15,14 @@
 # Deliverables
 
 - [ ] A new Pulumi project in `spigell/my-reforge-ai/pulumi/`.
-- [ ] Pulumi code for the `my-reforge-ai` namespace.
+- [ ] Pulumi code for the `my-reforge-ai` namespace. Namespace is already created.
 - [ ] Pulumi code for the `mcp-server` deployment and service within the namespace.
 - [ ] A `README.md` in the `pulumi/` directory explaining how to use the Pulumi project.
 
 # Approach
 
-- Summary: I will initialize a new Pulumi project using `pulumi new` in a new `pulumi/` directory. I will then write TypeScript code to define the Kubernetes namespace and the deployment for the `mcp-server`, based on the existing manifest.
-- Affected paths (target repo): `pulumi/`, `deploy/mcp/github-server.yaml` (for reference).
+- Affected paths (target repo): `pulumi/`, `deploy/mcp/github-server.yaml` (for reference), use `common/node-js-app` directory with the module.
 - Interfaces/IO: The Pulumi project will be managed via the Pulumi CLI. It will require a `PULUMI_ACCESS_TOKEN` environment variable.
-- Security/Secrets:
-  - The `PULUMI_ACCESS_TOKEN` will be managed as a secret and should not be hardcoded.
-  - Secrets in the Pulumi stack will use the GCP Secret Manager provider. Initialize the stack with `pulumi stack init <stack> --secrets-provider="gcpsecretmanager://projects/<project-id>/secrets/<secret-name>?version=<version>"`. Authenticate with GCP by exporting `GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json` (or run `gcloud auth application-default login`) before running Pulumi commands so the CLI can access the secret manager.
 
 # Acceptance Criteria
 
