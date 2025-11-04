@@ -1,4 +1,9 @@
 {
+  "security": {
+    "auth": {
+      "selectedType": "oauth-personal"
+    }
+  },
   "model": {
     "maxSessionTurns": 100
   },
@@ -13,8 +18,11 @@
   },
   "mcpServers": {
     "github-mcp": {
-      "httpUrl": "http://mcp-github.my-reforge-ai.svc.cluster.local:8080/mcp/"
+      "httpUrl": "http://mcp-github:8080/mcp/"
     }
+  },
+  "telemetry": {
+    "enabled": false
   },
   "tools": {
     "core": [

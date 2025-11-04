@@ -13,7 +13,7 @@ spec:
     - command:
         - /bin/bash
         - -c
-        - /project/deploy/workbench/user-bootstrap.sh codex
+        - /project/deploy/workbench/workbench-start.sh codex
         # - sleep 3600
       image: ghcr.io/spigell/codex-workbench:v0.53.0-a7cdea
       name: codex-workbench
@@ -48,9 +48,9 @@ spec:
     - command:
         - /bin/bash
         - -c
-        - /project/deploy/workbench/user-bootstrap.sh gemini
+        - /project/deploy/workbench/workbench-start.sh gemini
         # - sleep 3600
-      image: ghcr.io/spigell/google-gemini-workbench:0.11.3-1d3e92
+      image: ghcr.io/spigell/google-gemini-workbench:0.11.3-8cc758
       name: gemini-workbench
       resources:
         limits:
