@@ -32,6 +32,7 @@ dist
 .npmrc
 
 workspace/*
+workspace-*/*
 .stfolder
 test-task.json
 task.json
