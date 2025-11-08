@@ -26,6 +26,8 @@
 - [x] Pulumi code for the `my-reforge-ai` namespace. Namespace is already created.
 - [x] Pulumi code for the `mcp-server` deployment and service within the namespace.
 - [x] A `README.md` in the `pulumi/` directory explaining how to use the Pulumi project.
+- [ ] Identity stack Kubernetes bootstrap: namespace, service account, and RBAC role/binding managed via Pulumi.
+- [ ] A facade Pulumi project that re-exports the stack outputs using the `<target-namespace>:<output>` naming convention for downstream consumers.
 
 # Rigorous Improvement Plan
 
@@ -84,6 +86,21 @@ By implementing this plan, we will have a robust, compositional, and professiona
 
 - Affected paths (target repo): `pulumi/`, `deploy/mcp/github-server.yaml` (for reference), use `common/k8s-app` directory with the module.
 - Interfaces/IO: The Pulumi project will be managed via the Pulumi CLI. It will require a `PULUMI_ACCESS_TOKEN` environment variable.
+
+## Identity Project Additions
+
+To extend the bootstrap work to the `my-cloud-identity` project we will introduce a Kubernetes control-plane baseline and a facade for surfacing shared outputs.
+
+1. **Namespace Management**
+   - Provision a dedicated namespace (e.g. `identity`) using Pulumi.
+   - Ensure future workloads can depend on this namespace resource from the shared components package.
+2. **Service Account & RBAC**
+   - Define a `pulumi-service-account` scoped to the namespace.
+   - Attach a namespace-scoped `Role` granting CRUD access to core, apps, and batch API groups.
+   - Bind the `Role` to the service account with a `RoleBinding`.
+3. **Facade Project**
+   - Create a sibling Pulumi project (e.g. `facade/`) that consumes stack references and re-exports outputs using the `<target-namespace>:<output>` pattern.
+   - Configure the facade via Pulumi config to list target namespaces and stack URNs, allowing downstream automation to query consolidated outputs without coupling to internal stack names.
 
 # Acceptance Criteria
 
