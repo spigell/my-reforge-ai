@@ -20,6 +20,23 @@ This project manages the Kubernetes resources for the `my-reforge-ai` namespace 
 
 ## Usage
 
+### Configuration
+
+All runtime values are pulled from Pulumi config. Before running `pulumi preview` or `pulumi up`, make sure the stack is configured:
+
+```bash
+pulumi config set my-reforge-ai:namespace my-reforge-ai
+pulumi config set my-reforge-ai:githubMcp:image ghcr.io/spigell/github-mcp-server:0.18.0-1b59f5
+pulumi config set my-reforge-ai:githubMcp:personalAccessTokenSecretName github-mcp-credentials
+pulumi config set my-reforge-ai:githubMcp:personalAccessTokenSecretKey github-pat
+pulumi config set my-reforge-ai:githubMcp:port 8080
+pulumi config set-json my-reforge-ai:githubMcp:allowOrigins '["*"]'
+pulumi config set-json my-reforge-ai:githubMcp:resources '{"requests":{"cpu":"100m","memory":"256Mi"},"limits":{"cpu":"1","memory":"1Gi"}}'
+pulumi config set-json my-reforge-ai:githubMcp:monitoring '{"enabled":true,"portName":"http","scrapeInterval":"30s"}'
+```
+
+Set `my-reforge-ai:githubMcp:enableInspector` to `true` and provide `my-reforge-ai:githubMcp:inspectorImage` to enable the MCP inspector sidecar.
+
 ### Previewing Changes
 
 To preview the changes that will be made to the infrastructure, run:
