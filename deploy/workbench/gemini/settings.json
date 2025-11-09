@@ -8,7 +8,10 @@
     "maxSessionTurns": 100
   },
   "context": {
-    "fileName": ["AGENTS.md", "GEMINI.md"],
+    "fileName": [
+      "AGENTS.md",
+      "GEMINI.md"
+    ],
     "loadMemoryFromIncludeDirectories": true,
     "fileFiltering": {
       "respectGitIgnore": true,
@@ -16,7 +19,11 @@
     }
   },
   "advanced": {
-    "excludedEnvVars": ["DEBUG", "DEBUG_MODE", "NODE_ENV"]
+    "excludedEnvVars": [
+      "DEBUG",
+      "DEBUG_MODE",
+      "NODE_ENV"
+    ]
   },
   "mcpServers": {
     "github-mcp": {
@@ -53,7 +60,13 @@
       "glob",
       "web_fetch",
       "web_search",
-      "memory"
+      "memory",
+      "save_memory",
+      "replace",
+      "search_file_content",
+      "list_directory",
+      "google_web_search",
+      "write_todos"
     ]
   }
 }

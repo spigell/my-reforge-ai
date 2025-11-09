@@ -39,13 +39,15 @@ link-agent-config() {
 
 start-codex-agent() {
   link-agent-config "Codex (local)" "/project/deploy/workbench/codex/codex-config.toml" "${USER_HOME}/.codex/config.toml"
+  link-agent-config "Codex (local)" "/project/deploy/workbench/AGENTS.md" "${USER_HOME}/.codex/AGENTS.md"
   echo ">>> Starting sleep loop"
   sleep infinity
 }
 
 start-gemini-agent() {
-  link-agent-config "Gemini-cli (local)" "/project/deploy/workbench/gemini/settings.json" "${USER_HOME}/.gemini/settings.json"
-  link-agent-config "Gemini-cli (local)" "/project/deploy/workbench/gemini/commands" "${USER_HOME}/.gemini/commands"
+  link-agent-config "Gemini-cli (local): link settings" "/project/deploy/workbench/gemini/settings.json" "${USER_HOME}/.gemini/settings.json"
+  link-agent-config "Gemini-cli (local): link commands" "/project/deploy/workbench/gemini/commands" "${USER_HOME}/.gemini/AGENTS.md"
+  link-agent-config "Gemini-cli (local): link global context file" "/project/deploy/workbench/AGENTS.md" "${USER_HOME}/.gemini/AGENTS.md"
   echo ">>> Starting sleep loop"
   sleep infinity
 }
