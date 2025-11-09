@@ -26,31 +26,36 @@ EOF
 # Setup git workbench
 setup-git-workbench --name "workbench ai bot" --email spigelly+gh-bot@gmail.com --editor vim
 
+link-agent-config() {
+  local label="$1"
+  local source="$2"
+  local dest="$3"
+
+  echo ">>> ${label} for ${USER_NAME}"
+
+  rm -rf "${dest}"
+  ln -s "${source}" "${dest}"
+}
+
+start-codex-agent() {
+  link-agent-config "Codex (local)" "/project/deploy/workbench/codex/codex-config.toml" "${USER_HOME}/.codex/config.toml"
+  echo ">>> Starting sleep loop"
+  sleep infinity
+}
+
+start-gemini-agent() {
+  link-agent-config "Gemini-cli (local)" "/project/deploy/workbench/gemini/settings.json" "${USER_HOME}/.gemini/settings.json"
+  link-agent-config "Gemini-cli (local)" "/project/deploy/workbench/gemini/commands" "${USER_HOME}/.gemini/commands"
+  echo ">>> Starting sleep loop"
+  sleep infinity
+}
 
 case "${1:-}" in
   codex)
-    echo ">>> Codex (local) for ${USER_NAME}"
-
-    CODEX_CONFIG_SOURCE="/project/deploy/workbench/codex/codex-config.toml"
-    CODEX_CONFIG_DEST="${USER_HOME}/.codex/config.toml"
-
-    rm -rf "${CODEX_CONFIG_DEST}"
-    ln -s "${CODEX_CONFIG_SOURCE}" "${CODEX_CONFIG_DEST}"
-    
-    echo ">>> Starting sleep loop"
-    sleep infinity
+    start-codex-agent
     ;;
   gemini)
-    echo ">>> Gemini-cli (local) for ${USER_NAME}"
-
-    GEMINI_CONFIG_SOURCE="/project/deploy/workbench/gemini/settings.json"
-    GEMINI_CONFIG_DEST="${USER_HOME}/.gemini/settings.json"
-
-    rm -rf "${GEMINI_CONFIG_DEST}"
-    ln -s "${GEMINI_CONFIG_SOURCE}" "${GEMINI_CONFIG_DEST}"
-
-    echo ">>> Starting sleep loop"
-    sleep infinity
+    start-gemini-agent
     ;;
   *)
     echo "Usage: $0 {codex|gemini}" >&2

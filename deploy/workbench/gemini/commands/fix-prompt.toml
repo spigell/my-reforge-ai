@@ -1,0 +1,6 @@
+description="Refine and expand a given prompt for clarity, grammar, and completeness in English."
+prompt = """
+Refine the following prompt in English. Ensure it is grammatically correct, clear, concise, and comprehensive. Expand on any ambiguous or brief instructions to provide more detail, making the prompt as effective as possible for an AI model.
+
+Original prompt: {{args}}
+"""

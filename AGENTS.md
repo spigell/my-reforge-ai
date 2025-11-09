@@ -30,6 +30,7 @@ Write modern TypeScript, targeting ES modules (`"type": "module"`). Use Prettier
 - **Arrow Functions:** Prefer arrow functions (`=>`) for conciseness and lexical `this` binding, especially for callbacks and utility functions. Use traditional `function` declarations for top-level functions that require hoisting or for class methods.
 - **Error Handling:** Prefer throwing errors over returning `undefined` or `null` for exceptional cases to ensure explicit error handling.
 - **Logger Usage:** Do not pass logger instances directly into functions. Instead, import the logger module where needed.
+- **Prompt Correction:** Always fix user prompts if there are any grammar errors. The user uses English.
 
 ### Linting
 
