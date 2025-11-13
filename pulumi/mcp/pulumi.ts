@@ -5,6 +5,7 @@ import { McpInspector } from '../common/mcp-inspector/index.js';
 import { SharedManualVolume } from '../common/storage/shared-manual-volume.js';
 import { McpServerArgs } from './types.js';
 import { createMcpPodScrape } from './monitoring.js';
+import { DEFAULT_INSPECTOR_IMAGE } from './constants.js';
 
 export type PulumiMcpServerArgs = McpServerArgs & {
   gcpCredentialsSecretName: pulumi.Input<string>;
@@ -45,10 +46,11 @@ export class PulumiMcpServer extends pulumi.ComponentResource {
     }
 
     const sidecars: k8s.types.input.core.v1.Container[] = [];
-    if (args.enableInspector && args.inspectorImage) {
+    const inspectorImage = args.inspectorImage ?? DEFAULT_INSPECTOR_IMAGE;
+    if (args.enableInspector) {
       const inspector = new McpInspector(
         `${name}-inspector`,
-        { image: args.inspectorImage },
+        { image: inspectorImage },
         { parent: this },
       );
       sidecars.push(inspector.containerSpec);
@@ -187,6 +189,10 @@ chmod 600 ${kubeconfigFilePath}
         initContainers,
         automountServiceAccountToken: args.automountServiceAccountToken ?? true,
         serviceAccountName: args.serviceAccountName,
+        podSecurityContext: {
+          runAsUser: 0,
+          runAsNonRoot: false,
+        },
       },
       { parent: this },
     );

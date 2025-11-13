@@ -40,7 +40,7 @@ config:
       requests:
         cpu: 100m
         memory: 256Mi
-    enableInspector: false
+    enableInspector: true
     monitoring:
       enabled: true
       portName: http

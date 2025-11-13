@@ -4,6 +4,7 @@ import { K8sApp } from '../common/k8s-app/index.js';
 import { McpInspector } from '../common/mcp-inspector/index.js';
 import { McpServerArgs, McpServerSecretRef } from './types.js';
 import { createMcpPodScrape } from './monitoring.js';
+import { DEFAULT_INSPECTOR_IMAGE } from './constants.js';
 
 export type GithubMcpServerArgs = McpServerArgs & {
   secret: McpServerSecretRef;
@@ -42,10 +43,11 @@ export class GithubMcpServer extends pulumi.ComponentResource {
     }
 
     const sidecars: k8s.types.input.core.v1.Container[] = [];
-    if (args.enableInspector && args.inspectorImage) {
+    const inspectorImage = args.inspectorImage ?? DEFAULT_INSPECTOR_IMAGE;
+    if (args.enableInspector) {
       const inspector = new McpInspector(
         `${name}-inspector`,
-        { image: args.inspectorImage },
+        { image: inspectorImage },
         { parent: this },
       );
       sidecars.push(inspector.containerSpec);

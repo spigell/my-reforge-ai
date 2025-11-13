@@ -35,7 +35,7 @@ pulumi config set-json my-reforge-ai:githubMcp:resources '{"requests":{"cpu":"10
 pulumi config set-json my-reforge-ai:githubMcp:monitoring '{"enabled":true,"portName":"http","scrapeInterval":"30s"}'
 ```
 
-Set `my-reforge-ai:githubMcp:enableInspector` to `true` and provide `my-reforge-ai:githubMcp:inspectorImage` to enable the MCP inspector sidecar.
+Set `my-reforge-ai:githubMcp:enableInspector` to `true` to enable the MCP inspector sidecar. The sidecar defaults to the `ghcr.io/modelcontextprotocol/inspector:0.17.2` image, but you can override it by setting `my-reforge-ai:githubMcp:inspectorImage`.
 
 ### Previewing Changes
 

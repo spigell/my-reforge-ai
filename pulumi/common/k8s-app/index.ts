@@ -28,6 +28,10 @@ export type K8sAppArgs = {
   serviceAccountName?: pulumi.Input<string>;
   initContainers?: pulumi.Input<pulumi.Input<k8s.types.input.core.v1.Container>[]>;
   dependsOn?: pulumi.Input<pulumi.Resource> | pulumi.Input<pulumi.Resource>[];
+  securityContext?: k8s.types.input.core.v1.SecurityContext;
+  podSecurityContext?: k8s.types.input.core.v1.PodSecurityContext;
+  hostUsers?: pulumi.Input<boolean>;
+  enableServiceLinks?: pulumi.Input<boolean>;
 };
 
 export class K8sApp extends pulumi.ComponentResource {
@@ -51,6 +55,25 @@ export class K8sApp extends pulumi.ComponentResource {
         }))
       : undefined;
 
+    const defaultContainerSecurityContext: k8s.types.input.core.v1.SecurityContext = {
+      allowPrivilegeEscalation: false,
+      capabilities: {
+        drop: ['ALL'],
+      },
+      seccompProfile: {
+        type: 'RuntimeDefault',
+      },
+    };
+
+    const mainContainerSecurityContext: k8s.types.input.core.v1.SecurityContext = {
+      ...defaultContainerSecurityContext,
+      ...(args.securityContext ?? {}),
+      capabilities:
+        args.securityContext?.capabilities ?? defaultContainerSecurityContext.capabilities,
+      seccompProfile:
+        args.securityContext?.seccompProfile ?? defaultContainerSecurityContext.seccompProfile,
+    };
+
     const mainContainer: k8s.types.input.core.v1.Container = {
       name: args.name,
       image: args.image,
@@ -65,6 +88,7 @@ export class K8sApp extends pulumi.ComponentResource {
       readinessProbe: args.readinessProbe,
       livenessProbe: args.livenessProbe,
       volumeMounts: args.volumeMounts,
+      securityContext: mainContainerSecurityContext,
     };
 
     const containers = args.sidecars ? [mainContainer, ...args.sidecars] : [mainContainer];
@@ -91,6 +115,13 @@ export class K8sApp extends pulumi.ComponentResource {
               containers,
               volumes: args.volumes,
               initContainers: args.initContainers,
+              enableServiceLinks: args.enableServiceLinks ?? false,
+              hostUsers: args.hostUsers ?? false,
+      securityContext: {
+        runAsNonRoot: true,
+        runAsUser: 1000,
+        ...(args.podSecurityContext ?? {}),
+      },
             },
           },
         },
