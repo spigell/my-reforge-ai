@@ -9,3 +9,6 @@ approval_policy = "never"
 
 [mcp_servers.github-mcp]
 url = "http://mcp-github:8080/mcp/"
+
+[mcp_servers.pulumi-mcp]
+url = "http://mcp-pulumi:3000/mcp/"

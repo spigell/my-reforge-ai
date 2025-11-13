@@ -14,7 +14,7 @@
     ],
     "loadMemoryFromIncludeDirectories": true,
     "fileFiltering": {
-      "respectGitIgnore": true,
+      "respectGitIgnore": false,
       "respectGeminiIgnore": true
     }
   },
@@ -28,6 +28,9 @@
   "mcpServers": {
     "github-mcp": {
       "httpUrl": "http://mcp-github:8080/mcp/"
+    },
+    "pulumi-mcp": {
+      "httpUrl": "http://mcp-pulumi:3000/mcp/"
     }
   },
   "telemetry": {
@@ -37,12 +40,10 @@
   "tools": {
     "enableToolOutputTruncation": false,
     "core": [
-      "read_many_files",
-      "edit",
-      "run_shell_command(yarn add)",
       "run_shell_command(yarn install)",
       "run_shell_command(./node_modules/.bin/eslint .)",
       "run_shell_command(./node_modules/.bin/tsc --build)",
+      "run_shell_command(./node_modules/.bin/prettier -w)",
       "run_shell_command(node --test dist/**/*.test.js)",
       "run_shell_command(ls)",
       "run_shell_command(find)",
@@ -53,6 +54,8 @@
       "run_shell_command(chmod)",
       "run_shell_command(grep)",
       "run_shell_command(git)",
+      "read_many_files",
+      "edit",
       "ls",
       "read_file",
       "write_file",
