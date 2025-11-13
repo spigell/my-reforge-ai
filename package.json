@@ -28,6 +28,7 @@
     "kube-gemini-tasks-pro": "kubectl -n my-reforge-ai exec -it my-reforge-ai-workbench -c gemini-workbench -- /bin/bash -l -c 'cd workspace/tasks && gemini -m gemini-2.5-pro'",
     "kube-gemini-tasks-flash": "kubectl -n my-reforge-ai exec -it my-reforge-ai-workbench -c gemini-workbench -- /bin/bash -l -c 'cd workspace/tasks && gemini -m gemini-2.5-flash'",
     "kube-gemini": "kubectl -n my-reforge-ai exec -it my-reforge-ai-workbench -c gemini-workbench -- /bin/bash -l -c",
+    "kube-gemini-prompt-fixer": "kubectl -n my-reforge-ai exec -it my-reforge-ai-workbench -c gemini-workbench -- /bin/bash -l -c 'GEMINI_SYSTEM_MD=/project/deploy/workbench/gemini/system-prompt-fixer.md gemini -m gemini-2.5-flash'",
     "kube-codex": "kubectl -n my-reforge-ai exec -it my-reforge-ai-workbench -c codex-workbench -- /bin/bash -l -c",
     "watch": "tsc --build --watch",
     "match-idea": "node ./dist/bin/task-agent-matcher.js pick tasks/ideas.yaml --output-file test-task.json",
