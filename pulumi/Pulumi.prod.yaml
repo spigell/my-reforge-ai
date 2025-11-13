@@ -1,7 +1,6 @@
 secretsprovider: gcpkms://projects/spigell-infra/locations/global/keyRings/spigell-infra-keyring/cryptoKeys/spigell-infra-my-reforge-ai-pulumi-key
 encryptedkey: CiQAlZw1Sl99bWwUAzoVQT64xci8/Z4MBlHE263cRXHUpfvTZHgSSQB1JEBo0FY5aHHCwfkglh6D7uPq2OhJ2pI2xGMBmqigPs+OUQlsEfZKFF7kZyYWJWGT8kFoUU4HYSmDho7q8l+XX1Ly9QeY0Uk=
 config:
-  namespace: my-reforge-ai
   githubMcp:
     enabled: true
     image: ghcr.io/spigell/github-mcp-server:0.18.0-1b59f5

@@ -3,11 +3,18 @@ import { GithubMcpServer, GithubMcpServerArgs } from './mcp/github.js';
 import { PulumiMcpServer, PulumiMcpServerArgs } from './mcp/pulumi.js';
 
 const config = new pulumi.Config();
-const namespace = config.require('namespace');
+
+type IdentityStackOutputs = {
+  'namespace-name': string;
+  'pulumi-gcp-secret-key-name': string;
+  'pulumi-account-name': string;
+};
 
 const identityStack = new pulumi.StackReference(`organization/output-gateway/${pulumi.getProject()}`);
-const identityOutputs = identityStack.getOutput('output') as pulumi.Output<IdentityStackOutputs>;
-const gcpSecretKeyName = identityOutputs.apply((o) => o['gcp-secret-key-name']);
+const identityOutputs = identityStack.getOutput('outputs') as pulumi.Output<IdentityStackOutputs>;
+
+const namespace = identityOutputs.apply((o) => o['namespace-name']);
+const pulumiGCPSecretKeyName = identityOutputs.apply((o) => o['pulumi-gcp-secret-key-name']);
 const pulumiAccountName = identityOutputs.apply((o) => o['pulumi-account-name']);
 
 const getEnabledMcpConfig = <T extends { enabled?: boolean }>(key: string): T | undefined => {
@@ -29,10 +36,6 @@ const getEnabledMcpConfig = <T extends { enabled?: boolean }>(key: string): T | 
 const githubMcpConfig = getEnabledMcpConfig<GithubMcpServerArgs>('githubMcp');
 const pulumiMcpConfig = getEnabledMcpConfig<PulumiMcpServerArgs>('pulumiMcp');
 
-type IdentityStackOutputs = {
-  'gcp-secret-key-name': string;
-  'pulumi-account-name': string;
-};
 
 
 let githubMcp: GithubMcpServer | undefined;
@@ -70,7 +73,7 @@ if (pulumiMcpConfig) {
     {
       namespace,
       image: pulumiMcpConfig.image,
-      gcpCredentialsSecretName: gcpSecretKeyName,
+      gcpCredentialsSecretName: pulumiGCPSecretKeyName,
       port: pulumiMcpConfig.port,
       allowOrigins: pulumiMcpConfig.allowOrigins,
       replicas: pulumiMcpConfig.replicas,
