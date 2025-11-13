@@ -1,9 +1,9 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as k8s from '@pulumi/kubernetes';
 
-export interface McpInspectorArgs {
+export type McpInspectorArgs = {
   image: pulumi.Input<string>;
-}
+};
 
 export class McpInspector extends pulumi.ComponentResource {
   public readonly containerSpec: k8s.types.input.core.v1.Container;

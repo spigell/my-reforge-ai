@@ -2,33 +2,12 @@ import * as pulumi from '@pulumi/pulumi';
 import * as k8s from '@pulumi/kubernetes';
 import { K8sApp } from '../common/k8s-app/index.js';
 import { McpInspector } from '../common/mcp-inspector/index.js';
+import { McpServerArgs, McpServerSecretRef } from './types.js';
+import { createMcpPodScrape } from './monitoring.js';
 
-export interface GithubMcpServerSecretRef {
-  name: pulumi.Input<string>;
-  key: pulumi.Input<string>;
-}
-
-export interface GithubMcpMonitoringOptions {
-  enabled?: boolean;
-  portName?: pulumi.Input<string>;
-  scrapeInterval?: pulumi.Input<string>;
-}
-
-export interface GithubMcpServerArgs {
-  namespace: pulumi.Input<string>;
-  image: pulumi.Input<string>;
-  secret: GithubMcpServerSecretRef;
-  port?: number;
-  allowOrigins?: string[];
-  replicas?: pulumi.Input<number>;
-  resources?: pulumi.Input<k8s.types.input.core.v1.ResourceRequirements>;
-  command?: string[];
-  args?: string[];
-  additionalEnv?: k8s.types.input.core.v1.EnvVar[];
-  enableInspector?: boolean;
-  inspectorImage?: pulumi.Input<string>;
-  monitoring?: GithubMcpMonitoringOptions;
-}
+export type GithubMcpServerArgs = McpServerArgs & {
+  secret: McpServerSecretRef;
+};
 
 export class GithubMcpServer extends pulumi.ComponentResource {
   public readonly deployment: k8s.apps.v1.Deployment;
@@ -37,13 +16,6 @@ export class GithubMcpServer extends pulumi.ComponentResource {
 
   constructor(name: string, args: GithubMcpServerArgs, opts?: pulumi.ComponentResourceOptions) {
     super('my-reforge-ai:mcp:GithubMcpServer', name, {}, opts);
-
-    if (args.enableInspector && !args.inspectorImage) {
-      throw new pulumi.ResourceError(
-        'An inspector image must be provided when enableInspector is true.',
-        this,
-      );
-    }
 
     const port = args.port ?? 8080;
     const env: k8s.types.input.core.v1.EnvVar[] = [
@@ -79,12 +51,22 @@ export class GithubMcpServer extends pulumi.ComponentResource {
       sidecars.push(inspector.containerSpec);
     }
 
+    const selectorLabels = {
+      app: name,
+      ...(args.labels ?? {}),
+    };
+
+    const volumes: k8s.types.input.core.v1.Volume[] = [...(args.volumes ?? [])];
+    const volumeMounts: k8s.types.input.core.v1.VolumeMount[] = [...(args.volumeMounts ?? [])];
+    const initContainers: k8s.types.input.core.v1.Container[] = [...(args.initContainers ?? [])];
+
     const app = new K8sApp(
       name,
       {
         name,
         namespace: args.namespace,
         image: args.image,
+        labels: args.labels,
         replicas: args.replicas,
         env,
         command: args.command,
@@ -92,6 +74,11 @@ export class GithubMcpServer extends pulumi.ComponentResource {
         ports: { http: port },
         resources: args.resources,
         sidecars,
+        serviceAccountName: args.serviceAccountName,
+        initContainers,
+        automountServiceAccountToken: args.automountServiceAccountToken,
+        volumes,
+        volumeMounts,
       },
       { parent: this },
     );
@@ -99,44 +86,15 @@ export class GithubMcpServer extends pulumi.ComponentResource {
     this.deployment = app.deployment;
     this.service = app.service;
 
-    const monitoring = {
-      enabled: true,
-      portName: 'http',
-      scrapeInterval: '30s',
-      ...(args.monitoring ?? {}),
-    };
-
-    if (monitoring.enabled !== false) {
-      this.podScrape = new k8s.apiextensions.CustomResource(
-        `${name}-scrape`,
-        {
-          apiVersion: 'operator.victoriametrics.com/v1beta1',
-          kind: 'VMPodScrape',
-          metadata: {
-            name: `${name}-scraper`,
-            namespace: args.namespace,
-            labels: {
-              app: name,
-            },
-          },
-          spec: {
-            podMetricsEndpoints: [
-              {
-                port: monitoring.portName ?? 'http',
-                scheme: 'http',
-                scrape_interval: monitoring.scrapeInterval ?? '30s',
-              },
-            ],
-            selector: {
-              matchLabels: {
-                app: name,
-              },
-            },
-          },
-        },
-        { parent: this },
-      );
-    }
+    this.podScrape = createMcpPodScrape(
+      {
+        name,
+        namespace: args.namespace,
+        labels: selectorLabels,
+        monitoring: args.monitoring,
+      },
+      { parent: this },
+    );
 
     this.registerOutputs({
       deploymentName: this.deployment.metadata.name,

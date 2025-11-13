@@ -1,13 +1,13 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as k8s from '@pulumi/kubernetes';
 
-export interface ServiceOptions {
+export type ServiceOptions = {
   enabled?: boolean;
   type?: pulumi.Input<'ClusterIP' | 'NodePort' | 'LoadBalancer'>;
   annotations?: Record<string, pulumi.Input<string>>;
-}
+};
 
-export interface K8sAppArgs {
+export type K8sAppArgs = {
   name: string;
   namespace: pulumi.Input<string>;
   image: pulumi.Input<string>;
@@ -25,8 +25,10 @@ export interface K8sAppArgs {
   sidecars?: k8s.types.input.core.v1.Container[];
   service?: ServiceOptions;
   automountServiceAccountToken?: pulumi.Input<boolean>;
+  serviceAccountName?: pulumi.Input<string>;
+  initContainers?: pulumi.Input<pulumi.Input<k8s.types.input.core.v1.Container>[]>;
   dependsOn?: pulumi.Input<pulumi.Resource> | pulumi.Input<pulumi.Resource>[];
-}
+};
 
 export class K8sApp extends pulumi.ComponentResource {
   public readonly deployment: k8s.apps.v1.Deployment;
@@ -52,7 +54,7 @@ export class K8sApp extends pulumi.ComponentResource {
     const mainContainer: k8s.types.input.core.v1.Container = {
       name: args.name,
       image: args.image,
-      imagePullPolicy: 'IfNotPresent',
+      imagePullPolicy: 'Always',
       env: args.env,
       command: args.command,
       args: args.args,
@@ -66,6 +68,7 @@ export class K8sApp extends pulumi.ComponentResource {
     };
 
     const containers = args.sidecars ? [mainContainer, ...args.sidecars] : [mainContainer];
+
 
     this.deployment = new k8s.apps.v1.Deployment(
       args.name,
@@ -84,8 +87,10 @@ export class K8sApp extends pulumi.ComponentResource {
             },
             spec: {
               automountServiceAccountToken: args.automountServiceAccountToken ?? false,
+              serviceAccountName: args.serviceAccountName,
               containers,
               volumes: args.volumes,
+              initContainers: args.initContainers,
             },
           },
         },

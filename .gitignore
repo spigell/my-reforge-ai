@@ -5,7 +5,6 @@ deploy/mcp/github-server-secret.yaml
 
 .env
 .env.*
-Pulumi.*.yaml
 *sublime-workspace
 .vagrant/
 .venv

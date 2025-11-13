@@ -1,69 +1,91 @@
 import * as pulumi from '@pulumi/pulumi';
-import * as k8s from '@pulumi/kubernetes';
-import { GithubMcpServer, GithubMcpMonitoringOptions } from './mcp/github.js';
+import { GithubMcpServer, GithubMcpServerArgs } from './mcp/github.js';
+import { PulumiMcpServer, PulumiMcpServerArgs } from './mcp/pulumi.js';
 
 const config = new pulumi.Config();
+const namespace = config.require('namespace');
 
-interface GithubMcpConfig {
-  namespace: string;
-  image: string;
-  personalAccessTokenSecretName: string;
-  personalAccessTokenSecretKey: string;
-  port: number;
-  allowOrigins: string[];
-  replicas?: number;
-  resources: k8s.types.input.core.v1.ResourceRequirements;
-  command?: string[];
-  args?: string[];
-  additionalEnv?: k8s.types.input.core.v1.EnvVar[];
-  enableInspector?: boolean;
-  inspectorImage?: string;
-  monitoring?: GithubMcpMonitoringOptions;
-}
+const identityStack = new pulumi.StackReference(`organization/output-gateway/${pulumi.getProject()}`);
+const identityOutputs = identityStack.getOutput('output') as pulumi.Output<IdentityStackOutputs>;
+const gcpSecretKeyName = identityOutputs.apply((o) => o['gcp-secret-key-name']);
+const pulumiAccountName = identityOutputs.apply((o) => o['pulumi-account-name']);
 
-const githubMcpConfig: GithubMcpConfig = {
-  namespace: config.require('my-reforge-ai:namespace'),
-  image: config.require('githubMcp:image'),
-  personalAccessTokenSecretName: config.require('githubMcp:personalAccessTokenSecretName'),
-  personalAccessTokenSecretKey: config.require('githubMcp:personalAccessTokenSecretKey'),
-  port: config.requireNumber('githubMcp:port'),
-  allowOrigins: config.requireObject<string[]>('githubMcp:allowOrigins'),
-  replicas: config.getNumber('githubMcp:replicas') ?? undefined,
-  resources: config.requireObject<k8s.types.input.core.v1.ResourceRequirements>('githubMcp:resources'),
-  command: config.getObject<string[]>('githubMcp:command') ?? undefined,
-  args: config.getObject<string[]>('githubMcp:args') ?? undefined,
-  additionalEnv: config.getObject<k8s.types.input.core.v1.EnvVar[]>('githubMcp:additionalEnv') ?? undefined,
-  enableInspector: config.getBoolean('githubMcp:enableInspector') ?? false,
-  inspectorImage: config.get('githubMcp:inspectorImage') ?? undefined,
-  monitoring: config.getObject<GithubMcpMonitoringOptions>('githubMcp:monitoring') ?? undefined,
+const getEnabledMcpConfig = <T extends { enabled?: boolean }>(key: string): T | undefined => {
+  const cfg = config.getObject<T>(key);
+
+  if (!cfg) {
+    pulumi.log.warn(`Configuration for '${key}' MCP server missing; disabling server.`);
+    return undefined;
+  }
+
+  if (cfg.enabled === false) {
+    pulumi.log.info(`'${key}' MCP server disabled via configuration.`);
+    return undefined;
+  }
+
+  return cfg;
 };
 
-if (githubMcpConfig.enableInspector && !githubMcpConfig.inspectorImage) {
-  throw new Error('githubMcp.inspectorImage must be set when enableInspector is true');
+const githubMcpConfig = getEnabledMcpConfig<GithubMcpServerArgs>('githubMcp');
+const pulumiMcpConfig = getEnabledMcpConfig<PulumiMcpServerArgs>('pulumiMcp');
+
+type IdentityStackOutputs = {
+  'gcp-secret-key-name': string;
+  'pulumi-account-name': string;
+};
+
+
+let githubMcp: GithubMcpServer | undefined;
+if (githubMcpConfig) {
+  if (!githubMcpConfig.secret) {
+    throw new pulumi.RunError("githubMcp.secret must be defined when the GitHub MCP server is enabled.");
+  }
+
+  githubMcp = new GithubMcpServer(
+    'mcp-github',
+    {
+      namespace,
+      image: githubMcpConfig.image,
+      secret: githubMcpConfig.secret,
+      port: githubMcpConfig.port,
+      allowOrigins: githubMcpConfig.allowOrigins,
+      replicas: githubMcpConfig.replicas,
+      resources: githubMcpConfig.resources,
+      command: githubMcpConfig.command,
+      args: githubMcpConfig.args,
+      additionalEnv: githubMcpConfig.additionalEnv,
+      enableInspector: githubMcpConfig.enableInspector,
+      inspectorImage: githubMcpConfig.inspectorImage,
+      monitoring: githubMcpConfig.monitoring,
+      labels: githubMcpConfig.labels,
+      serviceAccountName: githubMcpConfig.serviceAccountName,
+    },
+  );
 }
 
-const githubMcp = new GithubMcpServer(
-  'mcp-github',
-  {
-    namespace: githubMcpConfig.namespace,
-    image: githubMcpConfig.image,
-    secret: {
-      name: githubMcpConfig.personalAccessTokenSecretName,
-      key: githubMcpConfig.personalAccessTokenSecretKey,
+let pulumiMcp: PulumiMcpServer | undefined;
+if (pulumiMcpConfig) {
+  pulumiMcp = new PulumiMcpServer(
+    'mcp-pulumi',
+    {
+      namespace,
+      image: pulumiMcpConfig.image,
+      gcpCredentialsSecretName: gcpSecretKeyName,
+      port: pulumiMcpConfig.port,
+      allowOrigins: pulumiMcpConfig.allowOrigins,
+      replicas: pulumiMcpConfig.replicas,
+      resources: pulumiMcpConfig.resources,
+      command: pulumiMcpConfig.command,
+      args: pulumiMcpConfig.args,
+      additionalEnv: pulumiMcpConfig.additionalEnv ?? [],
+      enableInspector: pulumiMcpConfig.enableInspector,
+      inspectorImage: pulumiMcpConfig.inspectorImage,
+      monitoring: pulumiMcpConfig.monitoring,
+      labels: pulumiMcpConfig.labels,
+      serviceAccountName: pulumiAccountName,
+      sharedCodeMount: {
+        enabled: true,
+      }
     },
-    port: githubMcpConfig.port,
-    allowOrigins: githubMcpConfig.allowOrigins,
-    replicas: githubMcpConfig.replicas,
-    resources: githubMcpConfig.resources,
-    command: githubMcpConfig.command,
-    args: githubMcpConfig.args,
-    additionalEnv: githubMcpConfig.additionalEnv,
-    enableInspector: githubMcpConfig.enableInspector,
-    inspectorImage: githubMcpConfig.inspectorImage,
-    monitoring: githubMcpConfig.monitoring,
-  },
-);
-
-export const githubMcpDeploymentName = githubMcp.deployment.metadata.name;
-export const githubMcpServiceName = githubMcp.service?.metadata.name;
-export const githubMcpPodScrapeName = githubMcp.podScrape?.metadata.name;
+  );
+}
