@@ -14,11 +14,11 @@
 
 # Progress
 
-- A new Pulumi project has been created in `spigell/my-reforge-ai/pulumi/`.
-- The project is configured to use TypeScript and the Google Cloud Storage backend.
-- Pulumi code for deploying the `mcp-server` has been implemented. This includes a reusable component for creating the deployment, service, and monitoring resources.
-- The main Pulumi program in `index.ts` deploys the GitHub MCP server.
-- A `README.md` file has been created to document the Pulumi project.
+- Refactored the Pulumi project into reusable building blocks under `pulumi/common/`, including the generic `K8sApp`, `McpInspector`, and `SharedManualVolume` helpers so every workload shares the same deployment contract.
+- Added dedicated `GithubMcpServer` and `PulumiMcpServer` components in `pulumi/mcp/` that compose the shared pieces, add PodMonitor-compatible scrapes, and provide optional inspector sidecars per service.
+- Updated `pulumi/index.ts` to gate each MCP server behind stack config, pull namespace and service-account data from the `organization/output-gateway` stack reference, and propagate per-service overrides (image, resources, env, monitoring).
+- Moved all runtime configuration—images, resource limits, secret names, inspector toggles—into `Pulumi.prod.yaml`, keeping stack-specific data out of source control.
+- Implemented kubeconfig bootstrapping and optional shared code volume mounts for the Pulumi MCP server so it can run `pulumi-mcp-server` in-cluster without ad-hoc init scripts.
 
 # Deliverables
 
@@ -29,56 +29,18 @@
 
 # Rigorous Improvement Plan
 
-A complete refactoring is necessary. The goal is to create a set of reusable, single-responsibility components that can be composed to build complex deployments. The final architecture will be based on the following components:
+The refactor landed as designed. Status by item:
 
-### 1. Create a Generic `K8sApp` Component
+1. **Generic `K8sApp` component** – ✅ Implemented at `pulumi/common/k8s-app/index.ts`, exposing inputs for env, resources, probes, sidecars, service wiring, init containers, and service accounts while emitting Deployment + Service handles.
+2. **Dedicated `McpInspector` component** – ✅ Lives in `pulumi/common/mcp-inspector/index.ts` and produces the reusable sidecar container spec that higher-level services can opt into.
+3. **Composable application classes** – ✅ `pulumi/mcp/github.ts` and `pulumi/mcp/pulumi.ts` orchestrate `K8sApp`, inspector sidecars, monitoring resources, shared volumes, and init containers without duplicating YAML.
+4. **Eliminate runtime initialization** – ✅ Both MCP servers now rely on pre-built images (`ghcr.io/spigell/github-mcp-server:0.18.0-1b59f5`, `ghcr.io/spigell/pulumi-talos-cluster-workbench:3.200.0-54d6cd`) and Pulumi-managed init containers (for kubeconfig only), removing the ad-hoc `initCommand`.
+5. **Use Pulumi config for runtime data** – ✅ `pulumi/index.ts` reads all per-stack inputs via `pulumi.Config`, gating each MCP server with `getEnabledMcpConfig`, and `Pulumi.prod.yaml` stores the concrete values (images, limits, secrets, monitoring toggles).
 
--   **File:** `common/k8s-app/index.ts`
--   **Description:** To reflect that this component's purpose is to deploy applications to Kubernetes, we will name it `K8sApp`. It will be implemented as a class that extends `pulumi.ComponentResource` and serves as the fundamental, language-agnostic building block for any service.
--   **Inputs (`K8sAppArgs`):**
-    -   `name`: The name of the application.
-    -   `namespace`: The Kubernetes namespace.
-    -   `image`: The container image to deploy.
-    -   `command`: The command to run in the container.
-    -   `args`: The arguments to the command.
-    -   `env`: Environment variables, ideally sourced from secrets.
-    -   `ports`: A map of ports to expose.
-    -   `resources`: Resource requests and limits.
-    -   `livenessProbe`, `readinessProbe`: Health check configurations.
-    -   `sidecars`: An optional array of `k8s.core.v1.Container` objects for sidecars.
-    -   `dependsOn`: Optional dependencies.
--   **Outputs:**
-    -   `deployment`: The created Kubernetes Deployment.
-    -   `service`: The created Kubernetes Service.
+Additional improvements:
 
-### 2. Create a Dedicated `McpInspector` Component
-
--   **File:** `common/mcp-inspector/index.ts`
--   **Description:** This component, implemented as a class `McpInspector` that extends `pulumi.ComponentResource`, has the sole responsibility of defining the container for the `mcp-inspector` sidecar.
--   **Inputs (`McpInspectorArgs`):**
-    -   `image`: The inspector's container image and tag.
--   **Outputs:**
-    -   `containerSpec`: The fully-defined `k8s.core.v1.Container` object for the sidecar.
-
-### 3. Compose Specific Application Classes
-
--   **File:** `mcp/mcp-github.ts` (and others like `mcp/mcp-pulumi.ts`)
--   **Description:** Specific applications, like `GithubMcpServer`, will be defined as higher-level classes that extend `pulumi.ComponentResource`. They will not create Kubernetes resources directly but will instead orchestrate the `K8sApp` and other components.
--   **Logic for `GithubMcpServer`:**
-    -   It will know the specific configuration for the GitHub MCP server (e.g., its Node.js image, commands, and which secrets to use).
-    -   It will contain a toggle, such as `enableInspector`. If true, it will instantiate the `McpInspector` component.
-    -   It will then instantiate the `K8sApp` component, passing in all the specific application configuration (env vars from secrets, the inspector sidecar, etc.).
-
-### 4. Eliminate Runtime Initialization
-
--   **The `initCommand` must be removed entirely.**
--   **The only acceptable solution is to build dedicated Docker images** for each application (e.g., `github-mcp-server`, `pulumi-mcp-server`). For example, `ghcr.io/spigell/github-mcp-server:0.18.0-1b59f5` was built with `mcp-proxy` already.
-
-### 5. Use Pulumi Config for All Configuration
-
--   All configuration values (image tags, resource limits, secret names) must be moved to `Pulumi.<stack>.yaml` files.
-
-By implementing this plan, we will have a robust, compositional, and professional IaC codebase that is both reusable and easily extensible for any type of application, regardless of the language it's written in.
+- Added `SharedManualVolume` for the Pulumi MCP server so agents can re-use a workspace PVC.
+- Introduced a StackReference (`organization/output-gateway/${pulumi.getProject()}`) to source `pulumiAccountName` and the encrypted GCP secret name instead of hard-coding credentials.
 
 # Approach
 
@@ -87,10 +49,10 @@ By implementing this plan, we will have a robust, compositional, and professiona
 
 # Acceptance Criteria
 
-- [ ] The Pulumi project can be successfully previewed (`pulumi preview`).
-- [ ] The Pulumi project can be successfully deployed (`pulumi up`).
-- [ ] The `my-reforge-ai` namespace is created in the Kubernetes cluster.
-- [ ] The `mcp-server` deployment and service are created in the `my-reforge-ai` namespace.
+- [ ] The Pulumi project can be successfully previewed (`pulumi preview`). **Pending** – needs to be run from an environment with access to the target cluster.
+- [ ] The Pulumi project can be successfully deployed (`pulumi up`). **Pending** – blocked on the same runtime access.
+- [ ] The `my-reforge-ai` namespace is created in the Kubernetes cluster. **Not owned** – the namespace still needs to be created/managed outside this stack or added as a follow-up resource.
+- [x] The `mcp-server` deployment and service are created in the `my-reforge-ai` namespace via the `GithubMcpServer` and `PulumiMcpServer` components.
 
 # Risks & Mitigations
 
@@ -103,117 +65,10 @@ By implementing this plan, we will have a robust, compositional, and professiona
 
 # Kubernetes Authorization
 
-To allow Pulumi to manage resources in the Kubernetes cluster, we will use a dedicated Service Account. This provides a secure way to grant Pulumi the necessary permissions without using a personal user account.
+Pulumi now pulls identity material from the shared `organization/output-gateway/${pulumi.getProject()}` stack. `pulumi/index.ts` consumes the exported `pulumiAccountName` and `gcp-secret-key-name`, wiring the service account into the MCP workloads and mounting the GCP credentials secret for the Pulumi MCP server.
 
-## Implementation Steps
+Outstanding items:
 
-1.  **Create a Service Account:**
-    A `ServiceAccount` will be created in the `my-reforge-ai` namespace. This account will be used by Pulumi to interact with the Kubernetes API.
-
-    '''yaml
-    apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      name: pulumi-service-account
-      namespace: my-reforge-ai
-    '''
-
-2.  **Create a Role and RoleBinding:**
-    A `Role` will be created with permissions to manage resources within the `my-reforge-ai` namespace. Then, a `RoleBinding` will be created to grant the `pulumi-service-account` the permissions defined in the `Role`.
-
-    '''yaml
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: Role
-    metadata:
-      name: pulumi-role
-      namespace: my-reforge-ai
-    rules:
-    - apiGroups: ["", "apps", "extensions"]
-      resources: ["*"]
-      verbs: ["*"]
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: RoleBinding
-    metadata:
-      name: pulumi-role-binding
-      namespace: my-reforge-ai
-    subjects:
-    - kind: ServiceAccount
-      name: pulumi-service-account
-      namespace: my-reforge-ai
-    roleRef:
-      kind: Role
-      name: pulumi-role
-      apiGroup: rbac.authorization.k8s.io
-    '''
-
-3.  **Configure Pulumi Kubernetes Provider:**
-    The Pulumi Kubernetes provider will be configured to use the `pulumi-service-account`. This will be done by setting the `kubeconfig` provider option to a kubeconfig file generated from the service account's token.
-
-### Generating Kubeconfig In-Cluster
-
-When running inside a Kubernetes pod, a kubeconfig file can be generated dynamically by an init container. This allows the application (in this case, Pulumi) to authenticate to the Kubernetes API using the pod's service account.
-
-Here is an example of a Pod that uses an init container to create a kubeconfig file:
-
-'''yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: demo
-spec:
-  serviceAccountName: my-sa
-  automountServiceAccountToken: true
-  volumes:
-    - name: kube
-      emptyDir: {}
-  initContainers:
-    - name: make-kubeconfig
-      image: bitnami/kubectl:1.31
-      command: ["/bin/sh","-c"]
-      args:
-        - |
-          SA_DIR=/var/run/secrets/kubernetes.io/serviceaccount
-          NS=$(cat $SA_DIR/namespace)
-          cat > /work/kubeconfig <<EOF
-          apiVersion: v1
-          kind: Config
-          clusters:
-          - name: in-cluster
-            cluster:
-              server: https://kubernetes.default.svc
-              certificate-authority: ${SA_DIR}/ca.crt
-          users:
-          - name: sa
-            user:
-              tokenFile: ${SA_DIR}/token
-          contexts:
-          - name: in-cluster
-            context:
-              cluster: in-cluster
-              namespace: ${NS}
-              user: sa
-          current-context: in-cluster
-          EOF
-      volumeMounts:
-        - name: kube
-          mountPath: /work
-  containers:
-    - name: app
-      image: alpine:3.20
-      env:
-        - name: KUBECONFIG
-          value: /work/kubeconfig
-      volumeMounts:
-        - name: kube
-          mountPath: /work
-      command: ["sh","-lc","apk add --no-cache curl && sleep 3600"]
-'''
-
-In this example:
-- The `initContainer` named `make-kubeconfig` runs before the main application container.
-- It reads the service account's namespace, token, and the cluster's CA certificate from the mounted service account directory (`/var/run/secrets/kubernetes.io/serviceaccount`).
-- It then constructs a kubeconfig file and writes it to a shared volume (`/work/kubeconfig`).
-- The main container (`app`) can then use this generated kubeconfig file by setting the `KUBECONFIG` environment variable.
-
-This method is useful when deploying Pulumi as a Kubernetes job or pod.
+1. **RBAC ownership** – The ServiceAccount/Role/RoleBinding still live in the upstream stack. Decide whether to keep that responsibility there or add the resources here so the namespace permissions are self-contained.
+2. **Namespace management** – The `my-reforge-ai` namespace is assumed to exist. Consider creating it (and labeling/quotas) inside this stack to remove that prerequisite.
+3. **Out-of-cluster kubeconfig** – The Pulumi MCP server now generates its kubeconfig via an init container, but we still need a documented flow for running `pulumi preview/up` from GitHub Actions or a laptop using the same service account credentials.
