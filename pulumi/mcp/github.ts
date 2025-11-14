@@ -1,7 +1,7 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as k8s from '@pulumi/kubernetes';
 import { K8sApp } from '../common/k8s-app/index.js';
-import { McpInspector } from '../common/mcp-inspector/index.js';
+import { McpInspector } from './mcp-inspector.js';
 import { McpServerArgs, McpServerSecretRef } from './types.js';
 import { createMcpPodScrape } from './monitoring.js';
 import { DEFAULT_INSPECTOR_IMAGE } from './constants.js';
@@ -43,13 +43,14 @@ export class GithubMcpServer extends pulumi.ComponentResource {
     }
 
     const sidecars: k8s.types.input.core.v1.Container[] = [];
+    const volumes: k8s.types.input.core.v1.Volume[] = [...(args.volumes ?? [])];
     const inspectorImage = args.inspectorImage ?? DEFAULT_INSPECTOR_IMAGE;
     if (args.enableInspector) {
-      const inspector = new McpInspector(
-        `${name}-inspector`,
-        { image: inspectorImage },
-        { parent: this },
-      );
+      const inspector = new McpInspector({
+        image: inspectorImage,
+        serverUrl: pulumi.interpolate`http://localhost:${port}/mcp`,
+        transport: 'streamable-http',
+      });
       sidecars.push(inspector.containerSpec);
     }
 
@@ -58,7 +59,6 @@ export class GithubMcpServer extends pulumi.ComponentResource {
       ...(args.labels ?? {}),
     };
 
-    const volumes: k8s.types.input.core.v1.Volume[] = [...(args.volumes ?? [])];
     const volumeMounts: k8s.types.input.core.v1.VolumeMount[] = [...(args.volumeMounts ?? [])];
     const initContainers: k8s.types.input.core.v1.Container[] = [...(args.initContainers ?? [])];
 
