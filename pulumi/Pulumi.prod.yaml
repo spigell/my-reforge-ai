@@ -1,0 +1,47 @@
+secretsprovider: gcpkms://projects/spigell-infra/locations/global/keyRings/spigell-infra-keyring/cryptoKeys/spigell-infra-my-reforge-ai-pulumi-key
+encryptedkey: CiQAlZw1Sl99bWwUAzoVQT64xci8/Z4MBlHE263cRXHUpfvTZHgSSQB1JEBo0FY5aHHCwfkglh6D7uPq2OhJ2pI2xGMBmqigPs+OUQlsEfZKFF7kZyYWJWGT8kFoUU4HYSmDho7q8l+XX1Ly9QeY0Uk=
+config:
+  githubMcp:
+    enabled: true
+    image: ghcr.io/spigell/github-mcp-server:0.18.0-1b59f5
+    port: 8080
+    allowOrigins:
+      - '*'
+    replicas: 1
+    resources:
+      limits:
+        cpu: '1'
+        memory: 1Gi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+    enableInspector: false
+    monitoring:
+      enabled: true
+      portName: http
+      scrapeInterval: 30s
+    secret:
+      name: github-mcp-credentials
+      key: github-pat
+  pulumiMcp:
+    enabled: true
+    image: ghcr.io/spigell/pulumi-workbench:3.200.0-385e75
+    command:
+      - pulumi-mcp-server
+      - http
+    port: 3000
+    allowOrigins:
+      - '*'
+    replicas: 1
+    resources:
+      limits:
+        cpu: '1'
+        memory: 1Gi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+    enableInspector: true
+    monitoring:
+      enabled: true
+      portName: http
+      scrapeInterval: 30s

@@ -1,0 +1,17 @@
+{
+  "name": "my-reforge-ai",
+  "type": "module",
+  "main": "index.ts",
+  "devDependencies": {
+    "@types/node": "^18",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@pulumi/kubernetes": "^4.13.2",
+    "@pulumi/pulumi": "^3.113.0",
+    "ts-node": "^10.9.2"
+  },
+  "scripts": {
+    "build": "./node_modules/.bin/tsc --build"
+  }
+}
