@@ -79,6 +79,9 @@ export class GithubMcpServer extends pulumi.ComponentResource {
         serviceAccountName: args.serviceAccountName,
         initContainers,
         automountServiceAccountToken: args.automountServiceAccountToken,
+        service: {
+          enabled: true
+        },
         volumes,
         volumeMounts,
       },

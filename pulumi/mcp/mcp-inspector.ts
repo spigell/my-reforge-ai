@@ -22,6 +22,16 @@ export class McpInspector {
         '--server-url',
         args.serverUrl,
       ],
+      securityContext: {
+        allowPrivilegeEscalation: false,
+        capabilities: {
+          drop: ['ALL'],
+        },
+        seccompProfile: {
+          type: 'RuntimeDefault',
+        },
+        runAsNonRoot: true,
+      },
     };
   }
 }

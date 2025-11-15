@@ -37,6 +37,17 @@ export type K8sAppArgs = {
 export class K8sApp extends pulumi.ComponentResource {
   public readonly deployment: k8s.apps.v1.Deployment;
   public readonly service?: k8s.core.v1.Service;
+  private readonly defaultContainerSecurityContext: k8s.types.input.core.v1.SecurityContext = {
+    allowPrivilegeEscalation: false,
+    capabilities: {
+      drop: ['ALL'],
+    },
+    seccompProfile: {
+      type: 'RuntimeDefault',
+    },
+    runAsNonRoot: true,
+    runAsUser: 1000,
+  };
 
   constructor(name: string, args: K8sAppArgs, opts?: pulumi.ComponentResourceOptions) {
     super('my-reforge-ai:common:K8sApp', name, {}, opts);
@@ -55,26 +66,7 @@ export class K8sApp extends pulumi.ComponentResource {
         }))
       : undefined;
 
-    const defaultContainerSecurityContext: k8s.types.input.core.v1.SecurityContext = {
-      allowPrivilegeEscalation: false,
-      capabilities: {
-        drop: ['ALL'],
-      },
-      seccompProfile: {
-        type: 'RuntimeDefault',
-      },
-    };
-
-    const mainContainerSecurityContext: k8s.types.input.core.v1.SecurityContext = {
-      ...defaultContainerSecurityContext,
-      ...(args.securityContext ?? {}),
-      capabilities:
-        args.securityContext?.capabilities ?? defaultContainerSecurityContext.capabilities,
-      seccompProfile:
-        args.securityContext?.seccompProfile ?? defaultContainerSecurityContext.seccompProfile,
-    };
-
-    const mainContainer: k8s.types.input.core.v1.Container = {
+    const mainContainer: k8s.types.input.core.v1.Container = this.addSecurityContext({
       name: args.name,
       image: args.image,
       imagePullPolicy: 'Always',
@@ -88,10 +80,11 @@ export class K8sApp extends pulumi.ComponentResource {
       readinessProbe: args.readinessProbe,
       livenessProbe: args.livenessProbe,
       volumeMounts: args.volumeMounts,
-      securityContext: mainContainerSecurityContext,
-    };
+    }, args.securityContext);
 
-    const containers = args.sidecars ? [mainContainer, ...args.sidecars] : [mainContainer];
+    const sidecarContainers =
+      args.sidecars?.map((sidecar) => this.addSecurityContext(sidecar)) ?? [];
+    const containers = [mainContainer, ...sidecarContainers];
 
 
     this.deployment = new k8s.apps.v1.Deployment(
@@ -117,11 +110,11 @@ export class K8sApp extends pulumi.ComponentResource {
               initContainers: args.initContainers,
               enableServiceLinks: args.enableServiceLinks ?? false,
               hostUsers: args.hostUsers ?? false,
-      securityContext: {
-        runAsNonRoot: true,
-        runAsUser: 1000,
-        ...(args.podSecurityContext ?? {}),
-      },
+              securityContext: {
+                runAsNonRoot: true,
+                runAsUser: 1000,
+                ...(args.podSecurityContext ?? {}),
+              },
             },
           },
         },
@@ -133,11 +126,11 @@ export class K8sApp extends pulumi.ComponentResource {
     );
 
     const serviceOptions: ServiceOptions = {
-      enabled: true,
+      enabled: false,
       ...(args.service ?? {}),
     };
 
-    if (serviceOptions.enabled !== false && containerPorts && containerPorts.length > 0) {
+    if (serviceOptions.enabled && containerPorts && containerPorts.length > 0) {
       this.service = new k8s.core.v1.Service(
         args.name,
         {
@@ -168,5 +161,26 @@ export class K8sApp extends pulumi.ComponentResource {
       deploymentName: this.deployment.metadata.name,
       serviceName: this.service?.metadata.name,
     });
+  }
+
+  private addSecurityContext(
+    container: k8s.types.input.core.v1.Container,
+    overrides?: pulumi.Input<k8s.types.input.core.v1.SecurityContext>,
+  ): k8s.types.input.core.v1.Container {
+    const resolvedOverrides = overrides ?? container.securityContext;
+    const mergedContext = resolvedOverrides
+      ? pulumi.output(resolvedOverrides).apply((ctx) => ({
+          ...this.defaultContainerSecurityContext,
+          ...ctx,
+          capabilities: ctx?.capabilities ?? this.defaultContainerSecurityContext.capabilities,
+          seccompProfile:
+            ctx?.seccompProfile ?? this.defaultContainerSecurityContext.seccompProfile,
+        }))
+      : this.defaultContainerSecurityContext;
+
+    return {
+      ...container,
+      securityContext: mergedContext,
+    };
   }
 }

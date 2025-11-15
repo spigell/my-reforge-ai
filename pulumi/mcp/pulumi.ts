@@ -189,10 +189,9 @@ chmod 600 ${kubeconfigFilePath}
         initContainers,
         automountServiceAccountToken: args.automountServiceAccountToken ?? true,
         serviceAccountName: args.serviceAccountName,
-        podSecurityContext: {
-          runAsUser: 0,
-          runAsNonRoot: false,
-        },
+        service: {
+          enabled: true
+        }
       },
       { parent: this },
     );

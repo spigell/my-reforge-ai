@@ -25,7 +25,7 @@ config:
       key: github-pat
   pulumiMcp:
     enabled: true
-    image: ghcr.io/spigell/pulumi-talos-cluster-workbench:3.200.0-54d6cd
+    image: ghcr.io/spigell/pulumi-workbench:3.200.0-385e75
     command:
       - pulumi-mcp-server
       - http
