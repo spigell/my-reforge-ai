@@ -1,10 +1,10 @@
 model_provider = "openai"
-model = "gpt-5-codex"
+model = "gpt-5.1-codex"
 sandbox_mode = "danger-full-access"
 network_access = true
 model_reasoning_effort="low"
 model_reasoning_summary = "detailed"
-model_verbosity = "low"
+model_verbosity = "medium"
 approval_policy = "never"
 
 [mcp_servers.github-mcp]
@@ -12,3 +12,4 @@ url = "http://mcp-github:8080/mcp/"
 
 [mcp_servers.pulumi-mcp]
 url = "http://mcp-pulumi:3000/mcp/"
+tool_timeout_sec = 600

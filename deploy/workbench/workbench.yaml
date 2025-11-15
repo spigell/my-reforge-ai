@@ -15,7 +15,7 @@ spec:
         - -c
         - /project/deploy/workbench/workbench-start.sh codex
         # - sleep 3600
-      image: ghcr.io/spigell/codex-workbench:v0.56.0-d5ece8
+      image: ghcr.io/spigell/codex-workbench:v0.58.0-1b5604
       name: codex-workbench
       resources:
         limits:
@@ -46,7 +46,7 @@ spec:
         - -c
         - /project/deploy/workbench/workbench-start.sh gemini
         # - sleep 3600
-      image: ghcr.io/spigell/google-gemini-workbench:0.13-2d74c0
+      image: ghcr.io/spigell/google-gemini-workbench:v0.15.2-92ca1b
       name: gemini-workbench
       resources:
         limits:
