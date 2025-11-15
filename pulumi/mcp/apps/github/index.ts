@@ -1,10 +1,10 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as k8s from '@pulumi/kubernetes';
-import { K8sApp } from '../common/k8s-app/index.js';
-import { McpInspector } from './mcp-inspector.js';
-import { McpServerArgs, McpServerSecretRef } from './types.js';
-import { createMcpPodScrape } from './monitoring.js';
-import { DEFAULT_INSPECTOR_IMAGE } from './constants.js';
+import { K8sApp } from '../../../common/k8s-app/index.js';
+import { McpInspector } from '../../shared/inspector.js';
+import { McpServerArgs, McpServerSecretRef } from '../../shared/types.js';
+import { createMcpPodScrape } from '../../shared/monitoring.js';
+import { DEFAULT_INSPECTOR_IMAGE } from '../../shared/constants.js';
 
 export type GithubMcpServerArgs = McpServerArgs & {
   secret: McpServerSecretRef;
@@ -79,11 +79,11 @@ export class GithubMcpServer extends pulumi.ComponentResource {
         serviceAccountName: args.serviceAccountName,
         initContainers,
         automountServiceAccountToken: args.automountServiceAccountToken,
-        service: {
-          enabled: true
-        },
         volumes,
         volumeMounts,
+        service: {
+          enabled: true
+        }
       },
       { parent: this },
     );

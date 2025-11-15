@@ -1,6 +1,6 @@
 import * as pulumi from '@pulumi/pulumi';
-import { GithubMcpServer, GithubMcpServerArgs } from './mcp/github.js';
-import { PulumiMcpServer, PulumiMcpServerArgs } from './mcp/pulumi.js';
+import { GithubMcpServer, GithubMcpServerArgs } from './mcp/apps/github/index.js';
+import { PulumiMcpServer, PulumiMcpServerArgs } from './mcp/apps/pulumi/index.js';
 
 const config = new pulumi.Config();
 

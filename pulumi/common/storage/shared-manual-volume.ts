@@ -7,8 +7,6 @@ export type SharedVolumeArgs = {
   nodeHostname?: pulumi.Input<string>;
   storageSize?: pulumi.Input<string>;
   claimSize?: pulumi.Input<string>;
-  volumeName?: pulumi.Input<string>;
-  claimName?: pulumi.Input<string>;
 };
 
 export class SharedManualVolume extends pulumi.ComponentResource {
@@ -18,10 +16,10 @@ export class SharedManualVolume extends pulumi.ComponentResource {
   constructor(name: string, args: SharedVolumeArgs, opts?: pulumi.ComponentResourceOptions) {
     super('my-reforge-ai:storage:SharedManualVolume', name, {}, opts);
 
-    const volumeResourceName = `${name}-pv`;
-    const claimResourceName = `${name}-pvc`;
-    const volumeMetadataName = args.volumeName ?? volumeResourceName;
-    const claimMetadataName = args.claimName ?? claimResourceName;
+    const volumeResourceName = name;
+    const claimResourceName = name;
+    const volumeMetadataName = volumeResourceName;
+    const claimMetadataName = claimResourceName;
     const hostPath = args.hostPath ?? '/var/local-path-provisioner/pvc-bd327295-3488-4d8b-af44-ef20a0194833_sync-hub_dragonfish-shared/my-reforge-ai-1';
     const nodeHostname = args.nodeHostname ?? 'master-1';
 

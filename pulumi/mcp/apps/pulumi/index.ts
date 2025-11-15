@@ -1,11 +1,11 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as k8s from '@pulumi/kubernetes';
-import { K8sApp } from '../common/k8s-app/index.js';
-import { McpInspector } from './mcp-inspector.js';
-import { SharedManualVolume } from '../common/storage/shared-manual-volume.js';
-import { McpServerArgs } from './types.js';
-import { createMcpPodScrape } from './monitoring.js';
-import { DEFAULT_INSPECTOR_IMAGE } from './constants.js';
+import { K8sApp } from '../../../common/k8s-app/index.js';
+import { McpInspector } from '../../shared/inspector.js';
+import { SharedManualVolume } from '../../../common/storage/shared-manual-volume.js';
+import { McpServerArgs } from '../../shared/types.js';
+import { createMcpPodScrape } from '../../shared/monitoring.js';
+import { DEFAULT_INSPECTOR_IMAGE } from '../../shared/constants.js';
 
 export type PulumiMcpServerArgs = McpServerArgs & {
   gcpCredentialsSecretName: pulumi.Input<string>;
@@ -23,6 +23,11 @@ export class PulumiMcpServer extends pulumi.ComponentResource {
     const port = args.port ?? 3000;
     const kubeconfigMountPath = '/var/run/pulumi';
     const kubeconfigFilePath = `${kubeconfigMountPath}/kubeconfig`;
+    const gcpCredentialsMountPath = '/var/run/gcp';
+    const gcpCredentialsFileName = args.gcpCredentialsSecretKey ?? 'credentials.json';
+    const gcpCredentialsVolumeName = `${name}-gcp-credentials`;
+    const kubeconfigVolumeName = `${name}-kubeconfig`;
+
     const env: k8s.types.input.core.v1.EnvVar[] = [
       {
         name: 'GOOGLE_APPLICATION_CREDENTIALS',
@@ -47,7 +52,6 @@ export class PulumiMcpServer extends pulumi.ComponentResource {
 
     const sidecars: k8s.types.input.core.v1.Container[] = [];
     const inspectorImage = args.inspectorImage ?? DEFAULT_INSPECTOR_IMAGE;
-    const volumes: k8s.types.input.core.v1.Volume[] = [...(args.volumes ?? [])];
     if (args.enableInspector) {
       const inspector = new McpInspector({
         image: inspectorImage,
@@ -62,11 +66,7 @@ export class PulumiMcpServer extends pulumi.ComponentResource {
       ...(args.labels ?? {}),
     };
 
-    const gcpCredentialsVolumeName = `${name}-gcp-credentials`;
-    const gcpCredentialsMountPath = '/var/run/gcp';
-    const gcpCredentialsFileName = args.gcpCredentialsSecretKey ?? 'credentials.json';
-    const kubeconfigVolumeName = `${name}-kubeconfig`;
-
+    const volumes: k8s.types.input.core.v1.Volume[] = [...(args.volumes ?? [])];
     const volumeMounts: k8s.types.input.core.v1.VolumeMount[] = [...(args.volumeMounts ?? [])];
     const initContainers: k8s.types.input.core.v1.Container[] = [...(args.initContainers ?? [])];
 
@@ -148,8 +148,6 @@ chmod 600 ${kubeconfigFilePath}
         `${name}-shared-code`,
         {
           namespace: args.namespace,
-          volumeName: `${name}-shared-code-pv`,
-          claimName: `${name}-shared-code-pvc`,
         },
         { parent: this },
       );
